@@ -139,12 +139,7 @@ export function WorkspaceAsk({ question }: { question: string }) {
                 </p>
               )}
 
-              <div
-                className="whitespace-pre-wrap text-[14px] leading-[1.6]"
-                style={{ color: "var(--ink)" }}
-              >
-                {answer.text}
-              </div>
+              <Prose text={answer.text} />
 
               {answer.citations.length > 0 && (
                 <div className="mt-4 flex flex-col gap-2">
@@ -206,5 +201,50 @@ export function WorkspaceAsk({ question }: { question: string }) {
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * The model answers in light markdown — bold for the thing being named, and a
+ * numbered list when the answer really is a list. Rendering that as literal
+ * asterisks makes a good answer look broken, and pulling in a markdown
+ * library to un-break it would be a lot of bytes for two rules.
+ *
+ * Bold and list structure only. Anything else stays as written, which is the
+ * safe direction to fail in: nothing here is dangerouslySetInnerHTML.
+ */
+function Prose({ text }: { text: string }) {
+  const blocks = text.split(/\n{2,}/).filter((b) => b.trim());
+  return (
+    <div className="flex flex-col gap-2.5 text-[14px] leading-[1.6]" style={{ color: "var(--ink)" }}>
+      {blocks.map((block, i) => {
+        const lines = block.split("\n");
+        const listish = lines.every((l) => /^\s*(?:[-*\u2022]|\d+[.)])\s+/.test(l));
+        if (listish && lines.length > 1) {
+          return (
+            <ul key={i} className="flex flex-col gap-1.5 pl-4">
+              {lines.map((l, j) => (
+                <li key={j} className="list-disc">
+                  {bold(l.replace(/^\s*(?:[-*\u2022]|\d+[.)])\s+/, ""))}
+                </li>
+              ))}
+            </ul>
+          );
+        }
+        return <p key={i}>{bold(block)}</p>;
+      })}
+    </div>
+  );
+}
+
+function bold(s: string) {
+  return s.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
+    part.startsWith("**") && part.endsWith("**") && part.length > 4 ? (
+      <strong key={i} style={{ color: "var(--ink)", fontWeight: 650 }}>
+        {part.slice(2, -2)}
+      </strong>
+    ) : (
+      part
+    ),
   );
 }
