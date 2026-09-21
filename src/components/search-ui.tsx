@@ -7,6 +7,7 @@ import { clock, when } from "@/lib/format";
 import type { Person, SearchHit } from "@/lib/types";
 import { Avatar, Badge, Icon, speakerVar } from "./ui";
 import { PageHeader } from "./page-header";
+import { WorkspaceAsk } from "./workspace-ask";
 
 // Search.
 //
@@ -19,13 +20,15 @@ import { PageHeader } from "./page-header";
 // BM25, drag to 1 and it's pure vector similarity, and you can watch the
 // ranking change. Each result shows its own L/S split for the same reason.
 
+// A mix on purpose: the short ones show the retriever expanding a keyword,
+// the long ones are questions worth handing to Ask once the results are up.
 const EXAMPLES = [
+  "what did we promise Brightwater about December?",
   "churn risk",
-  "who promised December",
+  "did we ever change our mind about the second data source?",
   "why does search feel slow",
-  "security review deadline",
+  "who owns the security review and when is it due?",
   "where did people disagree",
-  "second data source",
 ];
 
 export function SearchUI({
@@ -85,7 +88,7 @@ export function SearchUI({
     <div className="mx-auto w-full max-w-[1000px] px-4 pb-24 md:px-8">
       <PageHeader
         title="Search"
-        subtitle={`Across ${corpusSize.meetings} meetings and ${corpusSize.segments.toLocaleString()} spoken lines. Transcripts and summaries, one ranked list.`}
+        subtitle={`Across ${corpusSize.meetings} meetings and ${corpusSize.segments.toLocaleString()} spoken lines. Transcripts and summaries, one ranked list — and a question can be answered from all of them at once, with the lines it used.`}
       />
 
       <form
@@ -228,6 +231,10 @@ export function SearchUI({
           </p>
         </div>
       )}
+
+      {/* The answer sits above the moments, because the answer is what was
+          asked for. The moments below are how you check it. */}
+      {q && hits.length > 0 && <WorkspaceAsk question={q} />}
 
       {q && hits.length > 0 && (
         <>
