@@ -1,6 +1,9 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import type { RawSegment } from "./transcribe";
+import type { AskEvidence } from "../evidence";
+
+export type { AskEvidence };
 
 // Grounded Ask without a database.
 //
@@ -44,13 +47,26 @@ export async function askOverSegments(
   speakerNames: Record<number, string>,
   question: string,
   candidateIdxs: number[],
-): Promise<{ text: string; citations: StatelessCitation[]; grounded: boolean; model: string }> {
+): Promise<{
+  text: string;
+  citations: StatelessCitation[];
+  grounded: boolean;
+  model: string;
+  evidence: AskEvidence;
+}> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not set");
+  const t0 = Date.now();
 
   const idxs = [...new Set(candidateIdxs)].filter((i) => i >= 0 && i < segments.length).sort((a, b) => a - b);
   if (!idxs.length) {
-    return { text: "There is nothing in this transcript to answer from.", citations: [], grounded: false, model: MODEL };
+    return {
+      text: "There is nothing in this transcript to answer from.",
+      citations: [],
+      grounded: false,
+      model: MODEL,
+      evidence: { considered: 0, proposed: 0, resolved: 0, dropped: [], elapsedMs: Date.now() - t0 },
+    };
   }
 
   const name = (label: number) => speakerNames[label] || `Speaker ${label + 1}`;
@@ -80,10 +96,21 @@ export async function askOverSegments(
 
   const seen = new Set<number>();
   const citations: StatelessCitation[] = [];
+  const dropped: { citedIdx: number; reason: string }[] = [];
   for (const i of cited) {
     // The validation step: an index outside the real array, or one the model
     // was never shown, is a hallucinated citation and is discarded.
-    if (!idxs.includes(i) || seen.has(i)) continue;
+    if (seen.has(i)) continue;
+    if (!idxs.includes(i)) {
+      dropped.push({
+        citedIdx: i,
+        reason:
+          i >= 0 && i < segments.length
+            ? `line ${i} exists but was never retrieved for this question`
+            : `line ${i} does not exist in this transcript`,
+      });
+      continue;
+    }
     seen.add(i);
     const s = segments[i];
     citations.push({
@@ -94,7 +121,19 @@ export async function askOverSegments(
     });
   }
 
-  return { text, citations, grounded: citations.length > 0, model: MODEL };
+  return {
+    text,
+    citations,
+    grounded: citations.length > 0,
+    model: MODEL,
+    evidence: {
+      considered: idxs.length,
+      proposed: new Set(cited).size,
+      resolved: citations.length,
+      dropped,
+      elapsedMs: Date.now() - t0,
+    },
+  };
 }
 
 function fmt(ms: number): string {

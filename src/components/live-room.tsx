@@ -97,6 +97,11 @@ export function LiveRoom({
    * across all their consecutive segments, not just the one being spoken.
    * If the press lands in a gap, take the turn that just finished.
    */
+  // The id counter lives in a ref rather than reading the clock: a highlight's
+  // identity has nothing to do with the wall clock, and Date.now() inside a
+  // component body is the kind of thing that bites you under Strict Mode.
+  const nextHighlightId = useRef(1);
+
   function markHighlight(categoryKey: string) {
     if (!said.length) return;
     const at = elapsed;
@@ -107,7 +112,7 @@ export function LiveRoom({
     const end = said[said.length - 1];
 
     const h: LiveHighlight = {
-      id: `lh-${Date.now().toString(36)}`,
+      id: `lh-${nextHighlightId.current++}`,
       categoryKey,
       startMs: start.startMs,
       endMs: Math.max(end.endMs, at),

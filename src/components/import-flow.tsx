@@ -91,7 +91,13 @@ export function ImportFlow({ configured }: { configured: boolean }) {
           (n: number, s: { bullets: unknown[] }) => n + s.bullets.length,
           0,
         )} cited bullets, ${json.analysis.actions.length} action items.`,
-      ]);
+        json.analysis.evidence
+          ? `Citation check: ${json.analysis.evidence.resolved} of ${json.analysis.evidence.proposed} claims anchored to a real line` +
+            (json.analysis.evidence.dropped.length
+              ? `, ${json.analysis.evidence.dropped.length} discarded.`
+              : ", none discarded.")
+          : "",
+      ].filter(Boolean));
 
       const id = `imp-${Date.now().toString(36)}`;
       saveImported({
@@ -137,6 +143,11 @@ export function ImportFlow({ configured }: { configured: boolean }) {
         a recorded call. Otter and Whisper export <code>.srt</code>. Or paste plain lines in the
         form <code>Name: what they said</code> — timings are then estimated from speaking rate, and
         the page says so.
+        <br />
+        <strong>Haven&rsquo;t got one to hand?</strong> There are two in{" "}
+        <code>samples/</code> in the repository — one clean six-speaker call, and one with no
+        timestamps and no speaker labels at all, to see what the pipeline does when the file gives
+        it nothing.
       </div>
 
       <textarea
@@ -268,8 +279,9 @@ export function ImportFlow({ configured }: { configured: boolean }) {
         Stated plainly: this build does not transcribe audio — the environment it was written in
         could not reach a speech API, so bringing a transcript is the honest version of that step.
         Everything after it is real. The analysis is Claude reading your words, and any citation it
-        produces that does not resolve to an actual line is dropped before you see it. The result is
-        kept in this browser, not a database.
+        produces that does not resolve to an actual line is dropped before you see it — and the
+        Evidence tab on the result shows you exactly how many were, and what they said. The result
+        is kept in this browser, not a database.
       </p>
     </div>
   );

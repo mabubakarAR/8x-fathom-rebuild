@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useOverlay } from "@/lib/overlay";
-import { clock, duration, when } from "@/lib/format";
+import { duration, when } from "@/lib/format";
 import type {
   ActionItem,
   Chapter,
@@ -16,12 +16,14 @@ import type {
   Template,
 } from "@/lib/types";
 import { Badge, Icon } from "../ui";
+import type { EvidenceLedger } from "@/lib/evidence";
 import { Player } from "./player";
 import { Transcript } from "./transcript";
 import { SummaryPane } from "./summary";
 import { HighlightsPane } from "./highlights";
 import { ActionsPane } from "./actions";
 import { AskPane } from "./ask";
+import { EvidencePane } from "./evidence";
 import { ShareDialog } from "./share";
 import { ExportMenu } from "./export";
 
@@ -44,9 +46,11 @@ export interface MeetingViewProps {
   /** Raw segments for the grounded Ask call, when they differ from `segments`. */
   askSegments?: { speakerLabel: number; startMs: number; endMs: number; text: string; confidence: number }[];
   askSpeakerNames?: Record<string, string>;
+  /** Validation telemetry from the real pipeline. Absent for seeded meetings. */
+  evidence?: EvidenceLedger;
 }
 
-type Tab = "summary" | "ask" | "highlights" | "actions";
+type Tab = "summary" | "ask" | "evidence" | "highlights" | "actions";
 
 export function MeetingView(props: MeetingViewProps) {
   const { meeting, segments, chapters, people } = props;
@@ -124,6 +128,11 @@ export function MeetingView(props: MeetingViewProps) {
     };
   }, [playing, rate, meeting.durationMs, hasMedia]);
 
+  // Auto-scroll follows playback until the user scrolls away, then stops and
+  // offers to resume. Nothing is more annoying than a transcript that yanks
+  // you back while you are reading.
+  const [follow, setFollow] = useState(true);
+
   const seek = useCallback(
     (ms: number, opts?: { play?: boolean }) => {
       const clamped = Math.max(0, Math.min(meeting.durationMs, ms));
@@ -134,11 +143,6 @@ export function MeetingView(props: MeetingViewProps) {
     },
     [meeting.durationMs],
   );
-
-  // Auto-scroll follows playback until the user scrolls away, then stops and
-  // offers to resume. Nothing is more annoying than a transcript that yanks
-  // you back while you are reading.
-  const [follow, setFollow] = useState(true);
 
   // Deep link from search: /m/<id>?t=<ms> lands on the exact moment. A search
   // result that drops you at 0:00 is not a search result.
@@ -239,6 +243,10 @@ export function MeetingView(props: MeetingViewProps) {
   const TABS: { key: Tab; label: string; count?: number }[] = [
     { key: "summary", label: "Summary" },
     { key: "ask", label: "Ask" },
+    // Only meetings that went through the model have a ledger to show. A
+    // seeded meeting showing "0 dropped" would be a lie of omission: nothing
+    // was validated because nothing was generated.
+    ...(props.evidence ? [{ key: "evidence" as Tab, label: "Evidence" }] : []),
     { key: "highlights", label: "Clips", count: highlights.length },
     { key: "actions", label: "Actions", count: openActions },
   ];
@@ -294,7 +302,6 @@ export function MeetingView(props: MeetingViewProps) {
       </header>
 
       {props.mediaUrl && (
-        // eslint-disable-next-line jsx-a11y/media-has-caption
         <audio ref={audioRef} src={props.mediaUrl} preload="metadata" className="hidden" />
       )}
 
@@ -384,7 +391,11 @@ export function MeetingView(props: MeetingViewProps) {
                   currentMs={currentMs}
                   onSeek={seek}
                   speakers={speakers}
+                  segments={segments}
                 />
+              )}
+              {tab === "evidence" && props.evidence && (
+                <EvidencePane ledger={props.evidence} />
               )}
               {tab === "ask" && (
                 <AskPane

@@ -25,7 +25,10 @@ export async function POST(req: Request) {
     const analysis = await analyse(parsed.segments, body.template || "general");
     return NextResponse.json({
       segments: parsed.segments,
-      speakerNames: { ...parsed.speakerNames, ...analysis.speakerNames },
+      // The file wins. If the transcript literally says <v Priya>, that is a
+      // fact and the model does not get to overwrite it with "Speaker 0" —
+      // the model only fills in labels the file left anonymous.
+      speakerNames: { ...analysis.speakerNames, ...parsed.speakerNames },
       format: parsed.format,
       warnings: parsed.warnings,
       analysis,

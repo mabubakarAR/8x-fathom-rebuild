@@ -183,6 +183,14 @@ export interface AskMessage {
   text: string;
   citations: AskCitation[];
   createdAt: string;
+  /** Grounding telemetry, when the answer came from the real model. */
+  evidence?: {
+    considered: number;
+    proposed: number;
+    resolved: number;
+    dropped: { citedIdx: number; reason: string }[];
+    elapsedMs: number;
+  };
 }
 
 export interface AskThread {

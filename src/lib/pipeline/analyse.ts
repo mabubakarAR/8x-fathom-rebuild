@@ -1,6 +1,12 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import type { RawSegment } from "./transcribe";
+import type { DroppedClaim, EvidenceLedger } from "../evidence";
+import { validateAnalysis } from "./validate";
+
+export { validateAnalysis };
+
+export type { DroppedClaim, EvidenceLedger };
 
 // The AI layer.
 //
@@ -61,6 +67,7 @@ export interface Analysis {
   actions: AnalysedAction[];
   highlights: AnalysedHighlight[];
   model: string;
+  evidence: EvidenceLedger;
 }
 
 export const TEMPLATE_SECTIONS: Record<string, string[]> = {
@@ -138,15 +145,11 @@ function extractJson(text: string): unknown {
   return JSON.parse(raw.slice(start, end + 1));
 }
 
-const clampIdx = (n: unknown, max: number): number | null => {
-  const i = typeof n === "number" ? Math.round(n) : Number.NaN;
-  return Number.isFinite(i) && i >= 0 && i <= max ? i : null;
-};
-
 export async function analyse(
   segments: RawSegment[],
   templateKey = "general",
 ): Promise<Analysis> {
+  const t0 = Date.now();
   const sections = TEMPLATE_SECTIONS[templateKey] ?? TEMPLATE_SECTIONS.general;
   const maxIdx = segments.length - 1;
 
@@ -177,97 +180,5 @@ ${renderTranscript(segments)}`,
     .join("");
 
   const parsed = extractJson(text) as Record<string, unknown>;
-
-  // ---- validation ---------------------------------------------------------
-  // Everything below drops rather than repairs. A citation pointing at a
-  // segment that does not exist is the exact failure this build is trying not
-  // to have, so it never reaches the database.
-
-  const speakerNames: Record<string, string> = {};
-  const rawNames = (parsed.speakerNames ?? {}) as Record<string, unknown>;
-  for (const [k, v] of Object.entries(rawNames)) {
-    if (typeof v === "string" && v.trim()) speakerNames[k] = v.trim().slice(0, 60);
-  }
-
-  const chapters: AnalysedChapter[] = ((parsed.chapters as unknown[]) ?? [])
-    .flatMap((c) => {
-      const o = c as Record<string, unknown>;
-      const idx = clampIdx(o.startIdx, maxIdx);
-      if (idx === null || typeof o.title !== "string") return [];
-      return [{
-        title: o.title.slice(0, 120),
-        gist: typeof o.gist === "string" ? o.gist.slice(0, 300) : "",
-        startIdx: idx,
-      }];
-    })
-    .sort((a, b) => a.startIdx - b.startIdx);
-
-  // Deduplicate chapters that start on the same line.
-  const seenStart = new Set<number>();
-  const uniqueChapters = chapters.filter((c) =>
-    seenStart.has(c.startIdx) ? false : (seenStart.add(c.startIdx), true),
-  );
-  if (uniqueChapters.length && uniqueChapters[0].startIdx !== 0) {
-    uniqueChapters[0] = { ...uniqueChapters[0], startIdx: 0 };
-  }
-
-  const outSections: AnalysedSection[] = ((parsed.sections as unknown[]) ?? [])
-    .flatMap((s) => {
-      const o = s as Record<string, unknown>;
-      if (typeof o.heading !== "string") return [];
-      const bullets = ((o.bullets as unknown[]) ?? []).flatMap((b) => {
-        const bo = b as Record<string, unknown>;
-        const idx = clampIdx(bo.segmentIdx, maxIdx);
-        if (idx === null || typeof bo.text !== "string" || !bo.text.trim()) return [];
-        return [{ text: bo.text.trim(), segmentIdx: idx }];
-      });
-      return [{ heading: o.heading, bullets }];
-    });
-
-  const actions: AnalysedAction[] = ((parsed.actions as unknown[]) ?? [])
-    .flatMap((a) => {
-      const o = a as Record<string, unknown>;
-      const idx = clampIdx(o.segmentIdx, maxIdx);
-      if (idx === null || typeof o.text !== "string" || !o.text.trim()) return [];
-      const label =
-        typeof o.speakerLabel === "number" ? Math.round(o.speakerLabel) : null;
-      return [{
-        text: o.text.trim(),
-        speakerLabel: label,
-        segmentIdx: idx,
-        dueHint: typeof o.dueHint === "string" && o.dueHint.trim() ? o.dueHint.trim() : undefined,
-      }];
-    });
-
-  const highlights: AnalysedHighlight[] = ((parsed.highlights as unknown[]) ?? [])
-    .flatMap((h) => {
-      const o = h as Record<string, unknown>;
-      const a = clampIdx(o.startIdx, maxIdx);
-      const b = clampIdx(o.endIdx, maxIdx);
-      if (a === null || typeof o.title !== "string") return [];
-      const end = b === null || b < a ? a : b;
-      const cat = typeof o.categoryKey === "string" && CATEGORIES.includes(o.categoryKey)
-        ? o.categoryKey
-        : "quote";
-      return [{
-        title: o.title.slice(0, 140),
-        categoryKey: cat,
-        startIdx: a,
-        endIdx: end,
-        note: typeof o.note === "string" && o.note.trim() ? o.note.trim().slice(0, 300) : undefined,
-      }];
-    });
-
-  return {
-    title: typeof parsed.title === "string" && parsed.title.trim()
-      ? parsed.title.trim().slice(0, 140)
-      : "Untitled recording",
-    gist: typeof parsed.gist === "string" ? parsed.gist.trim().slice(0, 400) : "",
-    speakerNames,
-    chapters: uniqueChapters,
-    sections: outSections,
-    actions,
-    highlights,
-    model: MODEL,
-  };
+  return validateAnalysis(parsed, segments.length, Date.now() - t0, MODEL);
 }

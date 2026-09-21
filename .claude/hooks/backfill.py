@@ -12,6 +12,14 @@ Usage:  python3 .claude/hooks/backfill.py <transcript.jsonl> [--out DIR]
 
 It only ADDS turns that are missing from the existing log. It never edits or
 removes an entry that is already there.
+
+That guarantee used to be a comment rather than a behaviour. The script
+rebuilt the whole file from the transcript every run, which was harmless right
+up until the session transcript was compacted — at which point the transcript
+no longer held the early turns, and "rebuild from the transcript" silently
+meant "delete two thirds of the log". It is now an append: existing entries are
+read back, matched on their prompt text, and only genuinely new turns are
+written, numbered on from the highest number already in the file.
 """
 import json
 import os
@@ -39,6 +47,40 @@ IMAGE_META = re.compile(r"^\s*\[Image:\s*original\s+\d+x\d+", re.I)
 # are still the human's, and leaving them out means the log shows me acting on
 # decisions with no record of who made them. They go in as prompts.
 ANSWER = re.compile(r"^\s*The user answered:", re.S)
+
+
+
+# ---------------------------------------------------------------------------
+# Secret redaction
+# ---------------------------------------------------------------------------
+# A verbatim log of everything a person typed is exactly what you want for the
+# assignment's audit trail, and exactly what you do not want in a public repo
+# the moment somebody pastes an API key into the chat. Somebody did.
+#
+# So nothing reaches .agent-logs/ without passing through here. The log stays
+# verbatim in every respect that matters — the words, the structure, the
+# timestamps — and loses only the token itself, replaced by a marker that says
+# what was removed so the redaction is visible rather than silent.
+SECRETS = [
+    # provider keys
+    (re.compile(r"\bsk-ant-(?:api|admin)\d{2}-[A-Za-z0-9_\-]{20,}"), "sk-ant-«REDACTED-KEY»"),
+    (re.compile(r"\bsk-[A-Za-z0-9]{20,}"), "sk-«REDACTED-KEY»"),
+    (re.compile(r"\bgh[pousr]_[A-Za-z0-9]{20,}"), "gh«REDACTED-TOKEN»"),
+    (re.compile(r"\bxox[baprs]-[A-Za-z0-9\-]{10,}"), "xox-«REDACTED-TOKEN»"),
+    (re.compile(r"\bAKIA[0-9A-Z]{16}\b"), "AKIA«REDACTED»"),
+    (re.compile(r"\beyJ[A-Za-z0-9_\-]{10,}\.[A-Za-z0-9_\-]{10,}\.[A-Za-z0-9_\-]{10,}"), "«REDACTED-JWT»"),
+    # postgres/mysql URLs with inline credentials
+    (re.compile(r"\b(postgres(?:ql)?|mysql|mongodb(?:\+srv)?)://[^\s:@/]+:[^\s@]+@"), r"\1://«REDACTED»@"),
+]
+
+
+def redact(text):
+    """Strip credentials from anything about to be written to the log."""
+    if not text:
+        return text
+    for pattern, replacement in SECRETS:
+        text = pattern.sub(replacement, text)
+    return text
 
 
 def answer_text(content) -> str:
@@ -133,6 +175,11 @@ def load_turns(path):
     return turns
 
 
+def norm(text):
+    """Prompt text reduced to something stable enough to match on."""
+    return re.sub(r"\s+", " ", (text or "")).strip()[:400]
+
+
 def main():
     if len(sys.argv) < 2:
         print(__doc__)
@@ -152,54 +199,80 @@ def main():
             existing = os.path.join(LOG_DIR, name)
             break
 
-    body_prompts = set()
+    # What is already on disk. Matching on the prompt text rather than the
+    # entry number is what makes this safe to run repeatedly: numbers shift
+    # when the transcript is compacted, the words a person typed do not.
+    seen = set()
+    max_num = 0
+    cur = ""
     if existing:
         with open(existing) as f:
             cur = f.read()
-        body_prompts = set(re.findall(
-            r"\[LOG_ENTRY type=PROMPT num=(\d+) session=", cur))
         out = existing
+        for m in re.finditer(
+            r"\[LOG_ENTRY type=PROMPT num=(\d+) session=[^\]]*\]\n"
+            r"timestamp:[^\n]*\nmodel:[^\n]*\n\n(.*?)(?=\n\n\n\[LOG_ENTRY|\Z)",
+            cur, re.S,
+        ):
+            max_num = max(max_num, int(m.group(1)))
+            seen.add(norm(m.group(2)))
     else:
         first = turns[0]["ptime"] or datetime.now(timezone.utc).isoformat()
         stamp = first[:19].replace("T", "_").replace(":", "-")
         out = os.path.join(LOG_DIR, f"{stamp}_{session_id}.md")
-        cur = ""
 
     model = next((t["model"] for t in turns if t["model"]), "claude-opus-5")
     date = (turns[0]["ptime"] or "")[:10]
-    head = (
-        "---\n"
-        f"session_id: {session_id}\n"
-        f"date: {date}\n"
-        f"author: {AUTHOR}\n"
-        f"model: {model}\n"
-        "tool: claude-code\n"
-        f"project: {PROJECT}\n"
-        f"total_exchanges: {len(turns)}\n"
-        f"first_prompt_time: {turns[0]['ptime']}\n"
-        f"last_prompt_time: {turns[-1]['ptime']}\n"
-        "---\n\n"
-        f"# Session Log - {date}\n\n"
-        f"Session: `{short}` | Project: `{PROJECT}` | Author: `{AUTHOR}`\n\n"
-        "---\n\n")
 
-    parts = [head]
-    for i, t in enumerate(turns, 1):
+    fresh = [t for t in turns if norm(t["prompt"]) not in seen]
+    if not fresh:
+        print(f"{out}: already complete ({max_num} turns on disk, nothing to add)")
+        return
+
+    parts = []
+    if not cur:
+        parts.append(
+            "---\n"
+            f"session_id: {session_id}\n"
+            f"date: {date}\n"
+            f"author: {AUTHOR}\n"
+            f"model: {model}\n"
+            "tool: claude-code\n"
+            f"project: {PROJECT}\n"
+            f"total_exchanges: {len(fresh)}\n"
+            f"first_prompt_time: {fresh[0]['ptime']}\n"
+            f"last_prompt_time: {fresh[-1]['ptime']}\n"
+            "---\n\n"
+            f"# Session Log - {date}\n\n"
+            f"Session: `{short}` | Project: `{PROJECT}` | Author: `{AUTHOR}`\n\n"
+            "---\n\n")
+
+    for i, t in enumerate(fresh, max_num + 1):
         parts.append(
             f"[LOG_ENTRY type=PROMPT num={i} session={short}]\n"
             f"timestamp: {t['ptime']}\n"
             f"model: {t['model'] or model}\n\n"
-            f"{t['prompt'].rstrip()}\n\n\n")
-        resp = "\n\n".join(t["chunks"]).strip()
+            f"{redact(t['prompt']).rstrip()}\n\n\n")
+        resp = redact("\n\n".join(t["chunks"]).strip())
         if resp:
             parts.append(
                 f"[LOG_ENTRY type=RESPONSE num={i} session={short}]\n"
                 f"timestamp: {t['rtime'] or t['ptime']}\n"
                 f"model: {t['model'] or model}\n\n"
                 f"{resp}\n\n\n")
+
+    body = cur + "".join(parts) if cur else "".join(parts)
+
+    # Keep the frontmatter counters honest without rewriting the entries.
+    if cur:
+        body = re.sub(r"(?m)^total_exchanges: .*$",
+                      f"total_exchanges: {max_num + len(fresh)}", body, count=1)
+        body = re.sub(r"(?m)^last_prompt_time: .*$",
+                      f"last_prompt_time: {fresh[-1]['ptime']}", body, count=1)
+
     with open(out, "w") as f:
-        f.write("".join(parts))
-    print(f"wrote {out} ({len(turns)} turns)")
+        f.write(body)
+    print(f"{out}: appended {len(fresh)} turn(s), {max_num + len(fresh)} total")
 
 
 if __name__ == "__main__":

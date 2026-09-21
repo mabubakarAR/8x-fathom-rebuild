@@ -1,5 +1,6 @@
 "use client";
 
+import type { EvidenceLedger } from "@/lib/evidence";
 import type { RawSegment } from "@/lib/pipeline/transcribe";
 import type {
   ActionItem,
@@ -33,6 +34,8 @@ export interface ImportedAnalysis {
   actions: { text: string; speakerLabel: number | null; segmentIdx: number; dueHint?: string }[];
   highlights: { title: string; categoryKey: string; startIdx: number; endIdx: number; note?: string }[];
   model: string;
+  /** Absent on imports saved by an older build. */
+  evidence?: EvidenceLedger;
 }
 
 export interface ImportedMeeting {

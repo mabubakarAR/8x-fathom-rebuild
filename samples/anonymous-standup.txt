@@ -1,0 +1,16 @@
+Okay let's go round. I finished the ingest retry logic yesterday, it's merged, and I'm on the dead-letter queue dashboard today. No blockers.
+Nice. I'm still on the billing reconciliation script. It's slower than I thought because the old rows don't have a currency column and I'm having to infer it from the account.
+Can you infer it safely? If you get that wrong we're issuing refunds in the wrong currency.
+I'm only inferring where the account has exactly one currency in its history. Anything ambiguous goes to a file I'll hand to finance. There were about four hundred of those.
+Four hundred is a lot to hand to a person.
+It is. I'll look at whether the invoice PDFs have it, they probably do, I just didn't want to parse PDFs if I didn't have to.
+Fair. Anything blocking you?
+Not blocking, but I'd like a second pair of eyes on the currency inference before it runs against production.
+I'll take that this afternoon.
+Thanks. Last one from me, the staging environment was down for about an hour this morning and I never found out why.
+That was me, sorry. I was testing the new deploy pipeline and it took the old one down with it. It's back and it won't happen again in that way.
+It's fine, just say something in the channel next time.
+Will do.
+Right, I'm on the customer-facing changelog today and then the on-call handover. Who's on call from Monday?
+Me, unless someone wants to swap.
+No, that's right, it's you.

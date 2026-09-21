@@ -1,79 +1,99 @@
 # Walkthrough script
 
-Loom, camera on, hard cap five minutes. Timings are generous — a first take usually lands around 4:30.
+Loom, camera on, hard cap five minutes. Timings are generous — a first take usually lands around 4:40.
 
-Open two tabs before you hit record: the live URL, and a **private window** with a clip link from `/clips` already copied. That saves fumbling at the 4-minute mark, which is where these always overrun.
+## Before you press record
+
+Open four tabs:
+
+1. The live URL, on **`/import`**, with `samples/renewal-call.vtt` already in the file picker.
+2. A tab where that import has **already finished**, sitting on the Evidence panel. Analysis takes 20–30 seconds and you cannot spend 30 seconds of a 5-minute video watching a spinner.
+3. **Q4 Roadmap Lock** (`/m/m-roadmap-lock`).
+4. A **private window** with a clip link from `/clips` already copied.
+
+The trick for the import beat: start the real import, keep talking over it, then cut to tab 2. You are showing that it works, not waiting for it.
 
 ---
 
-## 0:00 — What this is, and the one thing I'd have you look at (25s)
+## 0:00 — The one sentence that matters (20s)
 
-> "This is a rebuild of Fathom, built in a day. Before anything else — the capture layer is simulated. No bot joins a meeting, no audio is recorded. The brief said that was a legitimate call, and I took it, because the time was better spent somewhere specific.
+> "This is a rebuild of Fathom, built in a day. One thing up front so nothing I show you is ambiguous: the *capture* is stubbed — no bot joins a call, no audio is recorded. The brief said that was a legitimate call. Everything after capture is real, and I'll prove it rather than assert it."
+
+## 0:20 — Real analysis, on a file you bring (55s)
+
+Tab 1. Drop in `samples/renewal-call.vtt`, hit analyse, keep talking.
+
+> "This is a transcript the app has never seen. No database row, no fixture. It's going to Claude right now.
 >
-> Here's where. Fathom is very good at the two-person sales call. It visibly strains at the eight-person call that runs an hour — which is the case the brief points at. So that's what I built for, and everything I'm about to show exists because of that call."
+> And here's the constraint the whole thing is built on: **the model is never allowed to write a timestamp.** It sees the transcript as numbered lines, and every claim it makes has to carry the index of the line it came from. Then the server checks every index against the real array before any of it reaches the screen."
 
-## 0:25 — The list, and the calendar (30s)
+Cut to tab 2.
 
-Scroll the meetings list.
+> "Title, three chapters, a sales-template summary, five action items, clips — none of it written by me. Click any bullet…" *(click one)* "…and you're on the line it came from."
 
-> "Nine meetings, real transcripts, threads that run between them. Two things Fathom's own web list doesn't have: a one-line gist per row, and for the big call, a talk-time bar — Rachel took 23%, one person never spoke at all.
+## 1:15 — The Evidence panel (60s) — **do not cut this**
+
+Evidence tab.
+
+> "Every notetaker on the market says its summary is 'grounded in your transcript'. None of them show you the working, because showing it means admitting the model sometimes cites a line that doesn't exist.
 >
-> Up top is the calendar side. Capture decided per meeting *before* it happens, and the rule that chose it is written out rather than applied invisibly. That one's struck through — 'compensation review', matched a do-not-record rule."
+> So: thirty-one claims proposed, thirty-one anchored to a real line, nothing thrown away on this run. When something *is* thrown away it appears here — struck through, with the index the model invented and why it failed."
 
-## 0:55 — The hard case (70s)
+Then, to make the point concrete:
 
-Open **Q4 Roadmap Lock**.
+> "And it's dropped, never repaired. Snapping a bad citation to the nearest plausible line gives you something that looks right and points at the wrong words, which is worse than no claim at all. That path has its own test — `npm test` feeds the validator a bullet citing line nine thousand of a ten-line transcript and asserts it gets thrown away. A validator that's only ever seen well-behaved output isn't a validator."
 
-> "Fifty-four minutes, 332 lines, eight speakers. Here's the problem with an hour of eight people: where do you even start.
+Flip the **Evidence toggle** on the Summary tab.
+
+> "And on any summary: every claim with the actual line it's standing on, underneath it."
+
+## 2:15 — Ask, and getting told no (30s)
+
+Ask tab. Type: **What is the contract value?**
+
+> "This isn't in the transcript. Watch."
+
+> "'The transcript doesn't cover that.' It cites the lines that justify the absence. Retrieval narrows the transcript, the model only ever sees real lines, every citation comes back through the same validator — and an answer that loses all of its citations gets labelled unsupported instead of shown as fact."
+
+## 2:45 — The hard case (65s)
+
+Tab 3 — **Q4 Roadmap Lock**.
+
+> "The brief pointed at the eight-person call that runs an hour, which is where Fathom visibly strains. Fifty-four minutes, 332 lines, eight speakers. The problem with that call is knowing where to start.
 >
-> Three answers. Chapters — twelve of them, on the scrubber and down the transcript. This strip is who spoke when across the whole hour; amber is overlapping speech, so you can see the shape of the argument before reading a word. And the transcript flags what it wasn't sure about — eighteen lines here, filterable."
+> Chapters — twelve, on the scrubber and down the transcript. This strip is who spoke when across the whole hour; amber is overlapping speech, so you can see the shape of the argument before reading a word. And the transcript flags what it wasn't sure of — eighteen lines, filterable."
 
 Click a wavy-underlined line, then a speaker name.
 
-> "This is the one I'd defend hardest. The best-corroborated complaint about Fathom is misattribution when people talk over each other. Fixing one line is busywork." *(click Fix all)* "That's every line from that voice, in one action."
+> "This is the one I'd defend hardest. The best-corroborated complaint about Fathom is misattribution when people talk over each other. Fixing one line is busywork." *(click **Fix all**)* "Every line from that voice, one action."
 
-## 2:05 — Summary and citations (45s)
-
-Right rail, Summary tab. Hover a bullet, click one.
-
-> "Fathom stores a summary as one markdown blob — that's from their own API schema — so the only citation they can offer is a hyperlink buried in prose. Here every bullet is a row that carries its own anchor. Click it, you're at the moment."
-
-Switch template to **Retrospective**.
-
-> "Switching template re-shapes it — different sections, not reworded text."
-
-## 2:50 — Search (45s)
+## 3:50 — Search (30s)
 
 `/search`, type **churn risk**.
 
-> "One ranked list. Fathom puts keyword results first and hides the semantic ones behind a 'Find X with AI' link, which makes the better retriever the one you have to opt into. I inverted that.
+> "One ranked list. Fathom puts keyword results first and hides the semantic ones behind a 'Find X with AI' link, which makes the better retriever the one you opt into. I inverted that.
 >
-> Amber is my words. Blue is what it expanded to — cancellation, renewal, worry, switch. That's the vocabulary-mismatch problem their users complain about, and I'll be straight: that's a curated synonym table plus BM25 and cosine, not neural embeddings. It solves this case; it won't solve true paraphrase."
+> Amber is my words, blue is what it expanded to — cancellation, renewal, worry, switch. And I'll be straight: that's a curated synonym table with BM25 and cosine, not neural embeddings. It solves the vocabulary-mismatch case. It won't solve true paraphrase."
 
-## 3:35 — Sharing, signed out (35s)
+## 4:20 — Signed out, and the honest bit (35s)
 
-Copy a clip link, paste into the **private window**.
+Paste the clip link into the **private window**.
 
-> "A clip, opened by someone with no account and nothing in their browser. They get this range and its transcript — not the rest of the hour. The link carries its own payload, which is how sharing works with no database."
-
-## 4:10 — Live, and the honest bit (40s)
-
-`/live`, press **Join the call**, let it run ~8 seconds, hit **Decision**.
-
-> "Capture is stubbed, but the mid-call experience isn't — this is the real transcript at eight times speed. Now watch: I press highlight *late*, after the point's been made." *(press it)* "It went back 22 seconds to the start of that speaker's turn. That's Fathom's idea and it's the cleverest thing in their product — and it's missing from their own bot-free version.
+> "A clip opened by someone with no account. They get this range and its transcript, not the rest of the hour — the link carries its own payload.
 >
-> What's simulated and what's real is written up at `/about`, and the repo has `PRODUCT-NOTES.md` — the research, and every cut I made with the reasoning. Thanks."
+> What's real and what's simulated is written up at `/about`, `PRODUCT-NOTES.md` has every cut with the reasoning, and `CAPTURE-TEST.md` is green and names its own gap rather than hiding it. Thanks."
 
 ---
 
 ## Cut these if you're running long
 
-In order: the template switch (0:35), the calendar band (0:30), the `/about` mention at the end.
+In order: the search beat (0:30), the template switch, the `/about` mention at the end.
 
-**Do not cut** the speaker-repair click or the search expansion colours. Those are the two moments where the thing is visibly better than the original rather than just different.
+**Do not cut** the Evidence panel or the speaker-repair click. The first is the thing nobody else is doing; the second is the thing that's visibly better than the original.
 
 ## Worth saying out loud if asked
 
-- No database, on purpose — server-rendered seed plus a per-viewer overlay, so the third reviewer doesn't see what the second one broke.
-- Nine meetings are fiction, but consistent fiction: the Salesforce date promised in the Kestrel call is the one walked back in the roadmap call.
-- `CAPTURE-TEST.md` is green, and it names its own gap rather than hiding it.
+- **Why keep the authored corpus at all?** So the interface is reviewable in thirty seconds without anyone uploading an hour of audio first. It is not a stand-in for the pipeline — both are in the repo, and every screen says which one you're looking at.
+- **Why does a seeded meeting have no Evidence tab?** A ledger reading "0 dropped" over hand-written fixtures would be a lie of omission. Nothing was validated because nothing was generated.
+- **Where does an imported meeting live?** The browser that imported it. The Postgres path is in `src/lib/pipeline`; wiring it up is a connection string, not a rewrite.
+- **The other sample.** `samples/anonymous-standup.txt` has no timestamps and no speaker tags — the parser synthesises timings from speaking rate and *says so in the UI*, and the model has to work out who is who. It gets one speaker, flags it, and hands you the repair flow.

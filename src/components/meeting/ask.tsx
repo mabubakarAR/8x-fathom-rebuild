@@ -150,6 +150,7 @@ export function AskPane({
               snippet: c.snippet,
             }),
           ),
+          evidence: json.evidence,
           createdAt: new Date().toISOString(),
         };
       }
@@ -278,6 +279,7 @@ export function AskPane({
                     })}
                   </ul>
                 )}
+                {m.evidence && <AskGrounding e={m.evidence} />}
               </div>
             )}
           </div>
@@ -461,4 +463,34 @@ function namesFor(roster: string[], people: Map<string, Person>): Record<number,
     out[i] = people.get(id)?.name ?? `Speaker ${i + 1}`;
   });
   return out;
+}
+
+/** One line of grounding telemetry under a model answer.
+ *
+ *  Small on purpose. The full ledger lives in the Evidence tab; this is the
+ *  receipt you get without leaving the conversation — and it is the only place
+ *  in the product where you can see the model cite a line it was never shown.
+ */
+function AskGrounding({
+  e,
+}: {
+  e: NonNullable<AskMessage["evidence"]>;
+}) {
+  return (
+    <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10.5px]" style={{ color: "var(--ink-faint)" }}>
+      <span className="tnum">
+        {e.considered} lines retrieved · {e.resolved}/{e.proposed} citations verified
+      </span>
+      {e.dropped.length > 0 && (
+        <span
+          className="rounded-full px-1.5 py-[1px] font-semibold"
+          style={{ background: "var(--warn-soft)", color: "var(--warn-ink)" }}
+          title={e.dropped.map((d) => d.reason).join("; ")}
+        >
+          {e.dropped.length} discarded
+        </span>
+      )}
+      <span className="tnum">{(e.elapsedMs / 1000).toFixed(1)}s</span>
+    </div>
+  );
 }

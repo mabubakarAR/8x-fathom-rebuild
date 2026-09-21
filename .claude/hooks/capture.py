@@ -28,6 +28,40 @@ PROJECT = os.environ.get("AGENT_CAPTURE_PROJECT", "8x-fathom-rebuild")
 TOOL = "claude-code"
 
 
+
+# ---------------------------------------------------------------------------
+# Secret redaction
+# ---------------------------------------------------------------------------
+# A verbatim log of everything a person typed is exactly what you want for the
+# assignment's audit trail, and exactly what you do not want in a public repo
+# the moment somebody pastes an API key into the chat. Somebody did.
+#
+# So nothing reaches .agent-logs/ without passing through here. The log stays
+# verbatim in every respect that matters — the words, the structure, the
+# timestamps — and loses only the token itself, replaced by a marker that says
+# what was removed so the redaction is visible rather than silent.
+SECRETS = [
+    # provider keys
+    (re.compile(r"\bsk-ant-(?:api|admin)\d{2}-[A-Za-z0-9_\-]{20,}"), "sk-ant-«REDACTED-KEY»"),
+    (re.compile(r"\bsk-[A-Za-z0-9]{20,}"), "sk-«REDACTED-KEY»"),
+    (re.compile(r"\bgh[pousr]_[A-Za-z0-9]{20,}"), "gh«REDACTED-TOKEN»"),
+    (re.compile(r"\bxox[baprs]-[A-Za-z0-9\-]{10,}"), "xox-«REDACTED-TOKEN»"),
+    (re.compile(r"\bAKIA[0-9A-Z]{16}\b"), "AKIA«REDACTED»"),
+    (re.compile(r"\beyJ[A-Za-z0-9_\-]{10,}\.[A-Za-z0-9_\-]{10,}\.[A-Za-z0-9_\-]{10,}"), "«REDACTED-JWT»"),
+    # postgres/mysql URLs with inline credentials
+    (re.compile(r"\b(postgres(?:ql)?|mysql|mongodb(?:\+srv)?)://[^\s:@/]+:[^\s@]+@"), r"\1://«REDACTED»@"),
+]
+
+
+def redact(text):
+    """Strip credentials from anything about to be written to the log."""
+    if not text:
+        return text
+    for pattern, replacement in SECRETS:
+        text = pattern.sub(replacement, text)
+    return text
+
+
 def now_iso():
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.") + \
         f"{datetime.now(timezone.utc).microsecond // 1000:03d}Z"
@@ -124,7 +158,7 @@ def append_entry(path, kind, num, session_id, model, body):
         f.write(f"[LOG_ENTRY type={kind} num={num} session={short}]\n")
         f.write(f"timestamp: {now_iso()}\n")
         f.write(f"model: {model}\n\n")
-        f.write(body.rstrip("\n") + "\n\n\n")
+        f.write(redact(body).rstrip("\n") + "\n\n\n")
 
 
 def extract_final_response(transcript_path):

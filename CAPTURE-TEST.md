@@ -133,6 +133,18 @@ Received — CAPTURE TEST 2, 8x assignment, Abubakar, second canary logged.
 
 3. **Assuming one file per session UUID was safe.** It was not — see the child-session UUID collision in section 2. Caught it because canary 2 overwrote canary 1's file on the first attempt.
 
+4. **Trusting `backfill.py`'s own docstring.** It said *"It only ADDS turns that are missing from the existing log"*. It did not. It rebuilt the entire file from the transcript on every run, which was indistinguishable from appending right up until the session transcript was **compacted** — at which point the transcript no longer contained the early turns, and one routine run cut the main log from 53 KB to 17 KB.
+
+   Caught by looking at `wc -c` before and after instead of at the script's own success message, and restored with `git checkout` because the log was already committed. The script now reads the existing entries back, matches them on prompt text rather than entry number (numbers shift under compaction; the words a person typed do not), appends only genuinely new turns numbered on from the highest already present, and updates the frontmatter counters in place. It is idempotent: a second run reports `already complete (11 turns on disk, nothing to add)` and writes nothing.
+
+   Disclosing it because the whole point of this document is that the capture record is trustworthy, and a backup mechanism that can silently delete the thing it is backing up is worth more as a disclosed-and-fixed bug than as a clean-looking section. Nothing was lost — the log was committed, so the pre-bug content was recoverable and is present verbatim.
+
+5. **Verbatim capture into a public repo, with no redaction.** The spec asks for the prompt *verbatim*, and that is what the hook wrote — including the turn where an API key was pasted into the chat. It reached one local commit and was caught by grepping the bundle for a key prefix before handover, not by anything clever.
+
+   Both `capture.py` and `backfill.py` now pass every entry through a `redact()` filter before it touches `.agent-logs/`: provider keys, GitHub and Slack tokens, AWS access-key IDs, JWTs, and database URLs with inline credentials. The replacement is a visible marker rather than a deletion, so the log still shows that a key was pasted and where, which is the part that matters for an audit trail. Nothing else about the entry changes: same words, same structure, same timestamps.
+
+   The offending commit was amended before the repository was ever pushed, so the key is not in any published history — verified by re-cloning the bundle and grepping every object. The key is being rotated regardless, on the principle that a secret which briefly existed in a git object is a secret you no longer have.
+
 ## 5b. Known limitation, stated plainly
 
 The **primary build session is a Cowork session that started before the hook config existed**, so its `Stop` hook never loaded and does not fire. The two canaries prove the hook fires unprompted in sessions that did *not* install it — that requirement is genuinely met — but for this one long-running session the automatic path is not active.

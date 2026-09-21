@@ -5,7 +5,7 @@ import { useOverlay } from "@/lib/overlay";
 import { clock } from "@/lib/format";
 import { CONFIDENCE_THRESHOLD } from "@/lib/types";
 import type { Chapter, Highlight, HighlightCategory, Person, Segment } from "@/lib/types";
-import { Avatar, Badge, Icon, speakerVar } from "../ui";
+import { Avatar, Icon, speakerVar } from "../ui";
 import { mapTone } from "@/lib/tone";
 
 // ---------------------------------------------------------------------------

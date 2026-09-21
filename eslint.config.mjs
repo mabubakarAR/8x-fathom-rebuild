@@ -13,6 +13,24 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  {
+    // The React Compiler flags `useEffect(() => setState(read()), [])`. Every
+    // instance of it here is the same deliberate pattern: read `localStorage`
+    // *after* mount so the server-rendered HTML and the first client render
+    // match. Reading during render would hydrate-mismatch; `useSyncExternalStore`
+    // is the right long-term answer and is a refactor rather than a fix.
+    // Flagged here in the config rather than silenced line by line, so it stays
+    // visible as a known trade rather than disappearing into the code.
+    files: [
+      "src/lib/overlay.tsx",
+      "src/components/imported-view.tsx",
+      "src/components/search-ui.tsx",
+      "src/components/upcoming.tsx",
+      "src/components/meeting/share.tsx",
+      "src/components/meeting/view.tsx",
+    ],
+    rules: { "react-hooks/set-state-in-effect": "warn" },
+  },
 ]);
 
 export default eslintConfig;

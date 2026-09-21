@@ -135,3 +135,21 @@ Next.js (App Router) + TypeScript + Tailwind, Postgres, deployed on Vercel. Post
 Fathom's published brand palette: Cerulean `#00BEFF`, Electric Violet `#9600FF`, Dolly `#FFF58C`, black `#000000`, Soft Peach `#FAF5F5`. The distinctive part is **true black against a warm off-white** — not the cool grey every SaaS app reaches for. I am keeping that temperature and building both light and dark themes on it, since the black-and-cyan mark suits dark far better than the original's apparently light-only app.
 
 Two specifics, because they are where this category usually looks cheap: **tabular figures for every timestamp** so transcript columns don't jitter during playback, and speaker colour that stays legible at both themes rather than eight hues that collapse into mud on the eight-person call.
+
+## The evidence panel, and why it is the thing I would keep
+
+Every notetaker in this category — Fathom, Otter, Fireflies, Granola, the twenty launched this month — makes the same claim in the same words: the summary is *grounded in your transcript*. It is unfalsifiable as stated, and users have learned to read it as marketing, which is a shame, because the underlying engineering problem is real and solvable.
+
+The failure mode is specific. Ask a model to summarise a transcript and cite its sources and it will happily produce a citation to a timestamp that does not exist, or to a line that says something else. The usual mitigation is to repair it: snap the citation to the nearest line, or to the chapter, and ship it. That is the wrong call. A citation that resolves to approximately the right place is worse than no citation, because it survives a spot check — the reader clicks, lands somewhere plausible, and calibrates upward on everything else the summary said.
+
+So this build does three things instead:
+
+1. **The model cannot express a bad citation in the first place.** It never writes a timestamp. It is shown numbered lines and must cite by index, which turns "is this citation real" from a fuzzy text-matching problem into an array bounds check.
+2. **Anything that fails the check is dropped, not repaired.** An unciteable bullet is a bug, not a bullet.
+3. **The drop is shown to the user.** Claims proposed, claims anchored, claims discarded — with the discarded text quoted verbatim and the index the model invented.
+
+The third one is the product decision, and it is the one I would defend in a room. It looks like showing your failures. What it actually does is make the other 100% mean something: a product that never admits to a dropped claim is a product where you have no way to distinguish "nothing was wrong" from "nothing was checked".
+
+The cost is honest too. On short, clean transcripts the panel reads "0 dropped" every time, which makes it look decorative. That is why `npm test` exists — it feeds the validator citations no transcript could satisfy and asserts each one is thrown away, so the mechanism is demonstrable even when the model behaves.
+
+The thing I would build next, given another day: a **disagreement score** per bullet — re-ask the model whether the cited line actually supports the claim, and surface the ones where it says no. Index validation catches a citation pointing nowhere. It does not catch a citation pointing at the wrong real line, and that is the harder half.

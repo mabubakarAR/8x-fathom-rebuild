@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { corpus, HIGHLIGHT_CATEGORIES } from "@/lib/data/store";
 import { PERSON_BY_ID } from "@/lib/seed/cast";
-import { clock, when } from "@/lib/format";
+import { clock } from "@/lib/format";
 import { encodeShare } from "@/lib/sharelink";
 import { PageHeader } from "@/components/page-header";
 import { Avatar, Icon } from "@/components/ui";
