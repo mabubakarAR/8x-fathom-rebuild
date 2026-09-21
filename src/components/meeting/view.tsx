@@ -289,6 +289,40 @@ export function MeetingView(props: MeetingViewProps) {
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
+            {/* The trust chip.
+                The evidence ledger was living behind a tab, which is the wrong
+                place for the one fact that distinguishes this product from
+                every other notetaker. It belongs next to the title, where you
+                cannot read the summary without having already seen it. */}
+            {props.evidence && (
+              <button
+                onClick={() => setTab("evidence")}
+                title="How many of the model's claims resolved to a real transcript line"
+                className="hidden items-center gap-2 rounded-full py-[5px] pr-3 pl-2 text-[12px] font-medium transition-colors sm:inline-flex"
+                style={{
+                  background: props.evidence.dropped.length ? "var(--warn-soft)" : "var(--ok-soft)",
+                  color: "var(--ink-2)",
+                  border: "1px solid var(--line)",
+                }}
+              >
+                <span
+                  style={{ color: props.evidence.dropped.length ? "var(--warn-ink)" : "var(--ok-ink)" }}
+                >
+                  <Icon name="shield" size={13} />
+                </span>
+                <span className="tnum">
+                  <strong
+                    style={{ color: props.evidence.dropped.length ? "var(--warn-ink)" : "var(--ok-ink)" }}
+                  >
+                    {props.evidence.resolved}/{props.evidence.proposed}
+                  </strong>{" "}
+                  claims verified
+                  {props.evidence.dropped.length > 0 && (
+                    <> · <strong style={{ color: "var(--warn-ink)" }}>{props.evidence.dropped.length}</strong> cut</>
+                  )}
+                </span>
+              </button>
+            )}
             <ExportMenu {...props} highlights={highlights} />
             <button
               onClick={() => openShare()}

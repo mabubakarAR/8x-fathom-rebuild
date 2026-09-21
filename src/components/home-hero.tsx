@@ -6,6 +6,7 @@ import { useRef, useState } from "react";
 import { saveImported } from "@/lib/imported";
 import { Icon } from "./ui";
 import { VoicePrint, type Lane } from "./voice-print";
+import { Theatre } from "./theatre";
 
 // The front door.
 //
@@ -130,37 +131,45 @@ export function HomeHero({ configured, lanes }: { configured: boolean; lanes: La
           }}
         />
 
-        <div className="relative max-w-[610px] px-6 py-9 md:px-10 md:py-12">
-          <span
-            className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-[4px] text-[11px] font-semibold tracking-[0.04em] uppercase"
-            style={{ background: "var(--accent-soft)", color: "var(--accent-ink)" }}
-          >
-            <Icon name="live" size={11} /> Live · 8 speakers · 54 minutes
-          </span>
+        <div className="relative grid gap-8 px-6 py-9 md:grid-cols-[minmax(0,1fr)_minmax(0,480px)] md:items-center md:gap-10 md:px-10 md:py-12">
+          <div className="max-w-[600px]">
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-[4px] text-[11px] font-semibold tracking-[0.04em] uppercase"
+              style={{ background: "var(--accent-soft)", color: "var(--accent-ink)" }}
+            >
+              <Icon name="shield" size={11} /> Verified meeting notes
+            </span>
 
-          <h1
-            className="mt-4 max-w-[13ch] text-[34px] leading-[1.03] font-semibold tracking-[-0.035em] md:text-[54px]"
-            style={{ color: "var(--ink)" }}
-          >
-            Every claim,
-            <br />
-            <span style={{ color: "var(--accent)" }}>receipts attached.</span>
-          </h1>
+            <h1
+              className="mt-4 text-[32px] leading-[1.04] font-semibold tracking-[-0.035em] md:text-[42px] lg:text-[46px]"
+              style={{ color: "var(--ink)" }}
+            >
+              <span className="block">Every AI notetaker</span>
+              <span className="block">sounds confident.</span>
+              <span className="block" style={{ color: "var(--accent)" }}>
+                This one proves it.
+              </span>
+            </h1>
 
-          <p
-            className="mt-4 max-w-[52ch] text-[15px] leading-[1.6] md:text-[16.5px]"
-            style={{ color: "var(--ink-2)" }}
-          >
-            Drop in a transcript and a model writes the chapters, the summary, the action items
-            and the clips. Every sentence it produces carries the line it came from — and anything
-            it can&rsquo;t point at gets thrown away instead of shown to you.{" "}
-            <strong style={{ color: "var(--ink)" }}>The app counts how many, and tells you.</strong>
-          </p>
+            <p
+              className="mt-4 max-w-[44ch] text-[14.5px] leading-[1.6] md:text-[16px]"
+              style={{ color: "var(--ink-2)" }}
+            >
+              Your notes are a list of claims. Each one has to cite the transcript line it came
+              from, that citation gets checked against the real transcript, and{" "}
+              <strong style={{ color: "var(--ink)" }}>
+                anything that fails is deleted instead of shown to you
+              </strong>
+              . You see the count every time.
+            </p>
 
-          <p className="mt-3.5 text-[11.5px] leading-[1.5]" style={{ color: "var(--ink-faint)" }}>
-            That waveform is the real speaker lanes from the 54-minute call below — eight voices,
-            amber where they talk over each other. Nothing here was drawn to look good.
-          </p>
+            <p className="mt-3 text-[11.5px] leading-[1.5]" style={{ color: "var(--ink-faint)" }}>
+              Behind all of it, the real speaker lanes from the 54-minute eight-person call below.
+              Amber is genuine crosstalk.
+            </p>
+          </div>
+
+          <Theatre />
         </div>
       </div>
 
