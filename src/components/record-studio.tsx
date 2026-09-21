@@ -325,9 +325,14 @@ export function RecordStudio({
         );
       }
 
+      const createdAt = new Date().toISOString();
+
+      // Local copy first, always. It is written before the upload is even
+      // attempted, so a network failure on the way to the server can never
+      // lose a recording somebody just made.
       saveImported({
         id,
-        createdAt: new Date().toISOString(),
+        createdAt,
         templateKey: template,
         format: farSide ? `call capture · ${transcriptSource}` : `live recording · ${transcriptSource}`,
         warnings,
@@ -335,6 +340,48 @@ export function RecordStudio({
         speakerNames,
         analysis: json.analysis,
       });
+
+      // Then the server, so it outlives this browser and the link works for
+      // anyone you send it to.
+      setLog((l) => [...l, "Saving to your workspace…"]);
+      try {
+        const fd = new FormData();
+        fd.append(
+          "meta",
+          JSON.stringify({
+            id,
+            title: json.analysis.title,
+            gist: json.analysis.gist,
+            startedAt: createdAt,
+            durationMs: Math.round(durationMs),
+            origin: farSide ? "call" : "mic",
+            templateKey: template,
+            transcriptSource,
+            segments: spoken,
+            speakerNames,
+            analysis: json.analysis,
+          }),
+        );
+        if (blob) fd.append("audio", blob, `${id}.webm`);
+
+        const save = await fetch("/api/calls", { method: "POST", body: fd });
+        const out = await save.json();
+        if (!save.ok) throw new Error(out.error || "Save failed");
+        setLog((l) => [
+          ...l,
+          out.warning ? `Saved. ${out.warning}` : "Saved — this call is now on the server.",
+        ]);
+      } catch (e) {
+        // Not fatal: the local copy is already written, and saying so is
+        // better than a silent half-success.
+        setLog((l) => [
+          ...l,
+          `Kept in this browser only — the workspace save failed (${
+            e instanceof Error ? e.message : String(e)
+          }).`,
+        ]);
+      }
+
       router.push(`/imported/${id}`);
     } catch (e) {
       setPhase("idle");

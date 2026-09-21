@@ -1,5 +1,6 @@
 import { corpus } from "@/lib/data/store";
 import { listLiveMeetings } from "@/lib/data/live";
+import { listCalls } from "@/lib/db/calls";
 import { PEOPLE, PERSON_BY_ID } from "@/lib/seed/cast";
 import { UPCOMING } from "@/lib/seed/upcoming";
 import { MeetingList, type MeetingRow } from "@/components/meeting-list";
@@ -12,6 +13,9 @@ export const dynamic = "force-dynamic";
 export default async function HomePage() {
   const c = corpus();
   const live = await listLiveMeetings();
+  // Calls saved to the workspace. Newest first, above the demo corpus, and
+  // absent entirely when no database is connected — the page still works.
+  const saved = await listCalls(24);
 
   const rows: MeetingRow[] = c.meetings.map((m) => {
     const bundle = c.byMeeting.get(m.id)!;
@@ -111,9 +115,31 @@ export default async function HomePage() {
     }];
   });
 
+  const savedRows: MeetingRow[] = saved.map((c) => ({
+    id: String(c.id),
+    href: `/imported/${String(c.id)}`,
+    title: String(c.title),
+    kind: "planning",
+    platform: c.origin === "call" ? "browser" : "upload",
+    startedAt: new Date(c.started_at as string).toISOString(),
+    durationMs: Number(c.duration_ms ?? 0),
+    gist: String(c.gist ?? ""),
+    hasExternal: false,
+    lowConfidenceRatio: Number(c.low_confidence_ratio ?? 0),
+    // Precomputed at save time, for the same reason: drawing this from
+    // segments would mean loading every segment of every call.
+    slices: (Array.isArray(c.shape) ? c.shape : []) as ThumbSlice[],
+    actionCount: Number(c.action_count ?? 0),
+    openActionCount: Number(c.action_count ?? 0),
+    highlightCount: Number(c.highlight_count ?? 0),
+    chapterCount: 0,
+    isLive: true,
+    participants: [],
+  }));
+
   return (
     <MeetingList
-      rows={[...liveRows, ...rows]}
+      rows={[...savedRows, ...liveRows, ...rows]}
       upcoming={UPCOMING}
       people={PEOPLE}
       hero={<HomeHero configured={Boolean(process.env.ANTHROPIC_API_KEY)} lanes={lanes} />}

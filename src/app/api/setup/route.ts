@@ -12,6 +12,7 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const status = {
     database: dbConfigured(),
+    blob: Boolean(process.env.BLOB_READ_WRITE_TOKEN),
     storage: storageConfigured(),
     transcription: transcriptionConfigured(),
     analysis: analysisConfigured(),

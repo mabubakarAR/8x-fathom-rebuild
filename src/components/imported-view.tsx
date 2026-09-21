@@ -25,13 +25,62 @@ export function ImportedView({ id }: { id: string }) {
   const [generating, setGenerating] = useState<string | null>(null);
   const overlay = useOverlay();
 
+  // Local first, server second.
+  //
+  // The browser that made the recording has it instantly, so it renders
+  // without waiting. Any other browser — a phone, a colleague's laptop, this
+  // one after clearing site data — has nothing locally and gets it from the
+  // server. That is the whole point of persisting: a link that works for
+  // someone who was never here.
   useEffect(() => {
-    setM(getImported(id));
+    const local = getImported(id);
+    if (local) {
+      setM(local);
+      return;
+    }
+    let live = true;
+    void (async () => {
+      try {
+        const res = await fetch(`/api/calls/${id}`);
+        if (!res.ok) throw new Error("not found");
+        const c = (await res.json()) as {
+          id: string;
+          startedAt: string;
+          templateKey: string;
+          transcriptSource: string | null;
+          origin: string;
+          mediaUrl: string | null;
+          segments: ImportedMeeting["segments"];
+          speakerNames: Record<string, string>;
+          analysis: ImportedMeeting["analysis"];
+        };
+        if (!live) return;
+        setM({
+          id: c.id,
+          createdAt: c.startedAt,
+          templateKey: c.templateKey,
+          format:
+            (c.origin === "call" ? "call capture" : c.origin === "mic" ? "live recording" : "import") +
+            (c.transcriptSource ? ` · ${c.transcriptSource}` : ""),
+          warnings: [],
+          segments: c.segments,
+          speakerNames: c.speakerNames,
+          analysis: c.analysis,
+        });
+        if (c.mediaUrl) setMediaUrl(c.mediaUrl);
+      } catch {
+        if (live) setM(null);
+      }
+    })();
+    return () => {
+      live = false;
+    };
   }, [id]);
 
   useEffect(() => {
     let url: string | null = null;
     let live = true;
+    // The local blob wins when it exists: no network, instant scrubbing.
     void getAudio(id).then((blob) => {
       if (!live || !blob) return;
       url = URL.createObjectURL(blob);
@@ -54,15 +103,11 @@ export function ImportedView({ id }: { id: string }) {
   if (m === null) {
     return (
       <div className="mx-auto max-w-[620px] px-4 pt-20 text-center">
-        <h1 className="text-[18px] font-semibold">Not on this browser</h1>
-        <p className="mx-auto mt-2 max-w-[46ch] text-[13.5px] leading-relaxed" style={{ color: "var(--ink-3)" }}>
-          Imported transcripts are kept in the browser that imported them, not in a database — so
-          this link won&rsquo;t open anywhere else. That&rsquo;s a real limitation of this build and
-          it&rsquo;s written up on the{" "}
-          <Link href="/about" className="underline" style={{ color: "var(--accent-ink)" }}>
-            about page
-          </Link>
-          .
+        <h1 className="text-[18px] font-semibold">This call isn&rsquo;t here</h1>
+        <p className="mx-auto mt-2 max-w-[48ch] text-[13.5px] leading-relaxed" style={{ color: "var(--ink-3)" }}>
+          It isn&rsquo;t in this browser and the server doesn&rsquo;t have it either. Recorded calls
+          are saved to the workspace and open anywhere; a transcript imported before the database
+          was connected stays in the browser that imported it.
         </p>
         <Link
           href="/import"

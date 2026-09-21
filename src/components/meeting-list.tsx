@@ -12,6 +12,9 @@ import type { Person } from "@/lib/types";
 
 export interface MeetingRow {
   id: string;
+  /** Where this row links. Seeded meetings live at /m, saved calls at
+   *  /imported — the row knows, so the card does not have to guess. */
+  href?: string;
   title: string;
   kind: string;
   platform: string;
@@ -224,7 +227,7 @@ function Card({ r }: { r: MeetingRow }) {
   const shaky = r.lowConfidenceRatio > 0.04;
 
   return (
-    <Link href={`/m/${r.id}`} className="group block">
+    <Link href={r.href ?? `/m/${r.id}`} className="group block">
       {/* The tile.
           Hover does three things at once, which is what makes it feel like a
           physical object rather than a link: the card lifts, a scrim darkens the artwork

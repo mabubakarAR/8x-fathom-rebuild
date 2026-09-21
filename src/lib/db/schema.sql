@@ -21,9 +21,20 @@ create table if not exists meetings (
   -- queued | transcribing | analysing | ready | failed
   status          text not null default 'queued',
   error           text,
-  -- Supabase Storage object path for the source media, so playback is real.
+  -- Where the audio lives. A Vercel Blob URL for browser-recorded calls, or a
+  -- Supabase Storage object path for uploads — media_url wins when both are
+  -- present, because it needs no signing round-trip to play.
   media_path      text,
+  media_url       text,
   media_mime      text,
+  -- How this meeting came to exist: 'call' (tab audio + mic), 'mic',
+  -- 'import' (a transcript you brought), 'upload' (a media file).
+  origin          text not null default 'import',
+  -- Provenance, verbatim: which model transcribed and which analysed.
+  transcript_source text,
+  -- The thumbnail's waveform, precomputed. Drawing it in the list otherwise
+  -- means loading every segment of every call to render the home page.
+  shape           jsonb not null default '[]'::jsonb,
   low_confidence_ratio real not null default 0,
   created_at      timestamptz not null default now()
 );
@@ -121,6 +132,20 @@ create table if not exists action_items (
   idx             integer not null
 );
 create index if not exists actions_meeting on action_items(meeting_id, idx);
+
+-- The evidence ledger for a meeting, kept whole rather than recomputed. It is
+-- a record of what happened on one model run, so regenerating it later from
+-- different output would be a lie about the past.
+create table if not exists evidence (
+  meeting_id      text primary key references meetings(id) on delete cascade,
+  model           text not null,
+  segment_count   integer not null default 0,
+  max_idx         integer not null default 0,
+  proposed        integer not null default 0,
+  resolved        integer not null default 0,
+  elapsed_ms      integer not null default 0,
+  dropped         jsonb not null default '[]'::jsonb
+);
 
 create table if not exists highlights (
   id              text primary key,
