@@ -11,13 +11,13 @@ export const metadata: Metadata = {
 
 // Applied before paint so a dark-mode viewer never sees a white flash. Reading
 // localStorage here can throw (private mode), hence the try/catch.
-const THEME_BOOT = `(function(){try{var s=localStorage.getItem("8x-fathom-rebuild.overlay.v1");if(s){var t=JSON.parse(s).theme;if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t);}}catch(e){}})();`;
+const THEME_BOOT = `(function(){var t="dark";try{var s=localStorage.getItem("8x-fathom-rebuild.overlay.v1");if(s){var v=JSON.parse(s).theme;if(v==="light"||v==="dark")t=v;else if(v==="system")t="";}}catch(e){}if(t)document.documentElement.setAttribute("data-theme",t);})();`;
 
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" data-theme="dark" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />

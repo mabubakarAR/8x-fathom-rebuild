@@ -79,7 +79,10 @@ const EMPTY: OverlayState = {
   threads: [],
   templateChoice: {},
   captureChoice: {},
-  theme: "system",
+  // Dark by default. The product is a dark-room instrument — waveforms,
+  // speaker lanes, fifteen hues — and it is simply better looking that way.
+  // Light is one click away in the sidebar and fully maintained.
+  theme: "dark",
 };
 
 function read(): OverlayState {

@@ -4,6 +4,7 @@ import { PEOPLE, PERSON_BY_ID } from "@/lib/seed/cast";
 import { UPCOMING } from "@/lib/seed/upcoming";
 import { MeetingList, type MeetingRow } from "@/components/meeting-list";
 import { HomeHero } from "@/components/home-hero";
+import type { Lane } from "@/components/voice-print";
 
 export const dynamic = "force-dynamic";
 
@@ -75,12 +76,34 @@ export default async function HomePage() {
     })),
   }));
 
+  // The hero artwork is the hero meeting's own speaker lanes. Sent as a
+  // compact array — eight lanes, start/end in seconds, a crosstalk flag —
+  // because shipping 332 full Segment objects to draw 332 rectangles would be
+  // silly.
+  const heroBundle = c.byMeeting.get("m-roadmap-lock");
+  const heroLaneOf = new Map(
+    (heroBundle?.meeting.participants ?? [])
+      .slice()
+      .sort((a, b) => b.talkMs - a.talkMs)
+      .map((p, i) => [p.personId, i] as const),
+  );
+  const lanes: Lane[] = (heroBundle?.segments ?? []).flatMap((seg) => {
+    const l = heroLaneOf.get(seg.speakerId);
+    if (l === undefined || l > 7) return [];
+    return [{
+      l,
+      s: Math.round(seg.startMs / 100) / 10,
+      e: Math.round(seg.endMs / 100) / 10,
+      ...(seg.crosstalk ? { x: 1 as const } : {}),
+    }];
+  });
+
   return (
     <MeetingList
       rows={[...liveRows, ...rows]}
       upcoming={UPCOMING}
       people={PEOPLE}
-      hero={<HomeHero configured={Boolean(process.env.ANTHROPIC_API_KEY)} />}
+      hero={<HomeHero configured={Boolean(process.env.ANTHROPIC_API_KEY)} lanes={lanes} />}
     />
   );
 }

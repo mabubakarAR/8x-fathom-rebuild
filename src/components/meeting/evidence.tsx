@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { DroppedClaim, EvidenceLedger } from "@/lib/evidence";
 import { Icon, SectionLabel } from "../ui";
 
@@ -27,11 +27,45 @@ const KIND_LABEL: Record<DroppedClaim["kind"], string> = {
   highlight: "Clip",
 };
 
+/** Count from 0 to `to` once, on mount. Respects reduced-motion by jumping
+ *  straight to the value — the number is the information, the motion is only
+ *  there to make you look at it. */
+function useCountUp(to: number, ms = 900): number {
+  // Decided once, before the first paint, so the reduced-motion path renders
+  // the final number directly rather than setting state from an effect.
+  const [still] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+  );
+  const [n, setN] = useState(0);
+  const raf = useRef(0);
+  useEffect(() => {
+    if (still) return;
+    const t0 = performance.now();
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - t0) / ms);
+      // easeOutExpo: fast, then settles. Reads as a counter landing.
+      const e = t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
+      setN(Math.round(to * e));
+      if (t < 1) raf.current = requestAnimationFrame(tick);
+    };
+    raf.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf.current);
+  }, [to, ms, still]);
+  return still ? to : n;
+}
+
 export function EvidencePane({ ledger }: { ledger: EvidenceLedger }) {
   const [open, setOpen] = useState(true);
   const { proposed, resolved, dropped } = ledger;
   const rate = proposed ? resolved / proposed : 1;
   const pct = Math.round(rate * 100);
+
+  const nProposed = useCountUp(proposed, 700);
+  const nResolved = useCountUp(resolved, 1000);
+  const nDropped = useCountUp(dropped.length, 1200);
+
 
   return (
     <div className="p-3.5">
@@ -51,11 +85,11 @@ export function EvidencePane({ ledger }: { ledger: EvidenceLedger }) {
         style={{ background: "var(--surface-2)" }}
       >
         <div className="flex items-end gap-3">
-          <Stat value={proposed} label="claims proposed" />
+          <Stat value={nProposed} label="claims proposed" />
           <Arrow />
-          <Stat value={resolved} label="anchored to a real line" tone="ok" />
+          <Stat value={nResolved} label="anchored to a real line" tone="ok" />
           <Arrow />
-          <Stat value={dropped.length} label="thrown away" tone={dropped.length ? "warn" : "mute"} />
+          <Stat value={nDropped} label="thrown away" tone={dropped.length ? "warn" : "mute"} />
         </div>
 
         {/* A bar, not a donut: the whole point is that the two parts are the
@@ -64,8 +98,20 @@ export function EvidencePane({ ledger }: { ledger: EvidenceLedger }) {
           className="mt-3 flex h-[7px] overflow-hidden rounded-full"
           style={{ background: "var(--line)" }}
         >
-          <div style={{ width: `${pct}%`, background: "var(--ok)" }} />
-          <div style={{ width: `${100 - pct}%`, background: dropped.length ? "var(--warn)" : "transparent" }} />
+          <div
+            style={{
+              width: `${pct}%`,
+              background: "var(--ok)",
+              animation: "evidence-fill 1s cubic-bezier(.16,1,.3,1) both",
+            }}
+          />
+          <div
+            style={{
+              width: `${100 - pct}%`,
+              background: dropped.length ? "var(--warn)" : "transparent",
+              animation: "evidence-fill 1s cubic-bezier(.16,1,.3,1) .1s both",
+            }}
+          />
         </div>
         <div className="mt-1.5 flex items-center justify-between text-[11px]" style={{ color: "var(--ink-faint)" }}>
           <span className="tnum">{pct}% of what the model said survived validation</span>
@@ -159,7 +205,10 @@ function Stat({
     tone === "ok" ? "var(--ok-ink)" : tone === "warn" ? "var(--warn-ink)" : tone === "mute" ? "var(--ink-faint)" : "var(--ink)";
   return (
     <div className="min-w-0 flex-1">
-      <div className="text-[21px] leading-none font-semibold tnum" style={{ color }}>
+      <div
+        className="text-[26px] leading-none font-semibold tracking-[-0.02em] tnum"
+        style={{ color, textShadow: tone === "ok" ? "0 0 22px color-mix(in oklab, var(--ok) 45%, transparent)" : undefined }}
+      >
         {value}
       </div>
       <div className="mt-1 text-[10.5px] leading-[1.3]" style={{ color: "var(--ink-faint)" }}>

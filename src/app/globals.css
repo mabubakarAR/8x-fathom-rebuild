@@ -71,6 +71,8 @@
   --shadow-lg: 0 4px 8px oklch(20% 0.02 40 / 0.06),
     0 24px 56px oklch(20% 0.02 40 / 0.14);
 
+  --glow: 0 1px 2px oklch(50% 0.12 233 / 0.24), 0 6px 20px oklch(55% 0.14 233 / 0.20);
+
   --radius: 10px;
   --radius-sm: 7px;
   --radius-lg: 16px;
@@ -79,27 +81,34 @@
 :root[data-theme="dark"] {
   color-scheme: dark;
 
-  /* True-black-leaning, keeping a trace of the brand's warmth so it doesn't
-     read as generic dark-mode blue-grey. */
-  --bg: oklch(15.5% 0.008 40);
-  --bg-sunken: oklch(12.5% 0.008 40);
-  --surface: oklch(19.5% 0.008 40);
-  --surface-2: oklch(22.5% 0.009 40);
-  --surface-hover: oklch(26% 0.01 40);
+  /* Deep water.
+     The light theme keeps Fathom's warm off-white. The dark theme goes the
+     other way on purpose: a near-black with a trace of blue in it, because
+     every colour this product cares about — cerulean, and fifteen speaker
+     hues — reads as luminous against cold dark and merely present against
+     warm dark. The name is a depth-sounding instrument. It should look like
+     one. */
+  --bg: oklch(12.5% 0.014 258);
+  --bg-sunken: oklch(9.5% 0.014 258);
+  --surface: oklch(16.5% 0.014 258);
+  --surface-2: oklch(20.5% 0.015 258);
+  --surface-hover: oklch(24.5% 0.016 258);
 
-  --ink: oklch(96% 0.004 40);
-  --ink-2: oklch(77% 0.008 40);
-  --ink-3: oklch(63% 0.009 40);
-  --ink-faint: oklch(50% 0.009 40);
+  --ink: oklch(97% 0.004 258);
+  --ink-2: oklch(79% 0.012 258);
+  --ink-3: oklch(64% 0.014 258);
+  --ink-faint: oklch(51% 0.015 258);
 
-  --line: oklch(28% 0.009 40);
-  --line-strong: oklch(36% 0.011 40);
+  --line: oklch(25.5% 0.016 258);
+  --line-strong: oklch(35% 0.02 258);
 
-  --accent: oklch(74% 0.148 226);
-  --accent-ink: oklch(84% 0.12 226);
-  --accent-soft: oklch(27% 0.055 230);
-  --accent-line: oklch(40% 0.08 230);
-  --on-accent: oklch(14% 0.02 240);
+  --accent: oklch(76% 0.155 226);
+  --accent-ink: oklch(85% 0.13 226);
+  --accent-soft: oklch(25% 0.06 232);
+  --accent-line: oklch(40% 0.09 230);
+  --on-accent: oklch(11% 0.03 244);
+  /* Bloom. Used sparingly — the primary action and the live indicator. */
+  --glow: 0 0 0 1px oklch(76% 0.155 226 / 0.28), 0 6px 28px oklch(70% 0.17 230 / 0.30);
 
   --ok: oklch(74% 0.14 158);
   --ok-soft: oklch(26% 0.05 158);
@@ -124,20 +133,21 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
-    --bg: oklch(15.5% 0.008 40);
-    --bg-sunken: oklch(12.5% 0.008 40);
-    --surface: oklch(19.5% 0.008 40);
-    --surface-2: oklch(22.5% 0.009 40);
-    --surface-hover: oklch(26% 0.01 40);
-    --ink: oklch(96% 0.004 40);
-    --ink-2: oklch(77% 0.008 40);
-    --ink-3: oklch(63% 0.009 40);
-    --ink-faint: oklch(50% 0.009 40);
-    --line: oklch(28% 0.009 40);
-    --line-strong: oklch(36% 0.011 40);
-    --accent: oklch(74% 0.148 226);
-    --accent-ink: oklch(84% 0.12 226);
-    --accent-soft: oklch(27% 0.055 230);
+    --bg: oklch(12.5% 0.014 258);
+    --bg-sunken: oklch(9.5% 0.014 258);
+    --surface: oklch(16.5% 0.014 258);
+    --surface-2: oklch(20.5% 0.015 258);
+    --surface-hover: oklch(24.5% 0.016 258);
+    --ink: oklch(97% 0.004 258);
+    --ink-2: oklch(79% 0.012 258);
+    --ink-3: oklch(64% 0.014 258);
+    --ink-faint: oklch(51% 0.015 258);
+    --line: oklch(25.5% 0.016 258);
+    --line-strong: oklch(35% 0.02 258);
+    --accent: oklch(76% 0.155 226);
+    --accent-ink: oklch(85% 0.13 226);
+    --accent-soft: oklch(25% 0.06 232);
+    --glow: 0 0 0 1px oklch(76% 0.155 226 / 0.28), 0 6px 28px oklch(70% 0.17 230 / 0.30);
     --accent-line: oklch(40% 0.08 230);
     --on-accent: oklch(14% 0.02 240);
     --ok: oklch(74% 0.14 158);
@@ -180,40 +190,40 @@
 }
 
 :root[data-theme="dark"] {
-  --sp-0: oklch(77% 0.132 250);
-  --sp-1: oklch(77% 0.132 295);
-  --sp-2: oklch(77% 0.132 160);
-  --sp-3: oklch(77% 0.132 340);
-  --sp-4: oklch(77% 0.132 70);
-  --sp-5: oklch(77% 0.132 205);
-  --sp-6: oklch(77% 0.132 115);
-  --sp-7: oklch(77% 0.132 25);
-  --sp-8: oklch(77% 0.132 180);
-  --sp-9: oklch(77% 0.132 45);
-  --sp-10: oklch(77% 0.132 320);
-  --sp-11: oklch(77% 0.132 90);
-  --sp-12: oklch(77% 0.132 265);
-  --sp-13: oklch(77% 0.132 135);
-  --sp-14: oklch(77% 0.132 355);
+  --sp-0: oklch(79% 0.145 250);
+  --sp-1: oklch(79% 0.145 295);
+  --sp-2: oklch(79% 0.145 160);
+  --sp-3: oklch(79% 0.145 340);
+  --sp-4: oklch(79% 0.145 70);
+  --sp-5: oklch(79% 0.145 205);
+  --sp-6: oklch(79% 0.145 115);
+  --sp-7: oklch(79% 0.145 25);
+  --sp-8: oklch(79% 0.145 180);
+  --sp-9: oklch(79% 0.145 45);
+  --sp-10: oklch(79% 0.145 320);
+  --sp-11: oklch(79% 0.145 90);
+  --sp-12: oklch(79% 0.145 265);
+  --sp-13: oklch(79% 0.145 135);
+  --sp-14: oklch(79% 0.145 355);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --sp-0: oklch(77% 0.132 250);
-    --sp-1: oklch(77% 0.132 295);
-    --sp-2: oklch(77% 0.132 160);
-    --sp-3: oklch(77% 0.132 340);
-    --sp-4: oklch(77% 0.132 70);
-    --sp-5: oklch(77% 0.132 205);
-    --sp-6: oklch(77% 0.132 115);
-    --sp-7: oklch(77% 0.132 25);
-    --sp-8: oklch(77% 0.132 180);
-    --sp-9: oklch(77% 0.132 45);
-    --sp-10: oklch(77% 0.132 320);
-    --sp-11: oklch(77% 0.132 90);
-    --sp-12: oklch(77% 0.132 265);
-    --sp-13: oklch(77% 0.132 135);
-    --sp-14: oklch(77% 0.132 355);
+    --sp-0: oklch(79% 0.145 250);
+    --sp-1: oklch(79% 0.145 295);
+    --sp-2: oklch(79% 0.145 160);
+    --sp-3: oklch(79% 0.145 340);
+    --sp-4: oklch(79% 0.145 70);
+    --sp-5: oklch(79% 0.145 205);
+    --sp-6: oklch(79% 0.145 115);
+    --sp-7: oklch(79% 0.145 25);
+    --sp-8: oklch(79% 0.145 180);
+    --sp-9: oklch(79% 0.145 45);
+    --sp-10: oklch(79% 0.145 320);
+    --sp-11: oklch(79% 0.145 90);
+    --sp-12: oklch(79% 0.145 265);
+    --sp-13: oklch(79% 0.145 135);
+    --sp-14: oklch(79% 0.145 355);
   }
 }
 
@@ -327,3 +337,12 @@ mark.hit-expanded {
     scroll-behavior: auto !important;
   }
 }
+
+/* The evidence bar fills on mount. Driven by a keyframe rather than a
+   mount-time state flip, so the React Compiler stays happy and the animation
+   still runs on first paint. */
+@keyframes evidence-fill {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+[style*="evidence-fill"] { transform-origin: left center; }

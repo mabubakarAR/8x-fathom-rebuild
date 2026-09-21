@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { saveImported } from "@/lib/imported";
 import { Icon } from "./ui";
+import { VoicePrint, type Lane } from "./voice-print";
 
 // The front door.
 //
@@ -33,7 +34,7 @@ const TEMPLATES = [
   ["qa", "Q&A"],
 ] as const;
 
-export function HomeHero({ configured }: { configured: boolean }) {
+export function HomeHero({ configured, lanes }: { configured: boolean; lanes: Lane[] }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [log, setLog] = useState<string[]>([]);
@@ -109,21 +110,58 @@ export function HomeHero({ configured }: { configured: boolean }) {
   }
 
   return (
-    <section className="pt-8 pb-7 md:pt-12">
-      <div className="max-w-[640px]">
-        <h1
-          className="text-[30px] leading-[1.12] font-semibold tracking-[-0.025em] md:text-[38px]"
-          style={{ color: "var(--ink)" }}
-        >
-          Drop in a transcript.
-          <br />
-          Get notes you can check.
-        </h1>
-        <p className="mt-3 text-[15px] leading-[1.6]" style={{ color: "var(--ink-2)" }}>
-          Chapters, a summary, action items and clips — written by a model reading your words.
-          Every claim carries the line it came from, and a claim that can&rsquo;t cite a real line
-          is thrown away rather than shown to you. The app counts how many, and tells you.
-        </p>
+    <section className="pt-6 pb-7 md:pt-8">
+      {/* ---- the stage ---- */}
+      <div
+        className="relative overflow-hidden rounded-[22px]"
+        style={{ background: "var(--bg-sunken)", border: "1px solid var(--line)" }}
+      >
+        <VoicePrint
+          lanes={lanes}
+          className="pointer-events-none absolute inset-0 h-full w-full"
+        />
+        {/* Legibility scrim. The artwork lives behind the words, not in a
+            fight with them. */}
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(98deg, var(--bg-sunken) 0%, color-mix(in oklab, var(--bg-sunken) 88%, transparent) 38%, color-mix(in oklab, var(--bg-sunken) 20%, transparent) 62%, transparent 82%)",
+          }}
+        />
+
+        <div className="relative max-w-[610px] px-6 py-9 md:px-10 md:py-12">
+          <span
+            className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-[4px] text-[11px] font-semibold tracking-[0.04em] uppercase"
+            style={{ background: "var(--accent-soft)", color: "var(--accent-ink)" }}
+          >
+            <Icon name="live" size={11} /> Live · 8 speakers · 54 minutes
+          </span>
+
+          <h1
+            className="mt-4 max-w-[13ch] text-[34px] leading-[1.03] font-semibold tracking-[-0.035em] md:text-[54px]"
+            style={{ color: "var(--ink)" }}
+          >
+            Every claim,
+            <br />
+            <span style={{ color: "var(--accent)" }}>receipts attached.</span>
+          </h1>
+
+          <p
+            className="mt-4 max-w-[52ch] text-[15px] leading-[1.6] md:text-[16.5px]"
+            style={{ color: "var(--ink-2)" }}
+          >
+            Drop in a transcript and a model writes the chapters, the summary, the action items
+            and the clips. Every sentence it produces carries the line it came from — and anything
+            it can&rsquo;t point at gets thrown away instead of shown to you.{" "}
+            <strong style={{ color: "var(--ink)" }}>The app counts how many, and tells you.</strong>
+          </p>
+
+          <p className="mt-3.5 text-[11.5px] leading-[1.5]" style={{ color: "var(--ink-faint)" }}>
+            That waveform is the real speaker lanes from the 54-minute call below — eight voices,
+            amber where they talk over each other. Nothing here was drawn to look good.
+          </p>
+        </div>
       </div>
 
       {/* ---- the working part ---- */}
@@ -131,10 +169,11 @@ export function HomeHero({ configured }: { configured: boolean }) {
         onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
         onDragLeave={() => setDrag(false)}
         onDrop={(e) => { e.preventDefault(); setDrag(false); takeFile(e.dataTransfer.files?.[0]); }}
-        className="mt-6 rounded-[var(--radius-lg)] p-5 transition-colors"
+        className="relative z-10 mx-auto -mt-6 max-w-[1000px] rounded-[var(--radius-lg)] p-5 transition-colors"
         style={{
           background: drag ? "var(--accent-soft)" : "var(--surface)",
-          border: `1.5px dashed ${drag ? "var(--accent)" : "var(--line-strong)"}`,
+          border: `1.5px ${drag ? "solid" : "dashed"} ${drag ? "var(--accent)" : "var(--line-strong)"}`,
+          boxShadow: "var(--shadow-lg)",
         }}
       >
         {busy ? (
@@ -160,8 +199,8 @@ export function HomeHero({ configured }: { configured: boolean }) {
               <button
                 onClick={runSample}
                 disabled={!configured}
-                className="inline-flex items-center gap-2 rounded-[var(--radius-sm)] px-4 py-[10px] text-[13.5px] font-semibold disabled:opacity-50"
-                style={{ background: "var(--accent)", color: "var(--on-accent)" }}
+                className="inline-flex items-center gap-2 rounded-[var(--radius-sm)] px-4 py-[11px] text-[13.5px] font-semibold transition-transform hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100"
+                style={{ background: "var(--accent)", color: "var(--on-accent)", boxShadow: "var(--glow)" }}
               >
                 <Icon name="sparkle" size={14} /> Run it on a sample call
               </button>
