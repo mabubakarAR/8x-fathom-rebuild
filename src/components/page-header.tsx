@@ -10,7 +10,7 @@ export function PageHeader({
   actions?: ReactNode;
 }) {
   return (
-    <header className="flex flex-wrap items-end justify-between gap-3 pt-8 pb-5 md:pt-10">
+    <header className="rise flex flex-wrap items-end justify-between gap-3 pt-8 pb-5 md:pt-10">
       <div>
         <h1
           className="display text-[30px] leading-[1.05] tracking-[-0.018em] md:text-[36px]" style={{ color: "var(--ink)" }}>

@@ -129,8 +129,12 @@ export function Theatre() {
 
   return (
     <div
-      className="overflow-hidden rounded-[var(--radius-lg)]"
-      style={{ background: "var(--surface)", border: "1px solid var(--line)", boxShadow: "var(--shadow-lg)" }}
+      className="frosted edge-glow overflow-hidden rounded-[var(--radius-lg)]"
+      style={{
+        background: "color-mix(in oklab, var(--surface) 93%, transparent)",
+        border: "1px solid var(--line)",
+        boxShadow: "var(--lift), var(--shadow-lg)",
+      }}
     >
       {/* ---- transcript ---- */}
       <div className="px-4 pt-3.5 pb-3" style={{ borderBottom: "1px solid var(--line)" }}>
@@ -142,7 +146,7 @@ export function Theatre() {
             <Icon name="live" size={10} /> checking
           </span>
         </div>
-        <ul className="flex flex-col gap-[3px]">
+        <ul className="flex flex-col gap-[2px]">
           {LINES.map((l) => {
             const lit = scanning && active?.cite === l.i;
             return (
@@ -173,7 +177,7 @@ export function Theatre() {
           What the model claims
         </div>
 
-        <ul className="flex min-h-[176px] flex-col gap-1.5">
+        <ul className="flex min-h-[150px] flex-col gap-1.5">
           {CLAIMS.slice(0, shown).map((c, i) => {
             const isActive = i === shown - 1;
             const isSettled = i < settledCount;

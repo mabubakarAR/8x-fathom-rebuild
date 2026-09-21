@@ -102,12 +102,27 @@ export function HomeHero({ configured, lanes }: { configured: boolean; lanes: La
   }
 
   return (
-    <section className="pt-6 pb-7 md:pt-8">
+    <section className="pt-5 pb-6">
       {/* ---- the stage ---- */}
       <div
-        className="relative overflow-hidden rounded-[22px]"
-        style={{ background: "var(--bg-sunken)", border: "1px solid var(--line)" }}
+        className="edge-glow relative overflow-hidden rounded-[var(--radius-xl)]"
+        style={{
+          background: "var(--bg-sunken)",
+          border: "1px solid var(--line)",
+          boxShadow: "var(--lift), var(--shadow-lg)",
+        }}
       >
+        {/* Ambient light source. A large dark panel with no gradient in it
+            reads as a flat rectangle; one soft off-centre glow is what makes
+            it read as a lit surface. */}
+        <div
+          className="pointer-events-none absolute -top-1/3 -right-[10%] h-[140%] w-[70%]"
+          style={{
+            background:
+              "radial-gradient(closest-side, color-mix(in oklab, var(--accent) 22%, transparent), transparent)",
+            filter: "blur(10px)",
+          }}
+        />
         <VoicePrint
           lanes={lanes}
           className="pointer-events-none absolute inset-0 h-full w-full"
@@ -122,8 +137,8 @@ export function HomeHero({ configured, lanes }: { configured: boolean; lanes: La
           }}
         />
 
-        <div className="relative grid gap-8 px-6 py-9 md:grid-cols-[minmax(0,1fr)_minmax(0,480px)] md:items-center md:gap-10 md:px-10 md:py-12">
-          <div className="max-w-[600px]">
+        <div className="relative grid gap-8 px-6 py-10 md:grid-cols-[minmax(0,1fr)_minmax(0,480px)] md:items-center md:gap-10 md:px-10 md:py-11">
+          <div className="rise max-w-[600px]">
             <span
               className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-[4px] text-[11px] font-semibold tracking-[0.04em] uppercase"
               style={{ background: "var(--accent-soft)", color: "var(--accent-ink)" }}
@@ -132,18 +147,18 @@ export function HomeHero({ configured, lanes }: { configured: boolean; lanes: La
             </span>
 
             <h1
-              className="display mt-4 text-[40px] leading-[0.98] tracking-[-0.02em] md:text-[56px] lg:text-[62px]"
+              className="display mt-4 text-[32px] leading-[1.02] md:text-[40px] lg:text-[44px]"
               style={{ color: "var(--ink)" }}
             >
               <span className="block">Every AI notetaker</span>
               <span className="block">sounds confident.</span>
-              <span className="block italic" style={{ color: "var(--accent)" }}>
+              <span className="block" style={{ color: "var(--accent)" }}>
                 This one proves it.
               </span>
             </h1>
 
             <p
-              className="mt-4 max-w-[44ch] text-[14.5px] leading-[1.6] md:text-[16px]"
+              className="mt-3.5 max-w-[46ch] text-[14px] leading-[1.58] md:text-[15px]"
               style={{ color: "var(--ink-2)" }}
             >
               Hit record and it transcribes you as you talk. Then every sentence of the notes has
@@ -154,13 +169,15 @@ export function HomeHero({ configured, lanes }: { configured: boolean; lanes: La
               . You see the count every time.
             </p>
 
-            <p className="mt-3 text-[11.5px] leading-[1.5]" style={{ color: "var(--ink-faint)" }}>
+            <p className="mt-3 hidden text-[11.5px] leading-[1.5] lg:block" style={{ color: "var(--ink-faint)" }}>
               Behind all of it, the real speaker lanes from the 54-minute eight-person call below.
               Amber is genuine crosstalk.
             </p>
           </div>
 
-          <Theatre />
+          <div className="rise" style={{ animationDelay: "120ms" }}>
+            <Theatre />
+          </div>
         </div>
       </div>
 
@@ -169,11 +186,12 @@ export function HomeHero({ configured, lanes }: { configured: boolean; lanes: La
         onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
         onDragLeave={() => setDrag(false)}
         onDrop={(e) => { e.preventDefault(); setDrag(false); takeFile(e.dataTransfer.files?.[0]); }}
-        className="relative z-10 mx-auto -mt-6 max-w-[1000px] rounded-[var(--radius-lg)] p-5 transition-colors"
+        className="rise relative z-10 mx-auto -mt-8 max-w-[980px] rounded-[var(--radius-lg)] p-5 transition-[background,border-color] duration-300"
         style={{
+          animationDelay: "220ms",
           background: drag ? "var(--accent-soft)" : "var(--surface)",
-          border: `1.5px ${drag ? "solid" : "dashed"} ${drag ? "var(--accent)" : "var(--line-strong)"}`,
-          boxShadow: "var(--shadow-lg)",
+          border: `1.5px ${drag ? "solid" : "solid"} ${drag ? "var(--accent)" : "var(--line)"}`,
+          boxShadow: "var(--lift), var(--shadow-lg)",
         }}
       >
         {busy ? (

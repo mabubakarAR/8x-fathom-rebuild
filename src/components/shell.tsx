@@ -66,8 +66,11 @@ function TopBar({ pathname }: { pathname: string }) {
 
   return (
     <header
-      className="sticky top-0 z-40"
-      style={{ background: "var(--bg-sunken)", borderBottom: "1px solid var(--line)" }}
+      className="frosted sticky top-0 z-40"
+      style={{
+        background: "color-mix(in oklab, var(--bg-sunken) 78%, transparent)",
+        borderBottom: "1px solid var(--line)",
+      }}
     >
       <div className="mx-auto flex w-full max-w-[1480px] items-center gap-3 px-4 py-2.5 md:px-7">
         <Link href="/" className="flex shrink-0 items-center gap-2" style={{ color: "var(--ink)" }}>
@@ -107,8 +110,12 @@ function TopBar({ pathname }: { pathname: string }) {
 
         <Link
           href="/record"
-          className="inline-flex shrink-0 items-center gap-2 rounded-full py-[7px] pr-3.5 pl-3 text-[13px] font-semibold"
-          style={{ background: "var(--danger)", color: "oklch(100% 0 0)" }}
+          className="inline-flex shrink-0 items-center gap-2 rounded-full py-[7px] pr-3.5 pl-3 text-[13px] font-semibold transition-transform duration-200 hover:scale-[1.04]"
+          style={{
+            background: "var(--danger)",
+            color: "oklch(100% 0 0)",
+            boxShadow: "0 4px 18px color-mix(in oklab, var(--danger) 36%, transparent)",
+          }}
         >
           <span className="block h-2 w-2 rounded-full" style={{ background: "currentColor" }} />
           <span className="hidden sm:inline">Record</span>
@@ -180,13 +187,18 @@ function TopBar({ pathname }: { pathname: string }) {
                 <Link
                   href={n.href}
                   aria-current={on ? "page" : undefined}
-                  className="block px-3 py-2.5 text-[13.5px] font-medium whitespace-nowrap transition-colors"
-                  style={{
-                    color: on ? "var(--accent)" : "var(--ink-3)",
-                    boxShadow: on ? "inset 0 -2px 0 var(--accent)" : undefined,
-                  }}
+                  className="relative block px-3 py-2.5 text-[13.5px] font-medium whitespace-nowrap transition-colors duration-200 hover:text-[var(--ink)]"
+                  style={{ color: on ? "var(--ink)" : "var(--ink-3)" }}
                 >
                   {n.label}
+                  <span
+                    className="absolute inset-x-2 bottom-0 h-[2px] rounded-full transition-all duration-300"
+                    style={{
+                      background: "var(--accent)",
+                      opacity: on ? 1 : 0,
+                      transform: on ? "scaleX(1)" : "scaleX(0.4)",
+                    }}
+                  />
                 </Link>
               </li>
             );

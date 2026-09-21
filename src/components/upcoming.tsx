@@ -31,6 +31,10 @@ export function Upcoming({ upcoming, people }: Props) {
   const overlay = useOverlay();
   const byId = new Map(people.map((p) => [p.id, p]));
   const [open, setOpen] = useState(true);
+  // Three is enough to make the point that capture is decided before the
+  // meeting. Six pushes the actual recordings — the reason anyone is on this
+  // page — below the fold.
+  const [showAll, setShowAll] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
 
   // Rendered only after hydration: "in 24 min" computed on the server and
@@ -75,7 +79,7 @@ export function Upcoming({ upcoming, people }: Props) {
 
       {open && (
         <div className="flex flex-col gap-1.5">
-          {upcoming.map((m) => {
+          {(showAll ? upcoming : upcoming.slice(0, 3)).map((m) => {
             const mode = captureOf(m);
             const modeInfo = CAPTURE_MODES.find((c) => c.key === mode)!;
             const overridden = mode !== m.defaultCapture;
@@ -214,6 +218,15 @@ export function Upcoming({ upcoming, people }: Props) {
               </div>
             );
           })}
+          {!showAll && upcoming.length > 3 && (
+            <button
+              onClick={() => setShowAll(true)}
+              className="self-start px-1 pt-1 text-[12px] font-medium"
+              style={{ color: "var(--accent-ink)" }}
+            >
+              {upcoming.length - 3} more scheduled
+            </button>
+          )}
         </div>
       )}
     </section>

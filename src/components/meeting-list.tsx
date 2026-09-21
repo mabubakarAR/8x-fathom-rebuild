@@ -206,9 +206,11 @@ export function MeetingList({
           >
             {g.bucket}
           </h2>
-          <div className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {g.rows.map((r) => (
-              <Card key={r.id} r={r} />
+          <div className="stagger grid grid-cols-1 gap-x-5 gap-y-7 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {g.rows.map((r, i) => (
+              <div key={r.id} style={{ "--i": i } as React.CSSProperties}>
+                <Card r={r} />
+              </div>
             ))}
           </div>
         </section>
@@ -223,24 +225,46 @@ function Card({ r }: { r: MeetingRow }) {
 
   return (
     <Link href={`/m/${r.id}`} className="group block">
-      <div className="relative">
+      {/* The tile.
+          Hover does three things at once, which is what makes it feel like a
+          physical object rather than a link: the card lifts, a scrim darkens the artwork
+          so the play control has something to sit on, and the control fades
+          up. One of those alone reads as a hover state; all three read as an
+          object responding. */}
+      <div
+        className="lift-hover relative overflow-hidden rounded-[var(--radius)]"
+        style={{ boxShadow: "var(--lift), var(--shadow-md)" }}
+      >
         <CallThumb
           id={r.id}
           slices={r.slices}
           duration={duration(r.durationMs)}
           live={r.isLive}
-          className="transition-transform duration-200 group-hover:scale-[1.015]"
         />
         <div
-          className="pointer-events-none absolute inset-0 rounded-[var(--radius)] opacity-0 transition-opacity group-hover:opacity-100"
-          style={{ boxShadow: "0 0 0 2px var(--accent), var(--shadow-lg)" }}
+          className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+          style={{ background: "linear-gradient(to top, oklch(0% 0 0 / .55), oklch(0% 0 0 / .1) 55%, transparent)" }}
         />
+        <div
+          className="pointer-events-none absolute inset-0 grid place-items-center opacity-0 transition-all duration-300 group-hover:opacity-100"
+        >
+          <span
+            className="grid h-11 w-11 translate-y-1.5 place-items-center rounded-full transition-transform duration-300 group-hover:translate-y-0"
+            style={{
+              background: "oklch(100% 0 0 / .94)",
+              color: "oklch(12% 0 0)",
+              boxShadow: "0 8px 26px oklch(0% 0 0 / .45)",
+            }}
+          >
+            <Icon name="play" size={16} />
+          </span>
+        </div>
       </div>
 
       <div className="mt-2.5">
         <div className="flex items-start gap-2">
           <h3
-            className="min-w-0 flex-1 text-[14px] leading-[1.35] font-semibold tracking-[-0.005em] transition-colors group-hover:text-[var(--accent)]"
+            className="min-w-0 flex-1 text-[14.5px] leading-[1.32] font-semibold tracking-[-0.012em] transition-colors group-hover:text-[var(--accent)]"
             style={{ color: "var(--ink)" }}
           >
             {r.title}
