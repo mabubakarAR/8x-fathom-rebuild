@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { saveImported, listImported, deleteImported } from "@/lib/imported";
 import { Badge, Icon } from "./ui";
 import { PageHeader } from "./page-header";
@@ -66,7 +66,12 @@ export function ImportFlow({ configured }: { configured: boolean }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [log, setLog] = useState<string[]>([]);
-  const [existing, setExisting] = useState(() => (typeof window === "undefined" ? [] : listImported()));
+  // Empty on the server AND on the client's first render, then filled after
+  // mount. A lazy initialiser reading localStorage renders [] on the server
+  // and the real list on the client, which is a hydration mismatch every time
+  // the visitor has imported anything.
+  const [existing, setExisting] = useState<ReturnType<typeof listImported>>([]);
+  useEffect(() => setExisting(listImported()), []);
   const fileRef = useRef<HTMLInputElement>(null);
 
   async function run() {

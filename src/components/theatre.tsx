@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useReducer } from "react";
+import { useEffect, useReducer } from "react";
+import { usePrefersReducedMotion } from "@/lib/reduced-motion";
 import { Icon } from "./ui";
 
 // The verification theatre.
@@ -96,24 +97,16 @@ const DELAY: Record<Phase, number> = {
 
 export function Theatre() {
   const [s, dispatch] = useReducer(reducer, START);
+  const still = usePrefersReducedMotion();
 
   useEffect(() => {
-    if (typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      return; // handled below by rendering the finished state
-    }
+    if (still) return; // the finished state is rendered directly instead
     const t = setTimeout(
       () => dispatch(s.phase === "done" ? { type: "reset" } : { type: "advance" }),
       DELAY[s.phase],
     );
     return () => clearTimeout(t);
-  }, [s.phase, s.n, s.tick]);
-
-  const still = useMemo(
-    () =>
-      typeof window !== "undefined" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches,
-    [],
-  );
+  }, [s.phase, s.n, s.tick, still]);
 
   const shown = still ? CLAIMS.length : s.n;
   const settledCount = still

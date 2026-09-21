@@ -17,8 +17,11 @@ const eslintConfig = defineConfig([
     // The React Compiler flags `useEffect(() => setState(read()), [])`. Every
     // instance of it here is the same deliberate pattern: read `localStorage`
     // *after* mount so the server-rendered HTML and the first client render
-    // match. Reading during render would hydrate-mismatch; `useSyncExternalStore`
-    // is the right long-term answer and is a refactor rather than a fix.
+    // match. Reading during render would hydrate-mismatch. `useSyncExternalStore`
+    // is the right answer where the value is a subscription — see
+    // src/lib/reduced-motion.ts, which is that refactor done — but it needs a
+    // referentially stable snapshot, which a function returning a fresh array
+    // out of localStorage is not. These stay on the effect.
     // Flagged here in the config rather than silenced line by line, so it stays
     // visible as a known trade rather than disappearing into the code.
     files: [
@@ -30,6 +33,7 @@ const eslintConfig = defineConfig([
       "src/components/meeting/view.tsx",
       "src/components/commitments.tsx",
       "src/components/record-studio.tsx",
+      "src/components/import-flow.tsx",
     ],
     rules: { "react-hooks/set-state-in-effect": "warn" },
   },

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { usePrefersReducedMotion } from "@/lib/reduced-motion";
 import type { DroppedClaim, EvidenceLedger } from "@/lib/evidence";
 import { Icon, SectionLabel } from "../ui";
 
@@ -31,13 +32,7 @@ const KIND_LABEL: Record<DroppedClaim["kind"], string> = {
  *  straight to the value — the number is the information, the motion is only
  *  there to make you look at it. */
 function useCountUp(to: number, ms = 900): number {
-  // Decided once, before the first paint, so the reduced-motion path renders
-  // the final number directly rather than setting state from an effect.
-  const [still] = useState(
-    () =>
-      typeof window !== "undefined" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches,
-  );
+  const still = usePrefersReducedMotion();
   const [n, setN] = useState(0);
   const raf = useRef(0);
   useEffect(() => {
