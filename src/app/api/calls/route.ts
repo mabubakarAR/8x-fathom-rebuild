@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { put } from "@vercel/blob";
-import { dbConfigured } from "@/lib/db/client";
+import { dbConfigured, blobTokenVar } from "@/lib/db/client";
 import { saveCall, type SaveCallInput } from "@/lib/db/calls";
 
 export const runtime = "nodejs";
@@ -57,7 +57,8 @@ export async function POST(req: Request) {
 
   const audio = form.get("audio");
   if (audio instanceof File && audio.size > 0) {
-    if (!process.env.BLOB_READ_WRITE_TOKEN) {
+    const tokenVar = blobTokenVar();
+    if (!tokenVar) {
       audioWarning =
         "No Blob store is connected, so the audio stayed in your browser. The transcript and notes are saved.";
     } else {
@@ -67,6 +68,9 @@ export async function POST(req: Request) {
           access: "public",
           contentType: audio.type || "audio/webm",
           addRandomSuffix: false,
+          // Passed explicitly rather than relying on the SDK's default
+          // lookup, because the token can arrive under a prefixed name.
+          token: process.env[tokenVar],
         });
         mediaUrl = blob.url;
         mediaMime = audio.type || "audio/webm";

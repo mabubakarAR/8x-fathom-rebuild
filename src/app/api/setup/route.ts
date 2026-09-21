@@ -1,5 +1,11 @@
 import { NextResponse } from "next/server";
-import { migrate, dbConfigured, databaseUrlVar, envReport } from "@/lib/db/client";
+import {
+  migrate,
+  dbConfigured,
+  databaseUrlVar,
+  blobTokenVar,
+  envReport,
+} from "@/lib/db/client";
 import { storageConfigured, ensureBucket } from "@/lib/pipeline/ingest";
 import { transcriptionConfigured } from "@/lib/pipeline/transcribe";
 import { analysisConfigured } from "@/lib/pipeline/analyse";
@@ -12,7 +18,7 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const status = {
     database: dbConfigured(),
-    blob: Boolean(process.env.BLOB_READ_WRITE_TOKEN),
+    blob: Boolean(blobTokenVar()),
     storage: storageConfigured(),
     transcription: transcriptionConfigured(),
     analysis: analysisConfigured(),
@@ -24,8 +30,11 @@ export async function GET() {
         ok: false,
         status,
         message:
-          "No Postgres connection string in this deployment's environment. " +
-          "If the database is attached in Vercel, redeploy so the variable is injected.",
+          "No variable in this deployment holds a postgres:// URL. Storage " +
+          "variables are injected at BUILD time, so a store attached after " +
+          "this deployment was built will not appear in it — redeploy the " +
+          "latest deployment. If env.storageish is also empty, the store is " +
+          "not attached to this project/environment at all.",
         // Names only — this endpoint never returns a secret's value.
         env,
       },
@@ -42,6 +51,7 @@ export async function GET() {
     ok: m.ok,
     status,
     usingVar: databaseUrlVar(),
+    blobVar: blobTokenVar(),
     migration: m.message,
     bucket,
     env,

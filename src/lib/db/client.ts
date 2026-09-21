@@ -26,13 +26,53 @@ const URL_VARS = [
   "DATABASE_URL_UNPOOLED",
 ] as const;
 
-/** The variable actually carrying a connection string, if any. */
+const PG_URL = /^postgres(ql)?:\/\//;
+
+/**
+ * The variable actually carrying a connection string, if any.
+ *
+ * Known names first, then — and this is the part that matters — ANY variable
+ * in the environment whose value looks like a Postgres URL. Vercel's
+ * marketplace integrations let you set a prefix when you attach a store, so
+ * the same Neon database can arrive as DATABASE_URL, POSTGRES_URL, or
+ * MY_STORE_DATABASE_URL depending on choices made in a dialog weeks earlier.
+ * Matching on the shape of the value rather than a list of names I guessed
+ * makes that irrelevant.
+ *
+ * Pooled connections are preferred: serverless opens a lot of short-lived
+ * connections and a direct one runs out of them.
+ */
 export function databaseUrlVar(): string | null {
   for (const name of URL_VARS) {
     const v = process.env[name];
-    if (v && /^postgres(ql)?:\/\//.test(v)) return name;
+    if (v && PG_URL.test(v)) return name;
   }
-  return null;
+  const found = Object.keys(process.env)
+    .filter((k) => {
+      const v = process.env[k];
+      return typeof v === "string" && PG_URL.test(v);
+    })
+    // Prefer a pooler, then anything that is not explicitly unpooled.
+    .sort((a, b) => {
+      const score = (k: string) => {
+        const v = process.env[k] ?? "";
+        if (/-pooler|pgbouncer=true/.test(v)) return 0;
+        if (/UNPOOLED|NON_POOLING/i.test(k)) return 2;
+        return 1;
+      };
+      return score(a) - score(b);
+    });
+  return found[0] ?? null;
+}
+
+/** Same trick for the blob token, which can also be prefixed. */
+export function blobTokenVar(): string | null {
+  if (process.env.BLOB_READ_WRITE_TOKEN) return "BLOB_READ_WRITE_TOKEN";
+  return (
+    Object.keys(process.env).find(
+      (k) => /BLOB/i.test(k) && /TOKEN/i.test(k) && process.env[k],
+    ) ?? null
+  );
 }
 
 function databaseUrl(): string | null {
@@ -74,19 +114,34 @@ export function dbConfigured(): boolean {
  * deployment where the database is plainly connected, the useful question is
  * *which variable did it land in* — and guessing that over chat is slow.
  */
-export function envReport(): { present: string[]; missing: string[] } {
+export function envReport() {
   const watched = [
     ...URL_VARS,
     "BLOB_READ_WRITE_TOKEN",
     "ANTHROPIC_API_KEY",
     "DEEPGRAM_API_KEY",
-    "SUPABASE_URL",
-    "SUPABASE_SERVICE_ROLE_KEY",
   ];
   const present: string[] = [];
   const missing: string[] = [];
   for (const n of watched) (process.env[n] ? present : missing).push(n);
-  return { present, missing };
+
+  const keys = Object.keys(process.env);
+  return {
+    present,
+    missing,
+    // Every variable whose VALUE is a Postgres URL, whatever it is called.
+    // If this is empty, the deployment genuinely has no database attached —
+    // no amount of renaming will help and the next step is a redeploy.
+    postgresShaped: keys.filter((k) => {
+      const v = process.env[k];
+      return typeof v === "string" && PG_URL.test(v);
+    }),
+    blobShaped: keys.filter((k) => /BLOB/i.test(k) && /TOKEN/i.test(k) && process.env[k]),
+    // Names of anything storage-ish, to catch a prefix we would otherwise
+    // have to guess at. Names only — never values.
+    storageish: keys.filter((k) => /POSTGRES|NEON|DATABASE|BLOB|STORAGE|PG(HOST|USER|DATABASE)/i.test(k)),
+    totalVars: keys.length,
+  };
 }
 
 /** Runs schema.sql. Idempotent — every statement is CREATE … IF NOT EXISTS. */
