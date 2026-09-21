@@ -1,8 +1,10 @@
-# Sonar
+# 8x-fathom-rebuild
 
-A rebuild of [Fathom](https://www.fathom.ai), the AI meeting notetaker. Built in a day.
+A rebuild of [Fathom](https://www.fathom.ai), the AI meeting notetaker. Built in a day for the 8x assignment.
 
-**Live:** _(see the links field)_ · **What's real and what isn't:** [`/about`](./src/app/about/page.tsx) in the app · **Product reasoning:** [PRODUCT-NOTES.md](./PRODUCT-NOTES.md) · **Agent capture proof:** [CAPTURE-TEST.md](./CAPTURE-TEST.md)
+> **On naming:** the repository, the npm package and the log `project` field are all `8x-fathom-rebuild`. The words **Fathom Rebuild** in the interface are the product's display name — a wordmark has to read like one, and `8x-fathom-rebuild` in a sidebar would not. There is no third name.
+
+**Agent capture proof:** [CAPTURE-TEST.md](./CAPTURE-TEST.md) · **Every line of the brief, checked:** [BRIEF-CHECK.md](./BRIEF-CHECK.md) · **Product reasoning and cuts:** [PRODUCT-NOTES.md](./PRODUCT-NOTES.md) · **Walkthrough script:** [WALKTHROUGH.md](./WALKTHROUGH.md) · **What's real vs simulated:** `/about` in the app
 
 ---
 
@@ -30,6 +32,7 @@ Fathom is very good at the two-person sales call and visibly strains at the eigh
 | Empty search result | "No results" | "Searched 625 lines across 9 meetings, including the related words it expanded to" |
 | Dark mode | Not found in 20 months of release notes | Yes |
 | Cross-meeting action items | Live inside the call they came from | One board, grouped by owner |
+| Pre-meeting capture control | Buried in settings; bot sometimes joins anyway | Per-meeting, on the list, with the rule that chose it shown |
 
 ## The stack
 
@@ -82,7 +85,8 @@ No environment variables. No database to provision.
 
 ```
 src/
-  app/                    routes: list, meeting, search, actions, clips, live, about, /s/<token>
+  app/                    routes: list (+ upcoming), meeting, search, actions, clips, live,
+                          about, /s/<token>
   components/
     meeting/              player, transcript, summary, highlights, actions, ask, share, export
   lib/
@@ -96,6 +100,6 @@ src/
 
 ## What was deliberately left out
 
-CRM sync, deal pipelines, coaching scorecards, calendar connection, auth, billing, integrations, mobile, admin. Some of it is Fathom's actual moat and all of it is downstream of the core loop working. [PRODUCT-NOTES.md](./PRODUCT-NOTES.md) has the reasoning for each cut, the research it came from, and the ranked table of where the original is weak and how confident I am about each one.
+CRM sync, deal pipelines, coaching scorecards, real calendar OAuth, auth, billing, third-party integrations, mobile, admin. Some of it is Fathom's actual moat and all of it is downstream of the core loop working. [PRODUCT-NOTES.md](./PRODUCT-NOTES.md) has the reasoning for each cut, the research it came from, and the ranked table of where the original is weak and how confident I am about each one.
 
 The honest near-miss: retroactive trackers. Fathom's *"Trackers do not scan past calls retroactively"* is a backfill-compute limitation rather than a product truth, and it would have been the next thing above the line.

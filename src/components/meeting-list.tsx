@@ -5,6 +5,8 @@ import { useMemo, useState } from "react";
 import { bucketOf, duration, pluralise, timeOf, when } from "@/lib/format";
 import { Avatar, AvatarStack, Badge, Icon, TalkBar } from "./ui";
 import { PageHeader } from "./page-header";
+import { Upcoming } from "./upcoming";
+import type { UpcomingMeeting } from "@/lib/seed/upcoming";
 import type { Person } from "@/lib/types";
 
 export interface MeetingRow {
@@ -43,7 +45,15 @@ const KIND_LABEL: Record<string, string> = {
 
 const ME = "p-abubakar";
 
-export function MeetingList({ rows }: { rows: MeetingRow[] }) {
+export function MeetingList({
+  rows,
+  upcoming,
+  people,
+}: {
+  rows: MeetingRow[];
+  upcoming: UpcomingMeeting[];
+  people: Person[];
+}) {
   const [filter, setFilter] = useState<Filter>("all");
   const [q, setQ] = useState("");
 
@@ -82,6 +92,8 @@ export function MeetingList({ rows }: { rows: MeetingRow[] }) {
         title="Meetings"
         subtitle={`${rows.length} recordings · ${totalMin} minutes captured · ${pluralise(openActions, "open action item")}`}
       />
+
+      <Upcoming upcoming={upcoming} people={people} />
 
       <div className="mb-5 flex flex-wrap items-center gap-2">
         <div

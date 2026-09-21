@@ -1,4 +1,4 @@
-// Domain model for Sonar.
+// Domain model for Fathom Rebuild.
 //
 // Two deliberate divergences from Fathom's public API schema, both noted in
 // PRODUCT-NOTES.md:

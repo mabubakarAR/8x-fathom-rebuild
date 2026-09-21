@@ -19,10 +19,10 @@ export async function generateMetadata({
   const { token } = await params;
   const payload = decodeShare(token);
   const bundle = payload ? corpus().byMeeting.get(payload.m) : null;
-  if (!bundle) return { title: "Link not found — Sonar" };
+  if (!bundle) return { title: "Link not found — Fathom Rebuild" };
   const title = payload?.t ? `${payload.t} — clip` : bundle.meeting.title;
   return {
-    title: `${title} — Sonar`,
+    title: `${title} — Fathom Rebuild`,
     description: bundle.meeting.gist,
   };
 }

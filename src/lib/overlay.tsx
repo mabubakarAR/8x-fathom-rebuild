@@ -38,7 +38,7 @@ import type { AskThread, Highlight, Ms } from "./types";
 // empty in a fresh context, and neither should break the page.
 // ---------------------------------------------------------------------------
 
-const KEY = "sonar.overlay.v1";
+const KEY = "8x-fathom-rebuild.overlay.v1";
 
 export interface SpeakerFix {
   /** Segment whose attribution was corrected. */
@@ -65,6 +65,8 @@ export interface OverlayState {
   threads: AskThread[];
   /** Last summary template chosen per meeting. */
   templateChoice: Record<string, string>;
+  /** Per-upcoming-meeting capture override, set before the meeting happens. */
+  captureChoice: Record<string, string>;
   theme: "light" | "dark" | "system";
 }
 
@@ -76,6 +78,7 @@ const EMPTY: OverlayState = {
   speakerFixes: {},
   threads: [],
   templateChoice: {},
+  captureChoice: {},
   theme: "system",
 };
 
@@ -121,6 +124,7 @@ interface OverlayApi {
   upsertThread(thread: AskThread): void;
   deleteThread(id: string): void;
   chooseTemplate(meetingId: string, key: string): void;
+  setCaptureChoice(upcomingId: string, mode: string): void;
   setTheme(t: OverlayState["theme"]): void;
   reset(): void;
 }
@@ -226,6 +230,11 @@ export function OverlayProvider({ children }: { children: React.ReactNode }) {
         patch((s) => ({
           ...s,
           templateChoice: { ...s.templateChoice, [meetingId]: key },
+        })),
+      setCaptureChoice: (upcomingId, mode) =>
+        patch((s) => ({
+          ...s,
+          captureChoice: { ...s.captureChoice, [upcomingId]: mode },
         })),
       setTheme: (theme) => patch((s) => ({ ...s, theme })),
       reset: () => setState(EMPTY),

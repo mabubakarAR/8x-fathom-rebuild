@@ -87,7 +87,7 @@ function Sidebar({ pathname }: { pathname: string }) {
           style={{ color: "var(--ink)" }}
         >
           <Mark />
-          <span className="text-[15px] font-semibold tracking-tight">Sonar</span>
+          <span className="text-[15px] font-semibold tracking-tight">Fathom Rebuild</span>
         </Link>
 
         <ul className="flex flex-col gap-0.5 px-2.5">
@@ -160,7 +160,7 @@ function Sidebar({ pathname }: { pathname: string }) {
   );
 }
 
-/** Sonar mark — concentric sweep, nodding at the depth-sounding metaphor. */
+/** Mark — concentric sweep, nodding at Fathom's depth-sounding metaphor. */
 function Mark() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden>

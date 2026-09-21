@@ -3,7 +3,7 @@ import { corpus } from "@/lib/data/store";
 import { PageHeader } from "@/components/page-header";
 
 export const metadata = {
-  title: "What's real and what isn't — Sonar",
+  title: "What's real and what isn't — Fathom Rebuild",
 };
 
 export default function AboutPage() {
@@ -46,6 +46,13 @@ export default function AboutPage() {
               structured summary, with shallow intent routing. Less fluent than an LLM, and
               incapable of making something up — every sentence it surfaces is a line somebody
               actually said, with a timestamp.
+            </Li>
+            <Li label="The calendar connection">
+              No OAuth, no Google API — the &ldquo;connected&rdquo; state is seeded. What is real is
+              the part that matters: the per-meeting capture decision on the meetings list, made
+              before the meeting happens, with the rule that chose it stated in words rather than
+              applied invisibly. That control is what stops a notetaker turning up where it was not
+              wanted, which is one of the sharper complaints in Fathom&rsquo;s reviews.
             </Li>
             <Li label="Summaries and chapters">
               Authored alongside the transcripts rather than generated at runtime. The structure is
@@ -112,18 +119,13 @@ export default function AboutPage() {
 
         <Section title="What was deliberately left out">
           <p>
-            CRM sync, deal pipelines, coaching scorecards, calendar connection, authentication,
-            billing, integrations, mobile, admin. Some of it is Fathom&rsquo;s actual moat, and all
+            CRM sync, deal pipelines, coaching scorecards, real calendar OAuth, authentication,
+            billing, third-party integrations, mobile, admin. Some of it is Fathom&rsquo;s actual moat, and all
             of it is downstream of the core loop working. Building a shallow version of any of it
             would have shown less judgement than not building it.{" "}
-            <Link
-              href="https://github.com/"
-              className="underline"
-              style={{ color: "var(--accent-ink)" }}
-            >
-              PRODUCT-NOTES.md
-            </Link>{" "}
-            in the repository has the full reasoning, and the research the decisions came from.
+            <code>PRODUCT-NOTES.md</code> in the repository has the full reasoning, the research
+            each decision came from, and a ranked table of where the original is weak with how
+            confident I am about each one.
           </p>
         </Section>
 

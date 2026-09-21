@@ -22,7 +22,7 @@ from datetime import datetime, timezone
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 LOG_DIR = os.path.join(REPO, ".agent-logs")
 AUTHOR = os.environ.get("AGENT_CAPTURE_AUTHOR", "abubakar-dev")
-PROJECT = os.environ.get("AGENT_CAPTURE_PROJECT", "fathom-rebuild")
+PROJECT = os.environ.get("AGENT_CAPTURE_PROJECT", "8x-fathom-rebuild")
 
 # Turns injected by the harness rather than typed by the human.
 SYNTHETIC = re.compile(

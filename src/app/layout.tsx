@@ -4,14 +4,14 @@ import { OverlayProvider } from "@/lib/overlay";
 import { Shell } from "@/components/shell";
 
 export const metadata: Metadata = {
-  title: "Sonar — AI meeting notetaker",
+  title: "Fathom Rebuild — AI meeting notetaker",
   description:
     "A rebuild of Fathom. Auto-chaptered transcripts, cited summaries, speaker repair and blended search — built for the eight-person hour-long call.",
 };
 
 // Applied before paint so a dark-mode viewer never sees a white flash. Reading
 // localStorage here can throw (private mode), hence the try/catch.
-const THEME_BOOT = `(function(){try{var s=localStorage.getItem("sonar.overlay.v1");if(s){var t=JSON.parse(s).theme;if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t);}}catch(e){}})();`;
+const THEME_BOOT = `(function(){try{var s=localStorage.getItem("8x-fathom-rebuild.overlay.v1");if(s){var t=JSON.parse(s).theme;if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t);}}catch(e){}})();`;
 
 export default function RootLayout({
   children,

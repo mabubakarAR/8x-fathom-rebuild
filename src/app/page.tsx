@@ -1,5 +1,6 @@
 import { corpus } from "@/lib/data/store";
-import { PERSON_BY_ID } from "@/lib/seed/cast";
+import { PEOPLE, PERSON_BY_ID } from "@/lib/seed/cast";
+import { UPCOMING } from "@/lib/seed/upcoming";
 import { MeetingList, type MeetingRow } from "@/components/meeting-list";
 
 export default function HomePage() {
@@ -39,5 +40,5 @@ export default function HomePage() {
     };
   });
 
-  return <MeetingList rows={rows} />;
+  return <MeetingList rows={rows} upcoming={UPCOMING} people={PEOPLE} />;
 }

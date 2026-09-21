@@ -24,7 +24,7 @@ REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 LOG_DIR = os.path.join(REPO, ".agent-logs")
 ERR_LOG = os.path.join(LOG_DIR, ".capture-errors.log")
 AUTHOR = os.environ.get("AGENT_CAPTURE_AUTHOR", "abubakar-dev")
-PROJECT = os.environ.get("AGENT_CAPTURE_PROJECT", "fathom-rebuild")
+PROJECT = os.environ.get("AGENT_CAPTURE_PROJECT", "8x-fathom-rebuild")
 TOOL = "claude-code"
 
 

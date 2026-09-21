@@ -64,7 +64,7 @@ date: 2026-09-21
 author: abubakar-dev
 model: claude-opus-5
 tool: claude-code
-project: fathom-rebuild
+project: 8x-fathom-rebuild
 total_exchanges: 1
 first_prompt_time: 2026-09-21T08:44:18.073Z
 last_prompt_time: 2026-09-21T08:44:18.073Z
@@ -99,7 +99,7 @@ date: 2026-09-21
 author: abubakar-dev
 model: claude-opus-5
 tool: claude-code
-project: fathom-rebuild
+project: 8x-fathom-rebuild
 total_exchanges: 1
 first_prompt_time: 2026-09-21T08:45:02.994Z
 last_prompt_time: 2026-09-21T08:45:02.994Z
