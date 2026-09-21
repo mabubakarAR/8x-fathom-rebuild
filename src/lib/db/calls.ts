@@ -57,9 +57,22 @@ export async function saveCall(
     id,
     segments,
     speakerNames,
-    analysis,
     durationMs,
   } = input;
+
+  // The transcript is the part the user cannot get back; the analysis can
+  // always be regenerated from it. So a summary that arrives half-formed —
+  // an older client, a model response that lost a field — must not take the
+  // recording down with it. Fill the holes and save.
+  const a0 = input.analysis;
+  const analysis = {
+    ...a0,
+    model: a0.model ?? "unknown",
+    chapters: a0.chapters ?? [],
+    sections: a0.sections ?? [],
+    actions: a0.actions ?? [],
+    highlights: a0.highlights ?? [],
+  };
 
   const labels = [...new Set(segments.map((s) => s.speakerLabel))].sort((a, b) => a - b);
   const spId = (label: number) => `${id}-sp${label}`;
@@ -159,7 +172,7 @@ export async function saveCall(
         await tx`
           insert into summary_sections (id, summary_id, heading, idx)
           values (${secId}, ${sumId}, ${sec.heading}, ${i})`;
-        const bullets = sec.bullets
+        const bullets = (sec.bullets ?? [])
           .filter((b) => segments[b.segmentIdx])
           .map((b, j) => ({
             id: `${secId}-b${j}`,
