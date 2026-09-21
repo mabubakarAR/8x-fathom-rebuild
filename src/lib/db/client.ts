@@ -75,6 +75,55 @@ export function blobTokenVar(): string | null {
   );
 }
 
+/**
+ * The newer Vercel Blob stores don't hand out a read-write token at all.
+ * They inject a store id (`BLOB_STORE_ID`, or `<prefix>_STORE_ID` when the
+ * store was attached with a prefix) and the request is authenticated by the
+ * per-deployment OIDC token Vercel already puts in `VERCEL_OIDC_TOKEN`.
+ *
+ * This is why `blobShaped` came back empty on a deployment where the store
+ * was plainly connected: we were looking for a credential the store never
+ * issues. Store ids are opaque (`store_xxxxxxxx`) and carry no secret, so
+ * matching them by shape is safe.
+ */
+const STORE_ID = /^store_[A-Za-z0-9]+$/;
+
+export function blobStoreIdVar(): string | null {
+  if (process.env.BLOB_STORE_ID) return "BLOB_STORE_ID";
+  const keys = Object.keys(process.env);
+  return (
+    keys.find((k) => /STORE_ID$/i.test(k) && process.env[k]) ??
+    keys.find((k) => {
+      const v = process.env[k];
+      return typeof v === "string" && STORE_ID.test(v);
+    }) ??
+    null
+  );
+}
+
+/**
+ * How this deployment can talk to Blob storage, if it can at all.
+ *
+ * Returns the option bag `@vercel/blob` wants, so the call site doesn't have
+ * to know which of the two auth styles it got.
+ */
+export function blobAuth():
+  | { token: string }
+  | { storeId: string }
+  | null {
+  const tokenVar = blobTokenVar();
+  if (tokenVar) return { token: process.env[tokenVar] as string };
+  const storeVar = blobStoreIdVar();
+  if (storeVar && process.env.VERCEL_OIDC_TOKEN) {
+    return { storeId: process.env[storeVar] as string };
+  }
+  return null;
+}
+
+export function blobConfigured(): boolean {
+  return blobAuth() !== null;
+}
+
 function databaseUrl(): string | null {
   const name = databaseUrlVar();
   return name ? (process.env[name] as string) : null;
@@ -137,9 +186,18 @@ export function envReport() {
       return typeof v === "string" && PG_URL.test(v);
     }),
     blobShaped: keys.filter((k) => /BLOB/i.test(k) && /TOKEN/i.test(k) && process.env[k]),
+    // The other half of the picture: store ids, and whether the OIDC token
+    // that makes them usable is actually present.
+    storeIdShaped: keys.filter((k) => {
+      const v = process.env[k];
+      return (
+        Boolean(v) && (/STORE_ID$/i.test(k) || (typeof v === "string" && STORE_ID.test(v)))
+      );
+    }),
+    oidc: Boolean(process.env.VERCEL_OIDC_TOKEN),
     // Names of anything storage-ish, to catch a prefix we would otherwise
     // have to guess at. Names only — never values.
-    storageish: keys.filter((k) => /POSTGRES|NEON|DATABASE|BLOB|STORAGE|PG(HOST|USER|DATABASE)/i.test(k)),
+    storageish: keys.filter((k) => /POSTGRES|NEON|DATABASE|BLOB|STORAGE|STORE_ID|OIDC|PG(HOST|USER|DATABASE)/i.test(k)),
     totalVars: keys.length,
   };
 }

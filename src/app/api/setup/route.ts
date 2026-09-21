@@ -4,6 +4,8 @@ import {
   dbConfigured,
   databaseUrlVar,
   blobTokenVar,
+  blobStoreIdVar,
+  blobConfigured,
   envReport,
 } from "@/lib/db/client";
 import { storageConfigured, ensureBucket } from "@/lib/pipeline/ingest";
@@ -18,7 +20,7 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const status = {
     database: dbConfigured(),
-    blob: Boolean(blobTokenVar()),
+    blob: blobConfigured(),
     storage: storageConfigured(),
     transcription: transcriptionConfigured(),
     analysis: analysisConfigured(),
@@ -51,7 +53,7 @@ export async function GET() {
     ok: m.ok,
     status,
     usingVar: databaseUrlVar(),
-    blobVar: blobTokenVar(),
+    blobVar: blobTokenVar() ?? blobStoreIdVar(),
     migration: m.message,
     bucket,
     env,

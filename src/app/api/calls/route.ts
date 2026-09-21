@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { put } from "@vercel/blob";
-import { dbConfigured, blobTokenVar } from "@/lib/db/client";
+import { dbConfigured, blobAuth } from "@/lib/db/client";
 import { saveCall, type SaveCallInput } from "@/lib/db/calls";
 
 export const runtime = "nodejs";
@@ -57,8 +57,10 @@ export async function POST(req: Request) {
 
   const audio = form.get("audio");
   if (audio instanceof File && audio.size > 0) {
-    const tokenVar = blobTokenVar();
-    if (!tokenVar) {
+    // Either a read-write token (older stores) or a store id authenticated by
+    // the deployment's OIDC token (newer ones). The call site doesn't care.
+    const auth = blobAuth();
+    if (!auth) {
       audioWarning =
         "No Blob store is connected, so the audio stayed in your browser. The transcript and notes are saved.";
     } else {
@@ -69,8 +71,9 @@ export async function POST(req: Request) {
           contentType: audio.type || "audio/webm",
           addRandomSuffix: false,
           // Passed explicitly rather than relying on the SDK's default
-          // lookup, because the token can arrive under a prefixed name.
-          token: process.env[tokenVar],
+          // lookup, because a store attached with a prefix lands under a name
+          // the SDK never looks at.
+          ...auth,
         });
         mediaUrl = blob.url;
         mediaMime = audio.type || "audio/webm";
