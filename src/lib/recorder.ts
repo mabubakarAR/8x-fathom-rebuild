@@ -1,21 +1,33 @@
-// Real capture.
+// Real capture — including the other people on the call.
 //
-// The first version of this build stubbed the recording bot, which the brief
-// allowed. The trouble with stubbing capture in a notetaker is that capture
-// is the product: without it there is nothing to take notes *of*, and what
-// is left is a viewer for data that arrived from nowhere.
+// Fathom's whole job is taking notes from a Zoom or Meet call. Recording only
+// your own microphone gets you a monologue, which is not a meeting, and that
+// gap is the difference between a notetaker and a dictaphone.
 //
-// So this is the real thing, and it needs no API key and no server:
+// The browser can close it without a bot, an extension or a desktop app:
 //
-//   getUserMedia        → the actual microphone
-//   MediaRecorder       → an actual audio file you can play back afterwards
-//   AnalyserNode        → the live level meter, from real samples
-//   SpeechRecognition   → live transcription, in the browser, as you talk
+//   getDisplayMedia({audio:true})  → the meeting tab's audio. When you share
+//                                    the Zoom/Meet tab and tick "share tab
+//                                    audio", this is everyone else on the
+//                                    call, at source quality, with no echo
+//                                    and no room noise.
+//   getUserMedia()                 → you.
+//   Web Audio                      → both mixed into one stream, so the
+//                                    recording is the conversation rather
+//                                    than one side of it.
+//   MediaRecorder                  → one file, both sides.
+//   AnalyserNode ×2                → separate level meters, so you can see at
+//                                    a glance that the far side is actually
+//                                    being captured. Silently recording
+//                                    silence is the worst possible failure
+//                                    for this feature.
+//   SpeechRecognition              → live captions while the call runs.
 //
-// The last one is Chrome/Edge only, which is a real limitation and is stated
-// in the UI rather than discovered. Everywhere else the recording still works
-// and the transcript comes from the file you bring, or from Deepgram when a
-// key is configured.
+// One honest limit: the Web Speech API only ever listens to the default
+// microphone. It cannot be pointed at the mixed stream, so live captions are
+// your side only. The far side is transcribed after the call by Deepgram,
+// which also diarizes it — and the UI says exactly that rather than letting
+// someone discover it afterwards.
 
 export interface LiveSegment {
   /** Which speaker this was tagged to at the time it was said. */
@@ -43,6 +55,19 @@ export function recordingSupported(): boolean {
     typeof MediaRecorder !== "undefined"
   );
 }
+
+/** Whether this browser can capture another tab's audio. */
+export function tabAudioSupported(): boolean {
+  return (
+    typeof navigator !== "undefined" &&
+    Boolean(
+      (navigator.mediaDevices as MediaDevices & { getDisplayMedia?: unknown })
+        ?.getDisplayMedia,
+    )
+  );
+}
+
+export type CaptureSource = "mic" | "meeting";
 
 /** The first mime type this browser will actually record. Safari and Chrome
  *  disagree, and MediaRecorder throws rather than degrading. */
@@ -82,8 +107,12 @@ interface RecognitionLike {
 }
 
 export interface SessionHandlers {
-  /** Fires continuously with the current mic level, 0..1. */
+  /** Fires continuously with your own mic level, 0..1. */
   onLevel(level: number): void;
+  /** Fires with the far side's level when capturing a meeting tab. */
+  onFarLevel?(level: number): void;
+  /** The user stopped sharing from the browser's own share bar. */
+  onShareEnded?(): void;
   /** A finalised piece of speech. */
   onSegment(seg: LiveSegment): void;
   /** The in-flight partial, so the UI can show words before they settle. */
@@ -95,12 +124,20 @@ export interface Session {
   /** Which speaker new segments are attributed to. Changed live by the UI. */
   setSpeaker(label: number): void;
   elapsedMs(): number;
+  /** True when the far side of a call is being captured too. */
+  readonly hasFarSide: boolean;
   /** Resolves with the recorded audio once everything has flushed. */
   stop(): Promise<{ blob: Blob | null; mime: string | undefined; durationMs: number }>;
 }
 
-export async function startSession(h: SessionHandlers): Promise<Session> {
-  const stream = await navigator.mediaDevices.getUserMedia({
+export async function startSession(
+  h: SessionHandlers,
+  source: CaptureSource = "mic",
+): Promise<Session> {
+  // Your microphone. Echo cancellation matters more than usual here: without
+  // it, capturing the meeting tab while your speakers play it back records
+  // the far side twice, half a beat apart.
+  const mic = await navigator.mediaDevices.getUserMedia({
     audio: {
       echoCancellation: true,
       noiseSuppression: true,
@@ -108,23 +145,64 @@ export async function startSession(h: SessionHandlers): Promise<Session> {
     },
   });
 
+  // The meeting tab. Video has to be requested — Chrome will not offer tab
+  // audio for an audio-only request — but it is discarded immediately, so
+  // nothing is ever recorded from the screen.
+  let display: MediaStream | null = null;
+  if (source === "meeting") {
+    try {
+      display = await navigator.mediaDevices.getDisplayMedia({
+        video: true,
+        audio: {
+          echoCancellation: false,
+          noiseSuppression: false,
+          autoGainControl: false,
+        },
+      });
+      if (!display.getAudioTracks().length) {
+        for (const t of display.getTracks()) t.stop();
+        display = null;
+        throw new Error(
+          'No audio came with that share. Pick the tab your call is in and tick "Also share tab audio".',
+        );
+      }
+      for (const t of display.getVideoTracks()) {
+        t.stop();
+        display.removeTrack(t);
+      }
+      display.getAudioTracks()[0].addEventListener("ended", () => h.onShareEnded?.());
+    } catch (e) {
+      for (const t of mic.getTracks()) t.stop();
+      throw e;
+    }
+  }
+
   const t0 = performance.now();
   const elapsedMs = () => performance.now() - t0;
   let speaker = 0;
 
-  // ---- level meter ---------------------------------------------------------
+  // ---- mixing and metering -------------------------------------------------
   const AudioCtor =
     window.AudioContext ||
     (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
   const ac = new AudioCtor();
-  const source = ac.createMediaStreamSource(stream);
-  const analyser = ac.createAnalyser();
-  analyser.fftSize = 1024;
-  analyser.smoothingTimeConstant = 0.72;
-  source.connect(analyser);
-  const buf = new Uint8Array(analyser.frequencyBinCount);
-  let raf = 0;
-  const meter = () => {
+
+  const mixed = ac.createMediaStreamDestination();
+
+  const tap = (src: MediaStream) => {
+    const node = ac.createMediaStreamSource(src);
+    const analyser = ac.createAnalyser();
+    analyser.fftSize = 1024;
+    analyser.smoothingTimeConstant = 0.72;
+    node.connect(analyser);
+    node.connect(mixed);
+    return analyser;
+  };
+
+  const micAnalyser = tap(mic);
+  const farAnalyser = display ? tap(display) : null;
+
+  const rms = (analyser: AnalyserNode, buf: Uint8Array<ArrayBuffer>) => {
     analyser.getByteTimeDomainData(buf);
     // RMS around the 128 midpoint, which is what actually tracks loudness.
     let sum = 0;
@@ -132,12 +210,25 @@ export async function startSession(h: SessionHandlers): Promise<Session> {
       const d = (buf[i] - 128) / 128;
       sum += d * d;
     }
-    h.onLevel(Math.min(1, Math.sqrt(sum / buf.length) * 3.2));
+    return Math.min(1, Math.sqrt(sum / buf.length) * 3.2);
+  };
+
+  const micBuf = new Uint8Array(new ArrayBuffer(micAnalyser.frequencyBinCount));
+  const farBuf = farAnalyser
+    ? new Uint8Array(new ArrayBuffer(farAnalyser.frequencyBinCount))
+    : null;
+  let raf = 0;
+  const meter = () => {
+    h.onLevel(rms(micAnalyser, micBuf));
+    if (farAnalyser && farBuf) h.onFarLevel?.(rms(farAnalyser, farBuf));
     raf = requestAnimationFrame(meter);
   };
   raf = requestAnimationFrame(meter);
 
   // ---- the recording -------------------------------------------------------
+  // The mixed destination, not the raw mic — so the file contains the
+  // conversation rather than one side of it.
+  const stream = mixed.stream;
   const mime = pickMime();
   const rec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
   const chunks: BlobPart[] = [];
@@ -223,6 +314,7 @@ export async function startSession(h: SessionHandlers): Promise<Session> {
   }
 
   return {
+    hasFarSide: Boolean(display),
     setSpeaker(label) {
       speaker = label;
     },
@@ -247,7 +339,8 @@ export async function startSession(h: SessionHandlers): Promise<Session> {
         rec.stop();
       });
 
-      for (const t of stream.getTracks()) t.stop();
+      for (const t of mic.getTracks()) t.stop();
+      for (const t of display?.getTracks() ?? []) t.stop();
       void ac.close().catch(() => {});
 
       return { blob, mime, durationMs };

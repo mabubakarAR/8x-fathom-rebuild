@@ -4,5 +4,10 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Record a meeting — Fathom Rebuild" };
 
 export default function RecordPage() {
-  return <RecordStudio configured={Boolean(process.env.ANTHROPIC_API_KEY)} />;
+  return (
+    <RecordStudio
+      configured={Boolean(process.env.ANTHROPIC_API_KEY)}
+      transcription={Boolean(process.env.DEEPGRAM_API_KEY)}
+    />
+  );
 }

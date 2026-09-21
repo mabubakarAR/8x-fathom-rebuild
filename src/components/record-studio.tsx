@@ -7,6 +7,8 @@ import {
   recordingSupported,
   speechSupported,
   startSession,
+  tabAudioSupported,
+  type CaptureSource,
   type LiveSegment,
   type Session,
 } from "@/lib/recorder";
@@ -19,10 +21,18 @@ import { PageHeader } from "./page-header";
 
 // The studio.
 //
-// This is the screen the product was missing: the place where a meeting
-// actually happens. Press record and it is your microphone, a real file, and
-// a transcript that fills in while you speak — then the pipeline that already
-// existed turns it into notes where every claim cites a line.
+// Fathom's job is taking notes from a Zoom or Meet call. Recording only your
+// own microphone gets you a monologue, so this screen captures the call:
+// share the tab your meeting is in and the browser hands over the far side's
+// audio at source quality, mixed with your mic into one recording.
+//
+// Two transcription paths, and the difference between them is stated up
+// front rather than discovered:
+//
+//   Live  — the Web Speech API, which only ever listens to the default
+//           microphone. Your side, as you speak, no key required.
+//   After — Deepgram over the mixed recording, which transcribes everyone
+//           and diarizes them. This is the one that makes it a meeting.
 //
 // The one design decision worth defending: you tag the speaker *during* the
 // call, with a click or a number key. Browser speech recognition does not
@@ -33,7 +43,14 @@ import { PageHeader } from "./page-header";
 
 type Phase = "idle" | "live" | "analysing";
 
-export function RecordStudio({ configured }: { configured: boolean }) {
+export function RecordStudio({
+  configured,
+  transcription,
+}: {
+  configured: boolean;
+  /** DEEPGRAM_API_KEY is set, so the far side can be transcribed too. */
+  transcription: boolean;
+}) {
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>("idle");
   const [segments, setSegments] = useState<LiveSegment[]>([]);
@@ -42,6 +59,8 @@ export function RecordStudio({ configured }: { configured: boolean }) {
   const [speaker, setSpeaker] = useState(0);
   const [names, setNames] = useState<string[]>(["You", "Guest"]);
   const [template, setTemplate] = useState("general");
+  const [source, setSource] = useState<CaptureSource>("mic");
+  const [farSide, setFarSide] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [log, setLog] = useState<string[]>([]);
@@ -49,10 +68,29 @@ export function RecordStudio({ configured }: { configured: boolean }) {
   const session = useRef<Session | null>(null);
   const feed = useRef<HTMLDivElement>(null);
   const levels = useRef<number[]>([]);
+  const farLevels = useRef<number[]>([]);
   const canvas = useRef<HTMLCanvasElement>(null);
 
-  const canRecord = recordingSupported();
-  const canTranscribe = speechSupported();
+  // Browser capabilities are client-only facts.
+  //
+  // Evaluating any of them during render means the server HTML and the first
+  // client render disagree, which React reports as a hydration error and
+  // which shows up as content flickering on load. All three are resolved
+  // once, after mount, and everything renders its capable state until then.
+  const [caps, setCaps] = useState<{ record: boolean; speech: boolean } | null>(null);
+  useEffect(
+    () => setCaps({ record: recordingSupported(), speech: speechSupported() }),
+    [],
+  );
+  const canRecord = caps?.record ?? true;
+  const canTranscribe = caps?.speech ?? true;
+  // null until mounted. Whether the browser can capture a tab is only
+  // knowable on the client, so the card renders its normal copy on the
+  // server and the unsupported note appears afterwards — deciding it during
+  // render makes the two HTMLs disagree (React #418).
+  const [canShareTab, setCanShareTab] = useState<boolean | null>(null);
+  useEffect(() => setCanShareTab(tabAudioSupported()), []);
+
 
   // ---- elapsed clock -------------------------------------------------------
   useEffect(() => {
@@ -79,20 +117,30 @@ export function RecordStudio({ configured }: { configured: boolean }) {
         }
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         ctx.clearRect(0, 0, r.width, r.height);
-        const all = levels.current;
+        const css = getComputedStyle(document.documentElement);
         const step = 3;
         const n = Math.floor(r.width / step);
-        const slice = all.slice(-n);
-        const colour = getComputedStyle(document.documentElement)
-          .getPropertyValue("--accent")
-          .trim() || "#00beff";
-        ctx.fillStyle = colour;
-        for (let i = 0; i < slice.length; i++) {
-          const h = Math.max(2, slice[i] * r.height * 0.92);
-          const x = r.width - (slice.length - i) * step;
-          ctx.globalAlpha = 0.35 + (i / Math.max(1, slice.length)) * 0.65;
-          ctx.fillRect(x, (r.height - h) / 2, step - 1.2, h);
-        }
+        // You above the line, the room below it. Two meters rather than one
+        // mixed bar, because the failure this has to make obvious is "the
+        // far side is not actually being captured".
+        const mine = levels.current.slice(-n);
+        const theirs = farLevels.current.slice(-n);
+        const mid = r.height / 2;
+        const draw = (
+          vals: number[],
+          colour: string,
+          dir: -1 | 1,
+        ) => {
+          ctx.fillStyle = colour.trim() || "#4a9eff";
+          for (let i = 0; i < vals.length; i++) {
+            const h = Math.max(1.5, vals[i] * mid * 0.92);
+            const x = r.width - (vals.length - i) * step;
+            ctx.globalAlpha = 0.4 + (i / Math.max(1, vals.length)) * 0.6;
+            ctx.fillRect(x, dir < 0 ? mid - h : mid, step - 1.2, h);
+          }
+        };
+        draw(mine, css.getPropertyValue("--accent"), -1);
+        if (theirs.length) draw(theirs, css.getPropertyValue("--sp-2"), 1);
         ctx.globalAlpha = 1;
       }
       raf = requestAnimationFrame(draw);
@@ -132,22 +180,32 @@ export function RecordStudio({ configured }: { configured: boolean }) {
     setSegments([]);
     setInterim("");
     levels.current = [];
+    farLevels.current = [];
     try {
-      const s = await startSession({
-        onLevel: (l) => levels.current.push(l),
-        onSegment: (seg) => setSegments((xs) => [...xs, seg]),
-        onInterim: setInterim,
-        onError: setNote,
-      });
+      const s = await startSession(
+        {
+          onLevel: (l) => levels.current.push(l),
+          onFarLevel: (l) => farLevels.current.push(l),
+          onSegment: (seg) => setSegments((xs) => [...xs, seg]),
+          onInterim: setInterim,
+          onError: setNote,
+          onShareEnded: () =>
+            setNote("Tab sharing stopped, so the far side is no longer being captured."),
+        },
+        source,
+      );
       session.current = s;
+      setFarSide(s.hasFarSide);
       s.setSpeaker(speaker);
       setPhase("live");
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       setError(
-        /denied|not allowed/i.test(msg)
-          ? "Microphone access was denied. Allow it in the browser's address bar and try again."
-          : `Could not start the microphone: ${msg}`,
+        /denied|not allowed|NotAllowed/i.test(msg)
+          ? source === "meeting"
+            ? "Screen sharing was declined. Pick the tab your call is in and tick \u201cAlso share tab audio\u201d."
+            : "Microphone access was denied. Allow it in the browser's address bar and try again."
+          : msg,
       );
     }
   }
@@ -158,10 +216,70 @@ export function RecordStudio({ configured }: { configured: boolean }) {
     setPhase("analysing");
     setLog(["Closing the recording…"]);
 
-    const { blob, durationMs } = await s.stop();
+    const { blob, mime, durationMs } = await s.stop();
     session.current = null;
 
-    const spoken = segments;
+    const id = `rec-${Date.now().toString(36)}`;
+    if (blob) {
+      setLog((l) => [
+        ...l,
+        `Recording saved — ${(blob.size / 1024 / 1024).toFixed(1)} MB, ${clock(durationMs)}.`,
+      ]);
+      await putAudio(id, blob);
+    }
+
+    // Transcription.
+    //
+    // Live captions only ever heard the default microphone, so on a call they
+    // are your half of it. If Deepgram is configured, the mixed recording goes
+    // there instead: it transcribes everyone and diarizes them, which is the
+    // difference between notes on a meeting and notes on a monologue. The live
+    // captions stay as the fallback, and the UI says which one was used.
+    let spoken: LiveSegment[] = segments;
+    let speakerNames: Record<string, string> = {};
+    names.forEach((n, i) => (speakerNames[String(i)] = n));
+    let transcriptSource = "live captions (your microphone only)";
+    const warnings: string[] = [];
+
+    if (blob && transcription) {
+      setLog((l) => [...l, "Sending the recording for transcription and speaker separation…"]);
+      try {
+        const res = await fetch("/api/transcribe", {
+          method: "POST",
+          headers: { "Content-Type": mime || "audio/webm" },
+          body: blob,
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || "Transcription failed");
+        if (Array.isArray(json.segments) && json.segments.length) {
+          spoken = json.segments as LiveSegment[];
+          // Deepgram numbers its speakers; it cannot know their names. Keep
+          // the one name we do know and leave the rest to the repair flow.
+          speakerNames = {};
+          const labels = [...new Set(spoken.map((x) => x.speakerLabel))].sort((a, b) => a - b);
+          for (const l of labels) speakerNames[String(l)] = `Speaker ${l + 1}`;
+          transcriptSource = `${json.model} · ${json.speakerCount} speakers separated`;
+          setLog((l) => [
+            ...l,
+            `${spoken.length} turns, ${json.speakerCount} speakers separated by ${json.model}.`,
+          ]);
+          warnings.push(
+            "Speakers were separated automatically but not named — use the transcript's speaker repair to put names to them.",
+          );
+        }
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        setLog((l) => [...l, `Transcription unavailable (${msg}). Using the live captions.`]);
+        warnings.push(
+          `The recording could not be transcribed (${msg}), so this transcript is the live captions — your microphone only.`,
+        );
+      }
+    } else if (blob && !transcription && farSide) {
+      warnings.push(
+        "The far side of this call was recorded but not transcribed: that needs DEEPGRAM_API_KEY on the server. The transcript below is your microphone only.",
+      );
+    }
+
     if (!spoken.length) {
       setPhase("idle");
       setError(
@@ -172,16 +290,11 @@ export function RecordStudio({ configured }: { configured: boolean }) {
       return;
     }
 
-    const id = `rec-${Date.now().toString(36)}`;
-    if (blob) {
-      setLog((l) => [...l, `Recording saved — ${(blob.size / 1024 / 1024).toFixed(1)} MB, ${clock(durationMs)}.`]);
-      await putAudio(id, blob);
-    }
-
-    // Send it through the same route an imported file uses. The pipeline does
-    // not know or care that these words arrived from a microphone.
     const text = spoken
-      .map((s2) => `${names[s2.speakerLabel] ?? `Speaker ${s2.speakerLabel + 1}`}: ${s2.text}`)
+      .map(
+        (s2) =>
+          `${speakerNames[String(s2.speakerLabel)] ?? `Speaker ${s2.speakerLabel + 1}`}: ${s2.text}`,
+      )
       .join("\n");
 
     setLog((l) => [...l, `${spoken.length} turns captured. Sending to the model…`]);
@@ -196,27 +309,28 @@ export function RecordStudio({ configured }: { configured: boolean }) {
       if (!res.ok) throw new Error(json.error || "Analysis failed");
 
       const ev = json.analysis.evidence;
-      setLog((l) => [
-        ...l,
-        ev
-          ? `Citation check: ${ev.resolved}/${ev.proposed} claims anchored${ev.dropped.length ? `, ${ev.dropped.length} discarded.` : ", none discarded."}`
-          : "",
-        "Opening…",
-      ].filter(Boolean));
+      setLog((l) =>
+        [
+          ...l,
+          ev
+            ? `Citation check: ${ev.resolved}/${ev.proposed} claims anchored${ev.dropped.length ? `, ${ev.dropped.length} discarded.` : ", none discarded."}`
+            : "",
+          "Opening…",
+        ].filter(Boolean),
+      );
 
-      // Keep OUR timings, not the parser's estimates — these came from a real
-      // clock running against real audio, which is strictly better data.
-      const speakerNames: Record<string, string> = {};
-      names.forEach((n, i) => (speakerNames[String(i)] = n));
+      if (!blob) {
+        warnings.push(
+          "Audio could not be saved in this browser, so playback is unavailable. The transcript and analysis are unaffected.",
+        );
+      }
 
       saveImported({
         id,
         createdAt: new Date().toISOString(),
         templateKey: template,
-        format: "live recording",
-        warnings: blob
-          ? []
-          : ["Audio could not be saved in this browser, so playback is unavailable. The transcript and analysis are unaffected."],
+        format: farSide ? `call capture · ${transcriptSource}` : `live recording · ${transcriptSource}`,
+        warnings,
         segments: spoken,
         speakerNames,
         analysis: json.analysis,
@@ -249,9 +363,35 @@ export function RecordStudio({ configured }: { configured: boolean }) {
   return (
     <div className="mx-auto w-full max-w-[1000px] px-4 pb-24 md:px-8">
       <PageHeader
-        title="Record a meeting"
-        subtitle="Your microphone, transcribed as you speak, then read by a model that has to cite its sources."
+        title="Capture a meeting"
+        subtitle="Share the tab your call is in and it records the whole room — not just your half of it."
       />
+
+      {/* ---- what to capture ---- */}
+      {phase === "idle" && (
+        <div className="mb-4 grid gap-3 sm:grid-cols-2">
+          <SourceCard
+            on={source === "meeting"}
+            disabled={canShareTab === false}
+            onPick={() => setSource("meeting")}
+            title="A call I'm in"
+            lead="Zoom, Meet or Teams in a browser tab"
+            body={"Pick the tab your call is in and tick \u201cAlso share tab audio\u201d. Everyone else comes through at source quality \u2014 no bot joins, nobody is told, nothing is installed."}
+            note={
+              canShareTab === false
+                ? "This browser can't capture another tab's audio — Chrome or Edge on desktop can."
+                : undefined
+            }
+          />
+          <SourceCard
+            on={source === "mic"}
+            onPick={() => setSource("mic")}
+            title="Just this room"
+            lead="Your microphone only"
+            body="For an in-person conversation, or a call you're dialled into on another device. One voice, or several around one mic."
+          />
+        </div>
+      )}
 
       {/* ---- the deck ---- */}
       <div
@@ -268,7 +408,7 @@ export function RecordStudio({ configured }: { configured: boolean }) {
               <span className="grid h-4 w-4 place-items-center">
                 <span className="block h-3 w-3 rounded-full" style={{ background: "currentColor" }} />
               </span>
-              Start recording
+              {source === "meeting" ? "Choose the call tab" : "Start recording"}
             </button>
           ) : (
             <button
@@ -295,7 +435,25 @@ export function RecordStudio({ configured }: { configured: boolean }) {
             </span>
           </div>
 
-          <canvas ref={canvas} className="h-10 min-w-[160px] flex-1" aria-hidden />
+          <div className="flex min-w-[180px] flex-1 flex-col gap-0.5">
+            <canvas ref={canvas} className="h-11 w-full" aria-hidden />
+            {phase === "live" && (
+              <div className="flex items-center gap-3 text-[10.5px]" style={{ color: "var(--ink-faint)" }}>
+                <span className="flex items-center gap-1">
+                  <span className="h-1.5 w-1.5 rounded-full" style={{ background: "var(--accent)" }} />
+                  You
+                </span>
+                {farSide ? (
+                  <span className="flex items-center gap-1">
+                    <span className="h-1.5 w-1.5 rounded-full" style={{ background: "var(--sp-2)" }} />
+                    The call
+                  </span>
+                ) : (
+                  <span>microphone only</span>
+                )}
+              </div>
+            )}
+          </div>
 
           {phase === "idle" && (
             <TemplateSelect value={template} onChange={setTemplate} />
@@ -355,6 +513,17 @@ export function RecordStudio({ configured }: { configured: boolean }) {
             importing a transcript
           </Link>{" "}
           is the route that works.
+        </p>
+      )}
+      {phase === "live" && farSide && !transcription && (
+        <p
+          className="mb-4 rounded-[var(--radius)] px-3.5 py-2.5 text-[12.5px] leading-relaxed"
+          style={{ background: "var(--warn-soft)", color: "var(--ink-2)" }}
+        >
+          <strong>The call is being recorded, but only you are being transcribed live.</strong>{" "}
+          The browser&rsquo;s speech API can only hear your microphone. Everyone else is in the
+          recording and would be transcribed and separated after the call, which needs{" "}
+          <code>DEEPGRAM_API_KEY</code> on the server.
         </p>
       )}
       {!configured && (
@@ -456,5 +625,66 @@ export function RecordStudio({ configured }: { configured: boolean }) {
         worth knowing before you record anything sensitive.
       </p>
     </div>
+  );
+}
+
+/** One capture source, as a card rather than a radio button — the choice
+ *  between "a call I'm in" and "just this room" is the most consequential
+ *  thing on the page and deserves to be legible from across the desk. */
+function SourceCard({
+  on,
+  disabled,
+  onPick,
+  title,
+  lead,
+  body,
+  note,
+}: {
+  on: boolean;
+  disabled?: boolean;
+  onPick: () => void;
+  title: string;
+  lead: string;
+  body: string;
+  note?: string;
+}) {
+  return (
+    <button
+      onClick={() => !disabled && onPick()}
+      disabled={disabled}
+      aria-pressed={on}
+      className="rounded-[var(--radius-lg)] p-4 text-left transition-[background,border-color,transform] duration-200 disabled:cursor-not-allowed"
+      style={{
+        background: on ? "var(--accent-soft)" : "var(--surface)",
+        border: `1px solid ${on ? "var(--accent-line)" : "var(--line)"}`,
+        boxShadow: on ? "var(--lift), var(--shadow-md)" : "var(--lift)",
+        opacity: disabled ? 0.5 : 1,
+      }}
+    >
+      <div className="flex items-center gap-2">
+        <span
+          className="grid h-4 w-4 shrink-0 place-items-center rounded-full"
+          style={{ border: `1.5px solid ${on ? "var(--accent)" : "var(--line-strong)"}` }}
+        >
+          {on && (
+            <span className="block h-2 w-2 rounded-full" style={{ background: "var(--accent)" }} />
+          )}
+        </span>
+        <span className="text-[14px] font-semibold" style={{ color: "var(--ink)" }}>
+          {title}
+        </span>
+        <span className="text-[11.5px]" style={{ color: "var(--ink-faint)" }}>
+          {lead}
+        </span>
+      </div>
+      <p className="mt-1.5 pl-6 text-[12px] leading-[1.55]" style={{ color: "var(--ink-3)" }}>
+        {body}
+      </p>
+      {note && (
+        <p className="mt-1.5 pl-6 text-[11.5px]" style={{ color: "var(--warn-ink)" }}>
+          {note}
+        </p>
+      )}
+    </button>
   );
 }
