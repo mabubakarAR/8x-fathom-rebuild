@@ -139,7 +139,7 @@ function Sidebar({ pathname }: { pathname: string }) {
             className="rounded-[var(--radius-sm)] px-2.5 py-2 text-[11px] leading-[1.45]"
             style={{ background: "var(--surface-2)", color: "var(--ink-3)" }}
           >
-            Demo workspace — Lumen Labs. Capture is simulated;{" "}
+            Nine demo meetings are authored fiction; anything you import is read by a real model.{" "}
             <Link href="/about" className="underline" style={{ color: "var(--accent-ink)" }}>
               what&rsquo;s real
             </Link>

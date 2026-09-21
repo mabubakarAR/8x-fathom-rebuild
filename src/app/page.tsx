@@ -3,6 +3,7 @@ import { listLiveMeetings } from "@/lib/data/live";
 import { PEOPLE, PERSON_BY_ID } from "@/lib/seed/cast";
 import { UPCOMING } from "@/lib/seed/upcoming";
 import { MeetingList, type MeetingRow } from "@/components/meeting-list";
+import { HomeHero } from "@/components/home-hero";
 
 export const dynamic = "force-dynamic";
 
@@ -75,6 +76,11 @@ export default async function HomePage() {
   }));
 
   return (
-    <MeetingList rows={[...liveRows, ...rows]} upcoming={UPCOMING} people={PEOPLE} />
+    <MeetingList
+      rows={[...liveRows, ...rows]}
+      upcoming={UPCOMING}
+      people={PEOPLE}
+      hero={<HomeHero configured={Boolean(process.env.ANTHROPIC_API_KEY)} />}
+    />
   );
 }

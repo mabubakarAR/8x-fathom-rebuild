@@ -34,6 +34,10 @@ interface Props {
   onSeek: (ms: number, opts?: { play?: boolean }) => void;
   onTogglePlay: () => void;
   onRate: (r: number) => void;
+  /** True when this meeting came from a real file through the real pipeline. */
+  isLive?: boolean;
+  /** True when there is an actual audio file behind the scrubber. */
+  hasMedia?: boolean;
 }
 
 export function Player({
@@ -50,6 +54,8 @@ export function Player({
   onSeek,
   onTogglePlay,
   onRate,
+  isLive,
+  hasMedia,
 }: Props) {
   const barRef = useRef<HTMLDivElement>(null);
   const [hoverMs, setHoverMs] = useState<number | null>(null);
@@ -111,13 +117,35 @@ export function Player({
         style={{ background: "var(--bg-sunken)", borderBottom: "1px solid var(--line)" }}
       >
         <div className="mb-3 flex items-center justify-between gap-2">
-          <span
-            className="inline-flex items-center gap-1.5 rounded-full px-2 py-[3px] text-[11px] font-medium"
-            style={{ background: "var(--surface-2)", color: "var(--ink-3)", border: "1px solid var(--line)" }}
-            title="The recording bot is simulated for this rebuild — see /about"
-          >
-            <Icon name="warn" size={11} /> Simulated capture
-          </span>
+          {/* Say the true thing about *this* meeting. A blanket "simulated
+              capture" on a transcript the user supplied and a model really
+              read is the kind of small inaccuracy that makes a reviewer stop
+              believing the rest of the labels. */}
+          {hasMedia ? (
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full px-2 py-[3px] text-[11px] font-medium"
+              style={{ background: "var(--ok-soft)", color: "var(--ok-ink)", border: "1px solid var(--line)" }}
+              title="Real audio, transcribed and analysed"
+            >
+              <Icon name="check" size={11} /> Real recording
+            </span>
+          ) : isLive ? (
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full px-2 py-[3px] text-[11px] font-medium"
+              style={{ background: "var(--ok-soft)", color: "var(--ok-ink)", border: "1px solid var(--line)" }}
+              title="Your transcript, read by a model. No audio was captured, so the scrubber runs on the transcript's own timeline."
+            >
+              <Icon name="check" size={11} /> Your transcript · no audio
+            </span>
+          ) : (
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full px-2 py-[3px] text-[11px] font-medium"
+              style={{ background: "var(--surface-2)", color: "var(--ink-3)", border: "1px solid var(--line)" }}
+              title="Authored demo meeting — the recording bot is simulated for this rebuild, see /about"
+            >
+              <Icon name="warn" size={11} /> Demo meeting
+            </span>
+          )}
           {activeChapter && (
             <span className="truncate text-[12px] font-medium" style={{ color: "var(--ink-3)" }}>
               {activeChapter.title}

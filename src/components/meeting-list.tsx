@@ -51,10 +51,13 @@ export function MeetingList({
   rows,
   upcoming,
   people,
+  hero,
 }: {
   rows: MeetingRow[];
   upcoming: UpcomingMeeting[];
   people: Person[];
+  /** The import surface. Rendered above the demo corpus on the home page. */
+  hero?: React.ReactNode;
 }) {
   const [filter, setFilter] = useState<Filter>("all");
   const [q, setQ] = useState("");
@@ -90,19 +93,44 @@ export function MeetingList({
 
   return (
     <div className="mx-auto w-full max-w-[1120px] px-4 pb-24 md:px-8">
-      <PageHeader
-        title="Meetings"
-        subtitle={`${rows.length} recordings · ${totalMin} minutes captured · ${pluralise(openActions, "open action item")}`}
-        actions={
-          <Link
-            href="/import"
-            className="inline-flex items-center gap-1.5 rounded-[var(--radius-sm)] px-3.5 py-[8px] text-[13px] font-semibold"
-            style={{ background: "var(--accent)", color: "var(--on-accent)" }}
-          >
-            <Icon name="plus" size={14} /> Import a transcript
-          </Link>
-        }
-      />
+      {hero}
+
+      {/* The demo corpus, labelled as what it is.
+          Nine authored meetings exist so the interface — chapters, the speaker
+          minimap, repair, search across calls — is reviewable in thirty
+          seconds without anyone uploading an hour of audio first. Calling them
+          "Meetings" and leaving the reader to work it out was the single most
+          misleading thing about the first version of this page. */}
+      <div
+        className="mb-4 flex flex-wrap items-end justify-between gap-3 rounded-[var(--radius-lg)] px-4 py-3.5"
+        style={{ background: "var(--surface-2)", border: "1px solid var(--line)" }}
+      >
+        <div className="min-w-0">
+          <h2 className="text-[15px] font-semibold tracking-[-0.01em]" style={{ color: "var(--ink)" }}>
+            Demo workspace{" "}
+            <span className="text-[12px] font-normal" style={{ color: "var(--ink-faint)" }}>
+              — fiction, on purpose
+            </span>
+          </h2>
+          <p className="mt-1 max-w-[62ch] text-[12.5px] leading-[1.55]" style={{ color: "var(--ink-3)" }}>
+            {rows.length} authored meetings, {totalMin} minutes, {pluralise(openActions, "open action item")}.
+            Nothing here was recorded and no model wrote it — it exists so the parts that are hard to
+            show on a two-minute clip (an eight-person hour, crosstalk, search across calls) are
+            there to poke at.{" "}
+            <Link href="/m/m-roadmap-lock" className="underline" style={{ color: "var(--accent-ink)" }}>
+              Start with the 54-minute one
+            </Link>
+            .
+          </p>
+        </div>
+        <Link
+          href="/about"
+          className="shrink-0 text-[12.5px] font-medium underline"
+          style={{ color: "var(--accent-ink)" }}
+        >
+          What&rsquo;s real vs simulated
+        </Link>
+      </div>
 
       <Upcoming upcoming={upcoming} people={people} />
 
@@ -218,8 +246,8 @@ function Row({ r }: { r: MeetingRow }) {
             </h3>
             {KIND_LABEL[r.kind] && <Badge>{KIND_LABEL[r.kind]}</Badge>}
             {r.isLive && (
-              <Badge tone="ok" title="Uploaded, transcribed and analysed for real">
-                Real recording
+              <Badge tone="ok" title="A transcript you supplied, read and structured by a real model">
+                Real analysis
               </Badge>
             )}
             {r.status && r.status !== "ready" && (
