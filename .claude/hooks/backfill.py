@@ -29,6 +29,33 @@ SYNTHETIC = re.compile(
     r"^\s*<(system-reminder|command-name|local-command|task-notification"
     r"|user_memory_snapshot)", re.I)
 
+# Viewing a screenshot puts an "[Image: original 2880x2800...]" metadata line
+# into the transcript as a user-role message. It is not something the human
+# typed and it must not be logged as a prompt.
+IMAGE_META = re.compile(r"^\s*\[Image:\s*original\s+\d+x\d+", re.I)
+
+# A multiple-choice answer comes back as a TOOL RESULT rather than a user
+# message, because the question was asked through a tool. The words inside it
+# are still the human's, and leaving them out means the log shows me acting on
+# decisions with no record of who made them. They go in as prompts.
+ANSWER = re.compile(r"^\s*The user answered:", re.S)
+
+
+def answer_text(content) -> str:
+    """Pull an AskUserQuestion answer out of a tool_result block."""
+    if not isinstance(content, list):
+        return ""
+    for b in content:
+        if not isinstance(b, dict) or b.get("type") != "tool_result":
+            continue
+        raw = b.get("content")
+        if isinstance(raw, list):
+            raw = "".join(
+                x.get("text", "") for x in raw if isinstance(x, dict))
+        if isinstance(raw, str) and ANSWER.match(raw):
+            return raw.strip()
+    return ""
+
 
 def iso(ts):
     if not ts:
@@ -75,8 +102,16 @@ def load_turns(path):
         content = msg.get("content")
         if t == "user":
             if is_tool_result(content):
+                ans = answer_text(content)
+                if ans:
+                    if cur:
+                        turns.append(cur)
+                    cur = {"prompt": ans, "ptime": iso(row.get("timestamp")),
+                           "chunks": [], "model": None, "rtime": ""}
                 continue
             body = text_of(content)
+            if IMAGE_META.match(body):
+                continue
             if not body.strip() or SYNTHETIC.match(body):
                 # harness-injected; keep it attached to the real prompt
                 if cur is not None:
