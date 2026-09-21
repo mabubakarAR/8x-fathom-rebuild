@@ -23,7 +23,7 @@ export const dynamic = "force-dynamic";
 export async function POST(req: Request) {
   if (!dbConfigured()) {
     return NextResponse.json(
-      { error: "DATABASE_URL is not set, so this call can only live in your browser." },
+      { error: "No database is connected, so this call can only live in your browser. Check /api/setup." },
       { status: 503 },
     );
   }

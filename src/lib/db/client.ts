@@ -9,12 +9,43 @@ import postgres from "postgres";
 // rotated, instead of showing a stack trace. Uploads are the only thing that
 // hard-requires it, and they say so.
 
+// Which environment variable holds the connection string depends entirely on
+// how the database got attached, and every provider picked a different name:
+// Vercel Postgres sets POSTGRES_URL, the Neon integration sets DATABASE_URL,
+// Prisma setups set POSTGRES_PRISMA_URL, Supabase hands you DATABASE_URL by
+// hand. Reading one name and reporting "not configured" when another is
+// sitting right there is an own goal — so read all of them, in the order
+// that prefers a pooled connection, which is what serverless needs.
+const URL_VARS = [
+  "DATABASE_URL",
+  "POSTGRES_URL",
+  "POSTGRES_PRISMA_URL",
+  "DATABASE_POSTGRES_URL",
+  "NEON_DATABASE_URL",
+  "POSTGRES_URL_NON_POOLING",
+  "DATABASE_URL_UNPOOLED",
+] as const;
+
+/** The variable actually carrying a connection string, if any. */
+export function databaseUrlVar(): string | null {
+  for (const name of URL_VARS) {
+    const v = process.env[name];
+    if (v && /^postgres(ql)?:\/\//.test(v)) return name;
+  }
+  return null;
+}
+
+function databaseUrl(): string | null {
+  const name = databaseUrlVar();
+  return name ? (process.env[name] as string) : null;
+}
+
 let sqlSingleton: postgres.Sql | null | undefined;
 
 export function db(): postgres.Sql | null {
   if (sqlSingleton !== undefined) return sqlSingleton;
 
-  const url = process.env.DATABASE_URL;
+  const url = databaseUrl();
   if (!url) {
     sqlSingleton = null;
     return null;
@@ -33,13 +64,41 @@ export function db(): postgres.Sql | null {
 }
 
 export function dbConfigured(): boolean {
-  return Boolean(process.env.DATABASE_URL);
+  return Boolean(databaseUrl());
+}
+
+/**
+ * Which integration variables this deployment can actually see.
+ *
+ * Names only, never values. When "database: false" comes back from a
+ * deployment where the database is plainly connected, the useful question is
+ * *which variable did it land in* — and guessing that over chat is slow.
+ */
+export function envReport(): { present: string[]; missing: string[] } {
+  const watched = [
+    ...URL_VARS,
+    "BLOB_READ_WRITE_TOKEN",
+    "ANTHROPIC_API_KEY",
+    "DEEPGRAM_API_KEY",
+    "SUPABASE_URL",
+    "SUPABASE_SERVICE_ROLE_KEY",
+  ];
+  const present: string[] = [];
+  const missing: string[] = [];
+  for (const n of watched) (process.env[n] ? present : missing).push(n);
+  return { present, missing };
 }
 
 /** Runs schema.sql. Idempotent — every statement is CREATE … IF NOT EXISTS. */
 export async function migrate(): Promise<{ ok: boolean; message: string }> {
   const sql = db();
-  if (!sql) return { ok: false, message: "DATABASE_URL is not set" };
+  if (!sql) {
+    return {
+      ok: false,
+      message:
+        "No Postgres connection string found. Looked for: " + URL_VARS.join(", "),
+    };
+  }
 
   const { readFile } = await import("node:fs/promises");
   const { join } = await import("node:path");
