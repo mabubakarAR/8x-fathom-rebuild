@@ -6,8 +6,20 @@ import type { ThumbSlice } from "@/lib/thumb";
 export type { ThumbSlice };
 export { sliceMeeting } from "@/lib/thumb";
 
-/** Stable 0..1 from a string, so a meeting keeps its colour forever and the
- *  grid stays recognisable between visits. */
+// The call tile.
+//
+// Fathom's list is a grid of gradient tiles with a white waveform on each.
+// This does the same thing but with the waveform carrying information: every
+// bar is coloured by whoever held the floor in that slice of the call, so at
+// thumbnail size a 1:1 reads as two colours trading, a demo reads as one
+// colour with a tail of questions, and an eight-way argument reads as
+// confetti. You can tell the calls apart before reading a single title.
+//
+// Mirrored around the centre line, because that is what a waveform is, and
+// because the symmetry is what makes forty-four bars read as one object
+// rather than a bar chart.
+
+/** Stable 0..1 from a string, so a meeting keeps its backdrop forever. */
 function hash01(str: string): number {
   let h = 2166136261;
   for (let i = 0; i < str.length; i++) {
@@ -16,20 +28,6 @@ function hash01(str: string): number {
   }
   return ((h >>> 0) % 10000) / 10000;
 }
-
-// The call thumbnail.
-//
-// Fathom's call list is a grid of tiles: a coloured gradient with a white
-// waveform across it, a duration badge, the title underneath. It reads as a
-// library of recordings. A list of text rows — which is what this build had —
-// reads as a database table with a stylesheet, and that difference is most of
-// why one looks like a product and the other looks like an exercise.
-//
-// The waveform is not decoration. Each bar is the real speaking density of
-// that slice of that meeting, so a call where one person monologued and a
-// call where eight people interrupted each other genuinely look different at
-// thumbnail size. The gradient is derived from the meeting id, so a given
-// call is always the same colour and the grid stays recognisable.
 
 export function CallThumb({
   id,
@@ -45,48 +43,72 @@ export function CallThumb({
   live?: boolean;
   className?: string;
 }) {
-  const { from, to } = useMemo(() => {
-    // Warm hues for the grid, spaced off the id. Fathom's tiles sit in the
-    // coral-to-violet range and the warmth is what stops a dark app feeling
-    // like a terminal.
-    const h = 18 + hash01(id) * 300;
-    return {
-      from: `oklch(64% 0.16 ${h})`,
-      to: `oklch(52% 0.17 ${(h + 42) % 360})`,
-    };
+  // The backdrop is deep and desaturated on purpose: the speaker colours are
+  // the subject, and a loud gradient behind them turns the whole grid into
+  // noise. Hue is keyed off the id so a call is always recognisable.
+  const bg = useMemo(() => {
+    const h = 200 + hash01(id) * 150;
+    return `linear-gradient(145deg, oklch(30% 0.085 ${h}), oklch(17% 0.055 ${(h + 55) % 360}))`;
   }, [id]);
+
+  const solo = useMemo(() => new Set(slices.map((s) => s.h)).size <= 2, [slices]);
 
   return (
     <div
-      className={`relative aspect-[16/9] w-full overflow-hidden rounded-[var(--radius)] ${className ?? ""}`}
-      style={{ background: `linear-gradient(135deg, ${from}, ${to})` }}
+      className={`relative aspect-[16/10] w-full overflow-hidden rounded-[var(--radius)] ${className ?? ""}`}
+      style={{ background: bg }}
     >
-      <div className="absolute inset-0 flex items-center justify-center gap-[2px] px-[7%]">
-        {slices.map((s, i) => (
-          <span
-            key={i}
-            className="flex-1 rounded-full"
-            style={{
-              height: `${12 + s.v * 62}%`,
-              background: s.x ? "oklch(92% 0.13 85)" : "oklch(100% 0 0)",
-              opacity: s.x ? 0.95 : 0.82,
-            }}
-          />
-        ))}
+      {/* Light from the top-left, so the tile reads as a lit surface. */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(120% 90% at 8% 0%, oklch(100% 0 0 / .14), transparent 60%)",
+        }}
+      />
+
+      <div className="absolute inset-0 flex items-center gap-[1.5px] px-[6%]">
+        {slices.map((s, i) => {
+          const colour =
+            s.x
+              ? "oklch(84% 0.15 78)"
+              : s.h >= 0
+                ? `var(--sp-${s.h})`
+                : "oklch(100% 0 0 / .28)";
+          // Mirrored: the bar grows equally above and below the centre.
+          const h = 7 + s.v * (solo ? 70 : 84);
+          return (
+            <span
+              key={i}
+              className="flex-1 rounded-full"
+              style={{
+                height: `${h}%`,
+                background: colour,
+                opacity: s.h >= 0 || s.x ? 0.94 : 1,
+              }}
+            />
+          );
+        })}
       </div>
+
+      {/* Bottom scrim so the duration chip always has contrast under it. */}
+      <div
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3"
+        style={{ background: "linear-gradient(to top, oklch(0% 0 0 / .45), transparent)" }}
+      />
 
       {live && (
         <span
-          className="absolute top-2 left-2 rounded-[5px] px-1.5 py-[2px] text-[10px] font-semibold tracking-[0.03em] uppercase"
-          style={{ background: "oklch(18% 0.02 258 / .78)", color: "oklch(98% 0 0)" }}
+          className="absolute top-2 left-2 rounded-[5px] px-1.5 py-[2px] text-[10px] font-semibold tracking-[0.04em] uppercase"
+          style={{ background: "oklch(100% 0 0 / .92)", color: "oklch(14% 0 0)" }}
         >
           Real
         </span>
       )}
 
       <span
-        className="absolute right-2 bottom-2 rounded-[5px] px-1.5 py-[2px] text-[11px] font-medium tnum"
-        style={{ background: "oklch(18% 0.02 258 / .78)", color: "oklch(98% 0 0)" }}
+        className="absolute right-2 bottom-2 rounded-[5px] px-1.5 py-[2px] text-[11px] font-semibold tnum"
+        style={{ background: "oklch(8% 0 0 / .62)", color: "oklch(99% 0 0)" }}
       >
         {duration}
       </span>

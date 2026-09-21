@@ -30,7 +30,17 @@ export default async function HomePage() {
       gist: m.gist,
       hasExternal: m.hasExternal,
       lowConfidenceRatio: m.lowConfidenceRatio,
-      slices: sliceMeeting(bundle.segments, m.durationMs),
+      // Each segment carries its speaker's palette index so the thumbnail
+      // can colour the waveform by who was actually talking.
+      slices: sliceMeeting(
+        bundle.segments.map((sg) => ({
+          startMs: sg.startMs,
+          endMs: sg.endMs,
+          crosstalk: sg.crosstalk,
+          hue: PERSON_BY_ID.get(sg.speakerId)?.hue,
+        })),
+        m.durationMs,
+      ),
       actionCount: bundle.actionItems.length,
       openActionCount: bundle.actionItems.filter((a) => !a.done).length,
       highlightCount: bundle.highlights.length,
