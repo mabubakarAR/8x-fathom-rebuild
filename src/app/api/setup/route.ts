@@ -24,6 +24,16 @@ export async function GET() {
     storage: storageConfigured(),
     transcription: transcriptionConfigured(),
     analysis: analysisConfigured(),
+    // Where a new recording's audio will actually land. Object storage if
+    // there is any, otherwise the database — which is why this is true even
+    // when both blob and storage are false.
+    audio: blobConfigured()
+      ? "blob"
+      : storageConfigured()
+        ? "storage"
+        : dbConfigured()
+          ? "database"
+          : "browser only",
   };
   const env = envReport();
   if (!status.database) {

@@ -55,14 +55,32 @@ export async function POST(req: Request) {
   let mediaMime: string | null = null;
   let audioWarning: string | null = null;
 
+  // Postgres is the fallback home for the audio, so the size that fits there
+  // is the size we accept. Opus at the bitrate the recorder uses is roughly
+  // 350KB a minute, which makes this about two hours — longer than any call
+  // anyone will sit through, and small enough that a bytea read stays quick.
+  const IN_DB_LIMIT = 40 * 1024 * 1024;
+
+  let mediaBytes: Uint8Array | null = null;
+
   const audio = form.get("audio");
   if (audio instanceof File && audio.size > 0) {
     // Either a read-write token (older stores) or a store id authenticated by
     // the deployment's OIDC token (newer ones). The call site doesn't care.
     const auth = blobAuth();
     if (!auth) {
-      audioWarning =
-        "No Blob store is connected, so the audio stayed in your browser. The transcript and notes are saved.";
+      // No object store. Rather than tell the user their recording is gone
+      // the moment they close the tab, put it in the database next to
+      // everything else about the call. Object storage is still preferred
+      // when it exists — this is the floor, not the plan.
+      if (audio.size <= IN_DB_LIMIT) {
+        mediaBytes = new Uint8Array(await audio.arrayBuffer());
+        mediaUrl = `/api/calls/${meta.id}/audio`;
+        mediaMime = audio.type || "audio/webm";
+      } else {
+        audioWarning =
+          "This recording is too large to store without an object store, so the audio stayed in your browser. The transcript and notes are saved.";
+      }
     } else {
       try {
         const ext = (audio.type.split("/")[1] || "webm").split(";")[0];
@@ -86,7 +104,7 @@ export async function POST(req: Request) {
   }
 
   // ---- the meeting --------------------------------------------------------
-  const saved = await saveCall({ ...meta, mediaUrl, mediaMime });
+  const saved = await saveCall({ ...meta, mediaUrl, mediaMime, mediaBytes });
   if (!saved.ok) {
     return NextResponse.json(
       {

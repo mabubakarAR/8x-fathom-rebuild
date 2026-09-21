@@ -31,6 +31,15 @@ export interface SaveCallInput {
   transcriptSource: string;
   mediaUrl?: string | null;
   mediaMime?: string | null;
+  /**
+   * The audio itself, when there is nowhere else to put it.
+   *
+   * Object storage is the right home for a media file and the code prefers
+   * it. But a deployment without a blob store shouldn't lose the recording —
+   * that is the one thing a user cannot reconstruct — and a few megabytes of
+   * Opus in a bytea column is a real answer, not a hack, at this size.
+   */
+  mediaBytes?: Uint8Array | null;
   segments: RawSegment[];
   speakerNames: Record<string, string>;
   analysis: Analysis;
@@ -77,13 +86,14 @@ export async function saveCall(
       await tx`
         insert into meetings (
           id, title, kind, platform, started_at, duration_ms, gist, status,
-          media_url, media_mime, origin, transcript_source, low_confidence_ratio,
-          shape
+          media_url, media_mime, media_bytes, origin, transcript_source,
+          low_confidence_ratio, shape
         ) values (
           ${id}, ${input.title}, 'planning',
           ${input.origin === "call" ? "browser" : "upload"},
           ${input.startedAt}, ${Math.round(durationMs)}, ${input.gist}, 'ready',
           ${input.mediaUrl ?? null}, ${input.mediaMime ?? null},
+          ${input.mediaBytes ? Buffer.from(input.mediaBytes) : null},
           ${input.origin}, ${input.transcriptSource},
           ${segments.length ? lowConf / segments.length : 0},
           ${JSON.stringify(
@@ -231,7 +241,13 @@ export async function loadCall(id: string): Promise<StoredCall | null> {
   if (!sql) return null;
 
   try {
-    const [meeting] = await sql`select * from meetings where id = ${id}`;
+    // Every column except the audio. `select *` would drag a few megabytes of
+    // bytea through on every page open, for a field this function never reads.
+    const [meeting] = await sql`
+      select id, title, kind, platform, started_at, duration_ms, gist, status,
+             media_url, media_mime, origin, transcript_source,
+             low_confidence_ratio, shape
+      from meetings where id = ${id}`;
     if (!meeting) return null;
 
     const [speakers, segs, chaps, sums, acts, hls, [ev]] = await Promise.all([

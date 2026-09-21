@@ -27,6 +27,8 @@ create table if not exists meetings (
   media_path      text,
   media_url       text,
   media_mime      text,
+  -- Fallback home for the audio when no object store is attached.
+  media_bytes     bytea,
   -- How this meeting came to exist: 'call' (tab audio + mic), 'mic',
   -- 'import' (a transcript you brought), 'upload' (a media file).
   origin          text not null default 'import',

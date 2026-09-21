@@ -227,6 +227,7 @@ export async function migrate(): Promise<{ ok: boolean; message: string }> {
       alter table meetings add column if not exists origin text not null default 'import';
       alter table meetings add column if not exists transcript_source text;
       alter table meetings add column if not exists shape jsonb not null default '[]'::jsonb;
+      alter table meetings add column if not exists media_bytes bytea;
     `);
     return { ok: true, message: "schema applied" };
   } catch (e) {
