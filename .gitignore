@@ -1,0 +1,11 @@
+node_modules/
+.next/
+.env
+.env*.local
+.DS_Store
+dist/
+*.tsbuildinfo
+
+# .agent-logs/ is intentionally NOT ignored - it ships with the repo.
+# Only the hook's own error log is excluded.
+.agent-logs/.capture-errors.log
