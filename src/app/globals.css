@@ -156,58 +156,58 @@
 /* Speaker palette. Fifteen hues at matched chroma and lightness per theme, so
    no speaker is quieter than another and none of them vanish in dark mode. */
 :root {
-  --sp-0: oklch(58% 0.15 240);
-  --sp-1: oklch(58% 0.16 12);
-  --sp-2: oklch(56% 0.14 160);
-  --sp-3: oklch(58% 0.17 305);
-  --sp-4: oklch(58% 0.14 60);
-  --sp-5: oklch(56% 0.15 195);
-  --sp-6: oklch(58% 0.16 340);
-  --sp-7: oklch(55% 0.14 130);
-  --sp-8: oklch(58% 0.15 275);
-  --sp-9: oklch(58% 0.15 35);
-  --sp-10: oklch(55% 0.13 215);
-  --sp-11: oklch(58% 0.16 90);
-  --sp-12: oklch(57% 0.15 320);
-  --sp-13: oklch(55% 0.14 175);
-  --sp-14: oklch(58% 0.15 255);
+  --sp-0: oklch(57% 0.152 250);
+  --sp-1: oklch(57% 0.152 295);
+  --sp-2: oklch(57% 0.152 160);
+  --sp-3: oklch(57% 0.152 340);
+  --sp-4: oklch(57% 0.152 70);
+  --sp-5: oklch(57% 0.152 205);
+  --sp-6: oklch(57% 0.152 115);
+  --sp-7: oklch(57% 0.152 25);
+  --sp-8: oklch(57% 0.152 180);
+  --sp-9: oklch(57% 0.152 45);
+  --sp-10: oklch(57% 0.152 320);
+  --sp-11: oklch(57% 0.152 90);
+  --sp-12: oklch(57% 0.152 265);
+  --sp-13: oklch(57% 0.152 135);
+  --sp-14: oklch(57% 0.152 355);
 }
 
 :root[data-theme="dark"] {
-  --sp-0: oklch(76% 0.13 240);
-  --sp-1: oklch(76% 0.14 12);
-  --sp-2: oklch(76% 0.13 160);
-  --sp-3: oklch(76% 0.14 305);
-  --sp-4: oklch(80% 0.13 70);
-  --sp-5: oklch(78% 0.12 195);
-  --sp-6: oklch(76% 0.14 340);
-  --sp-7: oklch(76% 0.13 130);
-  --sp-8: oklch(76% 0.13 275);
-  --sp-9: oklch(77% 0.13 35);
-  --sp-10: oklch(77% 0.12 215);
-  --sp-11: oklch(81% 0.13 95);
-  --sp-12: oklch(76% 0.14 320);
-  --sp-13: oklch(77% 0.12 175);
-  --sp-14: oklch(76% 0.13 255);
+  --sp-0: oklch(77% 0.132 250);
+  --sp-1: oklch(77% 0.132 295);
+  --sp-2: oklch(77% 0.132 160);
+  --sp-3: oklch(77% 0.132 340);
+  --sp-4: oklch(77% 0.132 70);
+  --sp-5: oklch(77% 0.132 205);
+  --sp-6: oklch(77% 0.132 115);
+  --sp-7: oklch(77% 0.132 25);
+  --sp-8: oklch(77% 0.132 180);
+  --sp-9: oklch(77% 0.132 45);
+  --sp-10: oklch(77% 0.132 320);
+  --sp-11: oklch(77% 0.132 90);
+  --sp-12: oklch(77% 0.132 265);
+  --sp-13: oklch(77% 0.132 135);
+  --sp-14: oklch(77% 0.132 355);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --sp-0: oklch(76% 0.13 240);
-    --sp-1: oklch(76% 0.14 12);
-    --sp-2: oklch(76% 0.13 160);
-    --sp-3: oklch(76% 0.14 305);
-    --sp-4: oklch(80% 0.13 70);
-    --sp-5: oklch(78% 0.12 195);
-    --sp-6: oklch(76% 0.14 340);
-    --sp-7: oklch(76% 0.13 130);
-    --sp-8: oklch(76% 0.13 275);
-    --sp-9: oklch(77% 0.13 35);
-    --sp-10: oklch(77% 0.12 215);
-    --sp-11: oklch(81% 0.13 95);
-    --sp-12: oklch(76% 0.14 320);
-    --sp-13: oklch(77% 0.12 175);
-    --sp-14: oklch(76% 0.13 255);
+    --sp-0: oklch(77% 0.132 250);
+    --sp-1: oklch(77% 0.132 295);
+    --sp-2: oklch(77% 0.132 160);
+    --sp-3: oklch(77% 0.132 340);
+    --sp-4: oklch(77% 0.132 70);
+    --sp-5: oklch(77% 0.132 205);
+    --sp-6: oklch(77% 0.132 115);
+    --sp-7: oklch(77% 0.132 25);
+    --sp-8: oklch(77% 0.132 180);
+    --sp-9: oklch(77% 0.132 45);
+    --sp-10: oklch(77% 0.132 320);
+    --sp-11: oklch(77% 0.132 90);
+    --sp-12: oklch(77% 0.132 265);
+    --sp-13: oklch(77% 0.132 135);
+    --sp-14: oklch(77% 0.132 355);
   }
 }
 

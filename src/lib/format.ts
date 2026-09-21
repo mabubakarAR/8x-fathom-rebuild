@@ -22,14 +22,24 @@ export function duration(ms: Ms): string {
 
 const DAY = 86_400_000;
 
+/** Whole calendar days between two instants, ignoring time of day.
+ *  Comparing raw millisecond deltas calls a Saturday-evening meeting
+ *  "Yesterday" on Monday afternoon, because it is 1.99 days old. */
+function daysApart(a: number, b: number): number {
+  const d1 = new Date(a);
+  const d2 = new Date(b);
+  const m1 = Date.UTC(d1.getFullYear(), d1.getMonth(), d1.getDate());
+  const m2 = Date.UTC(d2.getFullYear(), d2.getMonth(), d2.getDate());
+  return Math.round((m2 - m1) / DAY);
+}
+
 /** Relative where it helps, absolute where it doesn't. */
 export function when(iso: string, now = Date.now()): string {
   const t = new Date(iso).getTime();
-  const diff = now - t;
-  if (diff < DAY && new Date(t).getDate() === new Date(now).getDate())
-    return `Today, ${timeOf(iso)}`;
-  if (diff < 2 * DAY) return `Yesterday, ${timeOf(iso)}`;
-  if (diff < 7 * DAY)
+  const days = daysApart(t, now);
+  if (days === 0) return `Today, ${timeOf(iso)}`;
+  if (days === 1) return `Yesterday, ${timeOf(iso)}`;
+  if (days < 7)
     return `${new Date(t).toLocaleDateString("en-GB", { weekday: "long" })}, ${timeOf(iso)}`;
   return new Date(t).toLocaleDateString("en-GB", {
     day: "numeric",
@@ -54,7 +64,7 @@ export function dayKey(iso: string): string {
 /** "This week" / "Last week" / "September" — for grouping the meeting list. */
 export function bucketOf(iso: string, now = Date.now()): string {
   const t = new Date(iso).getTime();
-  const days = Math.floor((now - t) / DAY);
+  const days = daysApart(t, now);
   if (days < 7) return "This week";
   if (days < 14) return "Last week";
   if (days < 31) return "Earlier this month";
