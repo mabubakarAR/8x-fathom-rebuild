@@ -70,9 +70,20 @@ export async function listLiveMeetings(): Promise<
   const sql = db();
   if (!sql) return [];
   try {
+    // Only the ones still in flight.
+    //
+    // This used to return every row in `meetings`, which is also exactly what
+    // listCalls() returns — so a recording showed up twice on the home page,
+    // once as the rich row with its waveform and counts and once as this
+    // barer one. Two functions written weeks apart for what turned out to be
+    // the same table.
+    //
+    // The division now matches what each is for: listCalls owns finished
+    // calls, and this owns the ones that still need a "processing" state.
     const rows = await sql<(MeetingRow & { speaker_count: number })[]>`
       select m.*, (select count(*)::int from speakers s where s.meeting_id = m.id) as speaker_count
       from meetings m
+      where m.status is distinct from 'ready'
       order by m.created_at desc
       limit 50`;
 

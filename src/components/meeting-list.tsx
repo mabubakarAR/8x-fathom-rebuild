@@ -227,7 +227,16 @@ function Card({ r }: { r: MeetingRow }) {
   const shaky = r.lowConfidenceRatio > 0.04;
 
   return (
-    <Link href={r.href ?? `/m/${r.id}`} className="group block">
+    // content-visibility lets the browser skip laying out and painting a
+    // card that is off-screen entirely. Each one holds a 44-bar waveform, a
+    // stack of avatars and a few badges, so twelve of them is a few thousand
+    // boxes the browser was styling on every scroll. The intrinsic size is
+    // supplied so the scrollbar doesn't jump as cards enter and leave.
+    <Link
+      href={r.href ?? `/m/${r.id}`}
+      className="group block"
+      style={{ contentVisibility: "auto", containIntrinsicSize: "auto 280px" }}
+    >
       {/* The tile.
           Hover does three things at once, which is what makes it feel like a
           physical object rather than a link: the card lifts, a scrim darkens the artwork

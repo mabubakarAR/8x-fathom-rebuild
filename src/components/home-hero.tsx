@@ -120,7 +120,10 @@ export function HomeHero({ configured, lanes }: { configured: boolean; lanes: La
           style={{
             background:
               "radial-gradient(closest-side, color-mix(in oklab, var(--accent) 22%, transparent), transparent)",
-            filter: "blur(10px)",
+            // No blur filter here. A radial gradient is already soft, and a
+            // CSS blur on an element this large (140% x 70%) makes the
+            // browser rasterize and blur it again whenever it scrolls
+            // through the viewport, for no visible difference.
           }}
         />
         <VoicePrint

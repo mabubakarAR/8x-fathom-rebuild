@@ -398,15 +398,24 @@ mark.hit-expanded {
 =========================================================================== */
 
 /* ---- grain ---------------------------------------------------------------
-   One inline SVG turbulence, fixed, non-interactive. */
+   One inline SVG turbulence, fixed, non-interactive.
+
+   `mix-blend-mode` used to be on this. A full-viewport fixed layer that
+   blends with everything under it forces the browser to re-composite the
+   entire visible page on every scroll frame and throws away its cached
+   scroll tiles — which is a large part of why scrolling felt heavy. At 2%
+   opacity the blend mode was doing almost nothing visible, so it is gone and
+   the opacity is nudged to compensate. `contain` and the identity transform
+   keep this on its own compositor layer where it costs nothing. */
 body::after {
   content: "";
   position: fixed;
   inset: 0;
   z-index: 9999;
   pointer-events: none;
-  opacity: 0.022;
-  mix-blend-mode: overlay;
+  opacity: 0.03;
+  contain: strict;
+  transform: translateZ(0);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
@@ -423,10 +432,17 @@ body::after {
   box-shadow: var(--lift), var(--shadow-lg);
 }
 
-/* Frosted chrome. The header sits over scrolling content, so it blurs it. */
+/* Frosted chrome. The header sits over scrolling content, so it blurs it.
+   A backdrop-filter re-reads and re-blurs whatever is behind it every frame
+   the page scrolls, so the radius is the price: 14px with a saturate pass on
+   top was two filters per frame across the full width of the header. 10px
+   alone looks the same at this opacity and costs meaningfully less.
+   `contain: paint` tells the browser the blur cannot affect anything outside
+   the header's box, which lets it keep the rest of the page's tiles. */
 .frosted {
-  backdrop-filter: saturate(150%) blur(14px);
-  -webkit-backdrop-filter: saturate(150%) blur(14px);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  contain: paint;
 }
 
 /* A hairline gradient border for the one or two elements that should look

@@ -66,6 +66,9 @@ export function VoicePrint({ lanes, className }: { lanes: Lane[]; className?: st
     const loopPx = totalSec * PX_PER_SEC;
 
     let raf = 0;
+    // Starts false: the IntersectionObserver below decides, and on a page
+    // where the canvas is already off-screen it never starts at all.
+    let visible = false;
     let w = 0;
     let h = 0;
     let dpr = 1;
@@ -117,6 +120,14 @@ export function VoicePrint({ lanes, className }: { lanes: Lane[]; className?: st
         if (b.l >= LANES) continue;
         const cy = top + b.l * laneH + laneH / 2;
         const colour = b.x ? amber : hues[b.l];
+        // Ticks away from the playhead are all drawn at the same alpha with
+        // no glow, so they can be one path and one fill instead of one fill
+        // each. This is the whole performance story of this canvas: setting
+        // shadowBlur per tick and filling thousands of separate paths every
+        // frame is what made the page scroll badly, and almost none of those
+        // ticks were glowing.
+        const flat = new Path2D();
+        let flatCount = 0;
         // Three copies, not two. With only [0, +loop] the left of the canvas
         // renders negative time — i.e. nothing — until the scroll has run for
         // a couple of minutes. The -loop copy puts the tail of the call there
@@ -139,12 +150,23 @@ export function VoicePrint({ lanes, className }: { lanes: Lane[]; className?: st
 
             const d = Math.abs(x - headX);
             const near = Math.max(0, 1 - d / (w * 0.3));
+            if (near <= 0.02) {
+              addRoundRect(flat, x, cy - th / 2, TICK - 1.1, th, (TICK - 1.1) / 2);
+              flatCount++;
+              continue;
+            }
             ctx.globalAlpha = 0.42 + near * 0.58;
             ctx.shadowBlur = near * 16;
             ctx.shadowColor = colour;
             roundRect(ctx, x, cy - th / 2, TICK - 1.1, th, (TICK - 1.1) / 2);
             ctx.fill();
+            ctx.shadowBlur = 0;
           }
+        }
+        if (flatCount) {
+          ctx.globalAlpha = 0.42;
+          ctx.fillStyle = colour;
+          ctx.fill(flat);
         }
         seed += 977;
       }
@@ -174,13 +196,42 @@ export function VoicePrint({ lanes, className }: { lanes: Lane[]; className?: st
       ctx.fillRect(headX - 90, bandTop, 180, bandH);
       ctx.globalAlpha = 1;
 
-      if (!reduced) raf = requestAnimationFrame(frame);
+      if (!reduced && visible) raf = requestAnimationFrame(frame);
+      else raf = 0;
     }
-    raf = requestAnimationFrame(frame);
+
+    // Don't animate a canvas nobody is looking at.
+    //
+    // This loop used to run for as long as the page was open, including the
+    // entire time you were scrolled past it reading the meeting list. An
+    // animation off the bottom of the screen is pure cost: it competes with
+    // the scroll for the same main thread, which is exactly what it feels
+    // like.
+    function wake() {
+      if (!raf && visible && !document.hidden) raf = requestAnimationFrame(frame);
+    }
+    const io = new IntersectionObserver(
+      ([e]) => {
+        visible = e.isIntersecting && !document.hidden;
+        if (visible) wake();
+      },
+      { rootMargin: "120px" },
+    );
+    io.observe(cv);
+
+    function onVisibility() {
+      if (document.hidden) visible = false;
+      else wake();
+    }
+    document.addEventListener("visibilitychange", onVisibility);
+
+    wake();
 
     return () => {
       cancelAnimationFrame(raf);
       ro.disconnect();
+      io.disconnect();
+      document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [lanes]);
 
@@ -204,4 +255,20 @@ function roundRect(c: CanvasRenderingContext2D, x: number, y: number, w: number,
   c.arcTo(x, y + h, x, y, rr);
   c.arcTo(x, y, x + w, y, rr);
   c.closePath();
+}
+
+/** The same rounded rect, accumulated into a Path2D so a whole lane can be
+ *  filled in one call instead of one call per tick. */
+function addRoundRect(p: Path2D, x: number, y: number, w: number, h: number, r: number) {
+  const rr = Math.min(r, w / 2, h / 2);
+  p.moveTo(x + rr, y);
+  p.lineTo(x + w - rr, y);
+  p.arcTo(x + w, y, x + w, y + rr, rr);
+  p.lineTo(x + w, y + h - rr);
+  p.arcTo(x + w, y + h, x + w - rr, y + h, rr);
+  p.lineTo(x + rr, y + h);
+  p.arcTo(x, y + h, x, y + h - rr, rr);
+  p.lineTo(x, y + rr);
+  p.arcTo(x, y, x + rr, y, rr);
+  p.closePath();
 }
