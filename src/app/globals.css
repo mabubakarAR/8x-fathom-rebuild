@@ -356,3 +356,8 @@ mark.hit-expanded {
   0%, 100% { transform: scale(1);    opacity: 1; }
   50%      { transform: scale(1.35); opacity: .55; }
 }
+
+@keyframes rec-pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 color-mix(in oklab, var(--danger) 55%, transparent); }
+  70%      { opacity: .85; box-shadow: 0 0 0 7px transparent; }
+}

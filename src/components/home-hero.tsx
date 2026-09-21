@@ -155,8 +155,8 @@ export function HomeHero({ configured, lanes }: { configured: boolean; lanes: La
               className="mt-4 max-w-[44ch] text-[14.5px] leading-[1.6] md:text-[16px]"
               style={{ color: "var(--ink-2)" }}
             >
-              Your notes are a list of claims. Each one has to cite the transcript line it came
-              from, that citation gets checked against the real transcript, and{" "}
+              Hit record and it transcribes you as you talk. Then every sentence of the notes has
+              to cite the line it came from, that citation gets checked against the transcript, and{" "}
               <strong style={{ color: "var(--ink)" }}>
                 anything that fails is deleted instead of shown to you
               </strong>
@@ -205,25 +205,30 @@ export function HomeHero({ configured, lanes }: { configured: boolean; lanes: La
         ) : (
           <>
             <div className="flex flex-wrap items-center gap-2.5">
+              <Link
+                href="/record"
+                className="inline-flex items-center gap-2 rounded-[var(--radius-sm)] px-4 py-[11px] text-[13.5px] font-semibold transition-transform hover:scale-[1.02]"
+                style={{ background: "var(--danger)", color: "oklch(100% 0 0)", boxShadow: "0 6px 26px color-mix(in oklab, var(--danger) 34%, transparent)" }}
+              >
+                <span className="block h-2.5 w-2.5 rounded-full" style={{ background: "currentColor" }} />
+                Record a meeting
+              </Link>
               <button
                 onClick={runSample}
                 disabled={!configured}
                 className="inline-flex items-center gap-2 rounded-[var(--radius-sm)] px-4 py-[11px] text-[13.5px] font-semibold transition-transform hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100"
                 style={{ background: "var(--accent)", color: "var(--on-accent)", boxShadow: "var(--glow)" }}
               >
-                <Icon name="sparkle" size={14} /> Run it on a sample call
+                <Icon name="sparkle" size={14} /> Or try a sample call
               </button>
               <button
                 onClick={() => fileRef.current?.click()}
                 disabled={!configured}
-                className="inline-flex items-center gap-2 rounded-[var(--radius-sm)] px-4 py-[10px] text-[13.5px] font-semibold disabled:opacity-50"
-                style={{ background: "var(--surface-2)", color: "var(--ink)", border: "1px solid var(--line)" }}
+                className="inline-flex items-center gap-2 rounded-[var(--radius-sm)] px-4 py-[10px] text-[13.5px] font-medium disabled:opacity-50"
+                style={{ background: "transparent", color: "var(--ink-2)", border: "1px solid var(--line)" }}
               >
-                <Icon name="plus" size={14} /> Use my own transcript
+                <Icon name="plus" size={14} /> Bring a transcript
               </button>
-              <span className="text-[12px]" style={{ color: "var(--ink-faint)" }}>
-                or drag a file here
-              </span>
             </div>
 
             <input

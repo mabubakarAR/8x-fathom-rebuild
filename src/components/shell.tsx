@@ -18,10 +18,11 @@ import { Icon, type IconName } from "./ui";
 
 const NAV: { href: string; label: string; icon: IconName; key: string }[] = [
   { href: "/", label: "Meetings", icon: "home", key: "m" },
+  { href: "/record", label: "Record", icon: "live", key: "r" },
   { href: "/search", label: "Search", icon: "search", key: "/" },
   { href: "/actions", label: "Action items", icon: "check", key: "a" },
   { href: "/clips", label: "Clips", icon: "clip", key: "c" },
-  { href: "/live", label: "Live", icon: "live", key: "l" },
+  { href: "/live", label: "Simulated call", icon: "clip", key: "l" },
   { href: "/import", label: "Import", icon: "wand", key: "i" },
 ];
 
