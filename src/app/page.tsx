@@ -1,10 +1,14 @@
 import { corpus } from "@/lib/data/store";
+import { listLiveMeetings } from "@/lib/data/live";
 import { PEOPLE, PERSON_BY_ID } from "@/lib/seed/cast";
 import { UPCOMING } from "@/lib/seed/upcoming";
 import { MeetingList, type MeetingRow } from "@/components/meeting-list";
 
-export default function HomePage() {
+export const dynamic = "force-dynamic";
+
+export default async function HomePage() {
   const c = corpus();
+  const live = await listLiveMeetings();
 
   const rows: MeetingRow[] = c.meetings.map((m) => {
     const bundle = c.byMeeting.get(m.id)!;
@@ -40,5 +44,37 @@ export default function HomePage() {
     };
   });
 
-  return <MeetingList rows={rows} upcoming={UPCOMING} people={PEOPLE} />;
+  // Real uploads sit above the seeded workspace, newest first, and carry a
+  // badge so nobody has to guess which is which.
+  const liveRows: MeetingRow[] = live.map((m) => ({
+    id: m.id,
+    title: m.title,
+    kind: m.kind,
+    platform: m.platform,
+    startedAt: m.startedAt,
+    durationMs: m.durationMs,
+    gist: m.gist,
+    hasExternal: m.hasExternal,
+    lowConfidenceRatio: m.lowConfidenceRatio,
+    actionCount: 0,
+    openActionCount: 0,
+    highlightCount: 0,
+    chapterCount: 0,
+    isLive: true,
+    status: m.status,
+    participants: m.participants.map((p) => ({
+      id: p.personId,
+      name: p.personId,
+      title: "",
+      company: "",
+      external: false,
+      hue: 0,
+      talkMs: p.talkMs,
+      attended: p.attended,
+    })),
+  }));
+
+  return (
+    <MeetingList rows={[...liveRows, ...rows]} upcoming={UPCOMING} people={PEOPLE} />
+  );
 }

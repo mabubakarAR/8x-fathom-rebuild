@@ -16,12 +16,18 @@ import { Avatar, Icon } from "../ui";
 // and it is the cheapest thing on the list to beat. Threads here persist,
 // carry citations, and survive a reload.
 //
-// HONESTY, and it is stated in /about too: there is no language model behind
-// this. Answers are composed from retrieval over the transcript and the
-// structured summary, with a small amount of intent routing. Everything it
-// says is a real line somebody really said, with a timestamp — which makes it
-// less fluent than an LLM and impossible to hallucinate with. Wiring a model
-// in would replace `answer()` and nothing else.
+// Two paths, and which one runs depends on where the meeting came from:
+//
+//   UPLOADED meetings (grounded=true) — segments are retrieved from Postgres
+//   full-text search, Claude answers from them, and every citation it returns
+//   is checked against the segments table server-side before it is stored or
+//   shown. An id the database cannot resolve is dropped, and an answer that
+//   loses all of its citations is labelled unsupported rather than presented
+//   as fact. That validation step is what makes a citation evidence.
+//
+//   SEEDED meetings (grounded=false) — no model. Local retrieval over the
+//   fixture transcript with shallow intent routing, which is honest about
+//   being a demo over demo content.
 // ---------------------------------------------------------------------------
 
 interface Props {
@@ -30,6 +36,13 @@ interface Props {
   summaries: Summary[];
   people: Map<string, Person>;
   onSeek: (ms: number, opts?: { play?: boolean }) => void;
+  /**
+   * True for meetings that came through the real pipeline. The answer then
+   * comes from Claude reading segments retrieved out of Postgres, and every
+   * citation is validated against the segments table before it is shown.
+   * False falls back to local retrieval over the seeded transcript.
+   */
+  grounded?: boolean;
 }
 
 const SUGGESTIONS = [
@@ -39,10 +52,12 @@ const SUGGESTIONS = [
   "Where did people disagree?",
 ];
 
-export function AskPane({ meeting, segments, summaries, people, onSeek }: Props) {
+export function AskPane({ meeting, segments, summaries, people, onSeek, grounded }: Props) {
   const overlay = useOverlay();
   const [draft, setDraft] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
+  const [failed, setFailed] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
   const threads = overlay.state.threads.filter((t) => t.meetingId === meeting.id);
@@ -70,11 +85,50 @@ export function AskPane({ meeting, segments, summaries, people, onSeek }: Props)
     [meeting],
   );
 
-  function ask(question: string) {
+  async function ask(question: string) {
     const q = question.trim();
-    if (!q) return;
+    if (!q || pending) return;
+    setFailed(null);
 
-    const reply = answer(q, index, meta, summary, segments, people);
+    let reply: AskMessage;
+
+    if (grounded) {
+      // Real path: retrieval from Postgres + Claude, citations validated
+      // server-side against the segments table.
+      setPending(true);
+      try {
+        const res = await fetch(`/api/meetings/${meeting.id}/ask`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question: q, threadId: active?.id }),
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || "Ask failed");
+        reply = {
+          id: `am-${Date.now().toString(36)}`,
+          role: "assistant",
+          text: json.grounded
+            ? json.text
+            : `${json.text}\n\n(No line in the transcript could be cited for this, so treat it as unsupported.)`,
+          citations: (json.citations ?? []).map(
+            (c: { segmentId: string; anchorMs: number; snippet: string }) => ({
+              meetingId: meeting.id,
+              segmentId: c.segmentId,
+              anchorMs: c.anchorMs,
+              snippet: c.snippet,
+            }),
+          ),
+          createdAt: new Date().toISOString(),
+        };
+      } catch (e) {
+        setFailed(e instanceof Error ? e.message : "Ask failed");
+        setPending(false);
+        return;
+      }
+      setPending(false);
+    } else {
+      reply = answer(q, index, meta, summary, segments, people);
+    }
 
     const userMsg: AskMessage = {
       id: `um-${Date.now().toString(36)}`,
@@ -131,8 +185,9 @@ export function AskPane({ meeting, segments, summaries, people, onSeek }: Props)
         {!active && (
           <div className="pt-3">
             <p className="text-[13px] leading-relaxed" style={{ color: "var(--ink-2)" }}>
-              Ask anything about this call. Every answer is built from lines that were actually said,
-              with the timestamp attached — and threads are kept, so you can come back to them.
+              {grounded
+                ? "Claude answers from this recording's transcript, retrieved from the database. Every citation is checked against a real segment before you see it — anything it can't ground is dropped."
+                : "Answers are built from lines that were actually said, with the timestamp attached. Threads are kept, so you can come back to them."}
             </p>
             <div className="mt-3 flex flex-col gap-1.5">
               {SUGGESTIONS.map((s) => (
@@ -197,6 +252,19 @@ export function AskPane({ meeting, segments, summaries, people, onSeek }: Props)
             )}
           </div>
         ))}
+        {pending && (
+          <p className="text-[12.5px]" style={{ color: "var(--accent-ink)" }}>
+            Reading the transcript…
+          </p>
+        )}
+        {failed && (
+          <p
+            className="rounded-[var(--radius-sm)] p-2 font-mono text-[11.5px]"
+            style={{ background: "var(--danger-soft)", color: "var(--danger)" }}
+          >
+            {failed}
+          </p>
+        )}
         <div ref={endRef} />
       </div>
 
@@ -211,14 +279,15 @@ export function AskPane({ meeting, segments, summaries, people, onSeek }: Props)
         <input
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
-          placeholder="Ask about this call…"
+          placeholder={pending ? "Thinking…" : "Ask about this call…"}
+          disabled={pending}
           aria-label="Ask a question about this call"
           className="w-full rounded-[var(--radius-sm)] px-2.5 py-2 text-[13px] outline-none"
           style={{ background: "var(--surface-2)", color: "var(--ink)", border: "1px solid var(--line)" }}
         />
         <button
           type="submit"
-          disabled={!draft.trim()}
+          disabled={!draft.trim() || pending}
           className="grid h-8 w-8 shrink-0 place-items-center rounded-[var(--radius-sm)] disabled:opacity-40"
           style={{ background: "var(--accent)", color: "var(--on-accent)" }}
           aria-label="Ask"

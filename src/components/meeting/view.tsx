@@ -37,6 +37,10 @@ export interface MeetingViewProps {
   categories: HighlightCategory[];
   templates: Template[];
   suggested: string[];
+  /** Present for uploaded meetings: the real recording in Supabase Storage. */
+  mediaUrl?: string | null;
+  /** True when this meeting came out of the pipeline rather than the seed. */
+  isLive?: boolean;
 }
 
 type Tab = "summary" | "ask" | "highlights" | "actions";
@@ -59,7 +63,39 @@ export function MeetingView(props: MeetingViewProps) {
   const raf = useRef<number | null>(null);
   const last = useRef<number>(0);
 
+  // Real media when we have it, the clock when we don't.
+  //
+  // An uploaded meeting has an actual audio file, so the <audio> element is
+  // the source of truth for currentMs and everything downstream — transcript,
+  // chapters, scrubber — syncs against real playback. Seeded meetings have no
+  // media, so the requestAnimationFrame clock stands in. Nothing else in the
+  // component knows the difference.
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const hasMedia = Boolean(props.mediaUrl);
+
   useEffect(() => {
+    const el = audioRef.current;
+    if (!hasMedia || !el) return;
+    const onTime = () => setCurrentMs(el.currentTime * 1000);
+    const onEnd = () => setPlaying(false);
+    el.addEventListener("timeupdate", onTime);
+    el.addEventListener("ended", onEnd);
+    return () => {
+      el.removeEventListener("timeupdate", onTime);
+      el.removeEventListener("ended", onEnd);
+    };
+  }, [hasMedia]);
+
+  useEffect(() => {
+    const el = audioRef.current;
+    if (!hasMedia || !el) return;
+    el.playbackRate = rate;
+    if (playing) void el.play().catch(() => setPlaying(false));
+    else el.pause();
+  }, [playing, rate, hasMedia]);
+
+  useEffect(() => {
+    if (hasMedia) return;
     if (!playing) {
       if (raf.current) cancelAnimationFrame(raf.current);
       raf.current = null;
@@ -83,11 +119,13 @@ export function MeetingView(props: MeetingViewProps) {
     return () => {
       if (raf.current) cancelAnimationFrame(raf.current);
     };
-  }, [playing, rate, meeting.durationMs]);
+  }, [playing, rate, meeting.durationMs, hasMedia]);
 
   const seek = useCallback(
     (ms: number, opts?: { play?: boolean }) => {
-      setCurrentMs(Math.max(0, Math.min(meeting.durationMs, ms)));
+      const clamped = Math.max(0, Math.min(meeting.durationMs, ms));
+      setCurrentMs(clamped);
+      if (audioRef.current) audioRef.current.currentTime = clamped / 1000;
       if (opts?.play) setPlaying(true);
       setFollow(true);
     },
@@ -223,6 +261,11 @@ export function MeetingView(props: MeetingViewProps) {
               {meeting.title}
             </h1>
             <div className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[12.5px]" style={{ color: "var(--ink-3)" }}>
+              {props.isLive && (
+                <Badge tone="ok" title="Transcribed by Deepgram, analysed by Claude, stored in Postgres">
+                  Real recording
+                </Badge>
+              )}
               <span className="tnum">{when(meeting.startedAt)}</span>
               <span aria-hidden>·</span>
               <span className="tnum">{duration(meeting.durationMs)}</span>
@@ -246,6 +289,11 @@ export function MeetingView(props: MeetingViewProps) {
           </div>
         </div>
       </header>
+
+      {props.mediaUrl && (
+        // eslint-disable-next-line jsx-a11y/media-has-caption
+        <audio ref={audioRef} src={props.mediaUrl} preload="metadata" className="hidden" />
+      )}
 
       {/* ---- body: transcript centre, rail right ---- */}
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_396px] xl:grid-cols-[minmax(0,1fr)_432px]">
@@ -342,6 +390,7 @@ export function MeetingView(props: MeetingViewProps) {
                   summaries={props.summaries}
                   people={peopleById}
                   onSeek={seek}
+                  grounded={Boolean(props.isLive)}
                 />
               )}
               {tab === "highlights" && (

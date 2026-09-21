@@ -23,6 +23,8 @@ export interface MeetingRow {
   openActionCount: number;
   highlightCount: number;
   chapterCount: number;
+  isLive?: boolean;
+  status?: string;
   participants: (Pick<Person, "id" | "name" | "title" | "company" | "external" | "hue"> & {
     talkMs: number;
     attended: boolean;
@@ -91,6 +93,15 @@ export function MeetingList({
       <PageHeader
         title="Meetings"
         subtitle={`${rows.length} recordings · ${totalMin} minutes captured · ${pluralise(openActions, "open action item")}`}
+        actions={
+          <Link
+            href="/upload"
+            className="inline-flex items-center gap-1.5 rounded-[var(--radius-sm)] px-3.5 py-[8px] text-[13px] font-semibold"
+            style={{ background: "var(--accent)", color: "var(--on-accent)" }}
+          >
+            <Icon name="plus" size={14} /> Upload a recording
+          </Link>
+        }
       />
 
       <Upcoming upcoming={upcoming} people={people} />
@@ -206,6 +217,14 @@ function Row({ r }: { r: MeetingRow }) {
               {r.title}
             </h3>
             {KIND_LABEL[r.kind] && <Badge>{KIND_LABEL[r.kind]}</Badge>}
+            {r.isLive && (
+              <Badge tone="ok" title="Uploaded, transcribed and analysed for real">
+                Real recording
+              </Badge>
+            )}
+            {r.status && r.status !== "ready" && (
+              <Badge tone="warn">{r.status}</Badge>
+            )}
             {r.hasExternal && <Badge tone="violet">External</Badge>}
             {big && <Badge tone="accent">{r.participants.length} people</Badge>}
             {shaky && (
