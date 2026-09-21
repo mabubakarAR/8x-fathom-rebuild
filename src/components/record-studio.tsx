@@ -47,7 +47,6 @@ export function RecordStudio({ configured }: { configured: boolean }) {
   const [phase, setPhase] = useState<Phase>("idle");
   const [segments, setSegments] = useState<LiveSegment[]>([]);
   const [interim, setInterim] = useState("");
-  const [level, setLevel] = useState(0);
   const [elapsed, setElapsed] = useState(0);
   const [speaker, setSpeaker] = useState(0);
   const [names, setNames] = useState<string[]>(["You", "Guest"]);
@@ -144,10 +143,7 @@ export function RecordStudio({ configured }: { configured: boolean }) {
     levels.current = [];
     try {
       const s = await startSession({
-        onLevel: (l) => {
-          levels.current.push(l);
-          setLevel(l);
-        },
+        onLevel: (l) => levels.current.push(l),
         onSegment: (seg) => setSegments((xs) => [...xs, seg]),
         onInterim: setInterim,
         onError: setNote,

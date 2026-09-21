@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { bucketOf, duration, pluralise, timeOf, when } from "@/lib/format";
-import { Avatar, AvatarStack, Badge, Icon, TalkBar } from "./ui";
-import { PageHeader } from "./page-header";
+import { bucketOf, duration, pluralise, timeOf } from "@/lib/format";
+import { Avatar, AvatarStack, Icon } from "./ui";
+import { CallThumb } from "./call-thumb";
+import type { ThumbSlice } from "@/lib/thumb";
 import { Upcoming } from "./upcoming";
 import type { UpcomingMeeting } from "@/lib/seed/upcoming";
 import type { Person } from "@/lib/types";
@@ -25,6 +26,8 @@ export interface MeetingRow {
   chapterCount: number;
   isLive?: boolean;
   status?: string;
+  /** Precomputed waveform shape for the thumbnail. */
+  slices: ThumbSlice[];
   participants: (Pick<Person, "id" | "name" | "title" | "company" | "external" | "hue"> & {
     talkMs: number;
     attended: boolean;
@@ -203,9 +206,9 @@ export function MeetingList({
           >
             {g.bucket}
           </h2>
-          <div className="flex flex-col gap-1.5">
+          <div className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {g.rows.map((r) => (
-              <Row key={r.id} r={r} />
+              <Card key={r.id} r={r} />
             ))}
           </div>
         </section>
@@ -214,109 +217,86 @@ export function MeetingList({
   );
 }
 
-function Row({ r }: { r: MeetingRow }) {
+function Card({ r }: { r: MeetingRow }) {
   const spoke = r.participants.filter((p) => p.attended);
-  const total = spoke.reduce((a, p) => a + p.talkMs, 0);
-  const big = r.participants.length >= 6;
   const shaky = r.lowConfidenceRatio > 0.04;
 
   return (
-    <Link
-      href={`/m/${r.id}`}
-      className="group block rounded-[var(--radius-lg)] p-3.5 transition-[background,box-shadow,transform] hover:shadow-[var(--shadow-md)]"
-      style={{ background: "var(--surface)", border: "1px solid var(--line)" }}
-    >
-      <div className="flex items-start gap-3.5">
-        <div className="hidden w-[76px] shrink-0 pt-0.5 sm:block">
-          <div className="text-[12.5px] font-semibold tnum" style={{ color: "var(--ink-2)" }}>
-            {when(r.startedAt).replace(/,.*/, "")}
-          </div>
-          <div className="text-[11.5px] tnum" style={{ color: "var(--ink-faint)" }}>
-            {timeOf(r.startedAt)}
-          </div>
+    <Link href={`/m/${r.id}`} className="group block">
+      <div className="relative">
+        <CallThumb
+          id={r.id}
+          slices={r.slices}
+          duration={duration(r.durationMs)}
+          live={r.isLive}
+          className="transition-transform duration-200 group-hover:scale-[1.015]"
+        />
+        <div
+          className="pointer-events-none absolute inset-0 rounded-[var(--radius)] opacity-0 transition-opacity group-hover:opacity-100"
+          style={{ boxShadow: "0 0 0 2px var(--accent), var(--shadow-lg)" }}
+        />
+      </div>
+
+      <div className="mt-2.5">
+        <div className="flex items-start gap-2">
+          <h3
+            className="min-w-0 flex-1 text-[14px] leading-[1.35] font-semibold tracking-[-0.005em] transition-colors group-hover:text-[var(--accent)]"
+            style={{ color: "var(--ink)" }}
+          >
+            {r.title}
+          </h3>
         </div>
 
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <h3
-              className="text-[14.5px] font-semibold tracking-[-0.005em] transition-colors group-hover:text-[var(--accent-ink)]"
-              style={{ color: "var(--ink)" }}
-            >
-              {r.title}
-            </h3>
-            {KIND_LABEL[r.kind] && <Badge>{KIND_LABEL[r.kind]}</Badge>}
-            {r.isLive && (
-              <Badge tone="ok" title="A transcript you supplied, read and structured by a real model">
-                Real analysis
-              </Badge>
-            )}
-            {r.status && r.status !== "ready" && (
-              <Badge tone="warn">{r.status}</Badge>
-            )}
-            {r.hasExternal && <Badge tone="violet">External</Badge>}
-            {big && <Badge tone="accent">{r.participants.length} people</Badge>}
-            {shaky && (
-              <Badge tone="warn" title={`${Math.round(r.lowConfidenceRatio * 100)}% of lines are low-confidence — crosstalk and jargon`}>
-                <Icon name="warn" size={11} /> Needs review
-              </Badge>
-            )}
-          </div>
-
-          {/* The one-line gist. Fathom's web list is title + icons only; this is
-              the single highest-value thing to add to a list row. */}
-          <p
-            className="mt-1 line-clamp-2 text-[13px] leading-[1.5]"
-            style={{ color: "var(--ink-2)" }}
-          >
-            {r.gist}
-          </p>
-
-          <div className="mt-2.5 flex flex-wrap items-center gap-x-3.5 gap-y-1.5">
-            <AvatarStack people={r.participants as unknown as Person[]} max={6} size={22} />
-
-            <span className="flex items-center gap-1 text-[12px] tnum" style={{ color: "var(--ink-3)" }}>
-              {duration(r.durationMs)}
-            </span>
-
-            {r.chapterCount > 2 && (
-              <span className="flex items-center gap-1 text-[12px]" style={{ color: "var(--ink-3)" }}>
-                <Icon name="chapter" size={13} /> {r.chapterCount} chapters
+        <div
+          className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11.5px]"
+          style={{ color: "var(--ink-faint)" }}
+        >
+          <span className="tnum">{timeOf(r.startedAt)}</span>
+          {KIND_LABEL[r.kind] && (
+            <>
+              <span aria-hidden>·</span>
+              <span>{KIND_LABEL[r.kind]}</span>
+            </>
+          )}
+          {r.hasExternal && (
+            <>
+              <span aria-hidden>·</span>
+              <span style={{ color: "var(--violet)" }}>External</span>
+            </>
+          )}
+          {shaky && (
+            <>
+              <span aria-hidden>·</span>
+              <span
+                style={{ color: "var(--warn-ink)" }}
+                title={`${Math.round(r.lowConfidenceRatio * 100)}% of lines are low-confidence`}
+              >
+                Needs review
               </span>
-            )}
-            {r.openActionCount > 0 && (
-              <span className="flex items-center gap-1 text-[12px]" style={{ color: "var(--ink-3)" }}>
-                <Icon name="check" size={13} /> {r.openActionCount} open
-              </span>
-            )}
-            {r.highlightCount > 0 && (
-              <span className="flex items-center gap-1 text-[12px]" style={{ color: "var(--ink-3)" }}>
-                <Icon name="clip" size={13} /> {r.highlightCount}
-              </span>
-            )}
-          </div>
-
-          {big && total > 0 && (
-            <div className="mt-2.5">
-              <TalkBar
-                rows={spoke.map((p) => ({ person: p as unknown as Person, ms: p.talkMs }))}
-                totalMs={total}
-              />
-              <div className="mt-1 text-[11px]" style={{ color: "var(--ink-faint)" }}>
-                {spoke[0]?.name.split(" ")[0]} spoke {Math.round((spoke[0].talkMs / total) * 100)}% of
-                the time
-                {r.participants.some((p) => !p.attended) &&
-                  ` · ${r.participants.filter((p) => !p.attended).length} attended without speaking`}
-              </div>
-            </div>
+            </>
           )}
         </div>
 
-        <span
-          className="hidden self-center opacity-0 transition-opacity group-hover:opacity-100 sm:block"
-          style={{ color: "var(--ink-faint)" }}
-        >
-          <Icon name="chevron" />
-        </span>
+        <p className="mt-1.5 line-clamp-2 text-[12.5px] leading-[1.5]" style={{ color: "var(--ink-3)" }}>
+          {r.gist}
+        </p>
+
+        <div className="mt-2 flex items-center gap-2.5">
+          <AvatarStack people={r.participants as unknown as Person[]} max={4} size={19} />
+          {spoke.length > 0 && (
+            <span className="text-[11px]" style={{ color: "var(--ink-faint)" }}>
+              {spoke.length} spoke
+            </span>
+          )}
+          {r.openActionCount > 0 && (
+            <span
+              className="ml-auto flex items-center gap-1 text-[11px] tnum"
+              style={{ color: "var(--ink-3)" }}
+            >
+              <Icon name="check" size={11} /> {r.openActionCount}
+            </span>
+          )}
+        </div>
       </div>
     </Link>
   );

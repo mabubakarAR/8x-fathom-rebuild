@@ -5,6 +5,7 @@ import { UPCOMING } from "@/lib/seed/upcoming";
 import { MeetingList, type MeetingRow } from "@/components/meeting-list";
 import { HomeHero } from "@/components/home-hero";
 import type { Lane } from "@/components/voice-print";
+import { sliceMeeting, type ThumbSlice } from "@/lib/thumb";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +30,7 @@ export default async function HomePage() {
       gist: m.gist,
       hasExternal: m.hasExternal,
       lowConfidenceRatio: m.lowConfidenceRatio,
+      slices: sliceMeeting(bundle.segments, m.durationMs),
       actionCount: bundle.actionItems.length,
       openActionCount: bundle.actionItems.filter((a) => !a.done).length,
       highlightCount: bundle.highlights.length,
@@ -58,6 +60,7 @@ export default async function HomePage() {
     gist: m.gist,
     hasExternal: m.hasExternal,
     lowConfidenceRatio: m.lowConfidenceRatio,
+    slices: [] as ThumbSlice[],
     actionCount: 0,
     openActionCount: 0,
     highlightCount: 0,
