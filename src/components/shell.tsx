@@ -22,6 +22,7 @@ const NAV: { href: string; label: string; icon: IconName; key: string }[] = [
   { href: "/actions", label: "Action items", icon: "check", key: "a" },
   { href: "/clips", label: "Clips", icon: "clip", key: "c" },
   { href: "/live", label: "Live", icon: "live", key: "l" },
+  { href: "/import", label: "Import", icon: "wand", key: "i" },
 ];
 
 export function Shell({ children }: { children: React.ReactNode }) {

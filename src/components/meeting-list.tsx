@@ -95,11 +95,11 @@ export function MeetingList({
         subtitle={`${rows.length} recordings · ${totalMin} minutes captured · ${pluralise(openActions, "open action item")}`}
         actions={
           <Link
-            href="/upload"
+            href="/import"
             className="inline-flex items-center gap-1.5 rounded-[var(--radius-sm)] px-3.5 py-[8px] text-[13px] font-semibold"
             style={{ background: "var(--accent)", color: "var(--on-accent)" }}
           >
-            <Icon name="plus" size={14} /> Upload a recording
+            <Icon name="plus" size={14} /> Import a transcript
           </Link>
         }
       />

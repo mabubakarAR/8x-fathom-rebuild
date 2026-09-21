@@ -41,6 +41,9 @@ export interface MeetingViewProps {
   mediaUrl?: string | null;
   /** True when this meeting came out of the pipeline rather than the seed. */
   isLive?: boolean;
+  /** Raw segments for the grounded Ask call, when they differ from `segments`. */
+  askSegments?: { speakerLabel: number; startMs: number; endMs: number; text: string; confidence: number }[];
+  askSpeakerNames?: Record<string, string>;
 }
 
 type Tab = "summary" | "ask" | "highlights" | "actions";
@@ -390,7 +393,8 @@ export function MeetingView(props: MeetingViewProps) {
                   summaries={props.summaries}
                   people={peopleById}
                   onSeek={seek}
-                  grounded={Boolean(props.isLive)}
+                  askSegments={props.askSegments}
+                  askSpeakerNames={props.askSpeakerNames}
                 />
               )}
               {tab === "highlights" && (

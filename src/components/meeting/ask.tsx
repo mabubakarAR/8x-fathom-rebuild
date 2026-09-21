@@ -36,13 +36,9 @@ interface Props {
   summaries: Summary[];
   people: Map<string, Person>;
   onSeek: (ms: number, opts?: { play?: boolean }) => void;
-  /**
-   * True for meetings that came through the real pipeline. The answer then
-   * comes from Claude reading segments retrieved out of Postgres, and every
-   * citation is validated against the segments table before it is shown.
-   * False falls back to local retrieval over the seeded transcript.
-   */
-  grounded?: boolean;
+  /** Raw segments to send to the model, when they differ from `segments`. */
+  askSegments?: { speakerLabel: number; startMs: number; endMs: number; text: string; confidence: number }[];
+  askSpeakerNames?: Record<string, string>;
 }
 
 const SUGGESTIONS = [
@@ -52,7 +48,15 @@ const SUGGESTIONS = [
   "Where did people disagree?",
 ];
 
-export function AskPane({ meeting, segments, summaries, people, onSeek, grounded }: Props) {
+export function AskPane({
+  meeting,
+  segments,
+  summaries,
+  people,
+  onSeek,
+  askSegments,
+  askSpeakerNames,
+}: Props) {
   const overlay = useOverlay();
   const [draft, setDraft] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -85,6 +89,13 @@ export function AskPane({ meeting, segments, summaries, people, onSeek, grounded
     [meeting],
   );
 
+  // Stable speaker ordering, so a "speaker label" means the same thing on
+  // both sides of the request.
+  const roster = useMemo(
+    () => [...new Set(segments.map((s) => s.speakerId))],
+    [segments],
+  );
+
   async function ask(question: string) {
     const q = question.trim();
     if (!q || pending) return;
@@ -92,16 +103,37 @@ export function AskPane({ meeting, segments, summaries, people, onSeek, grounded
 
     let reply: AskMessage;
 
-    if (grounded) {
-      // Real path: retrieval from Postgres + Claude, citations validated
-      // server-side against the segments table.
-      setPending(true);
-      try {
-        const res = await fetch(`/api/meetings/${meeting.id}/ask`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ question: q, threadId: active?.id }),
-        });
+    // Always try the real model first. Retrieval narrows the transcript to a
+    // relevant window locally (that is what the BM25 engine is for now — a
+    // retriever in front of a model, rather than a substitute for one), then
+    // the server validates every citation the model returns before it comes
+    // back. If the key is not configured the endpoint answers 503 and we fall
+    // back to local retrieval, which is honest rather than broken.
+    setPending(true);
+    try {
+      const raw = askSegments ?? toRaw(segments, roster);
+      const hits = search(index, q, meta, { limit: 40, alpha: 0.4 });
+      const hitIdx = new Set<number>();
+      for (const h of hits) {
+        const i = raw.findIndex((r) => r.startMs === h.anchorMs);
+        if (i >= 0) for (let d = -1; d <= 1; d++) hitIdx.add(i + d);
+      }
+      const candidateIdxs = [...hitIdx].filter((i) => i >= 0 && i < raw.length).sort((a, b) => a - b);
+
+      const res = await fetch("/api/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          question: q,
+          segments: raw,
+          speakerNames: askSpeakerNames ?? namesFor(roster, people),
+          candidateIdxs: candidateIdxs.length ? candidateIdxs : undefined,
+        }),
+      });
+
+      if (res.status === 503) {
+        reply = answer(q, index, meta, summary, segments, people);
+      } else {
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || "Ask failed");
         reply = {
@@ -109,26 +141,24 @@ export function AskPane({ meeting, segments, summaries, people, onSeek, grounded
           role: "assistant",
           text: json.grounded
             ? json.text
-            : `${json.text}\n\n(No line in the transcript could be cited for this, so treat it as unsupported.)`,
+            : `${json.text}\n\n(Nothing in the transcript could be cited for this, so treat it as unsupported.)`,
           citations: (json.citations ?? []).map(
-            (c: { segmentId: string; anchorMs: number; snippet: string }) => ({
+            (c: { segmentIdx: number; anchorMs: number; snippet: string }) => ({
               meetingId: meeting.id,
-              segmentId: c.segmentId,
+              segmentId: segments[c.segmentIdx]?.id ?? "",
               anchorMs: c.anchorMs,
               snippet: c.snippet,
             }),
           ),
           createdAt: new Date().toISOString(),
         };
-      } catch (e) {
-        setFailed(e instanceof Error ? e.message : "Ask failed");
-        setPending(false);
-        return;
       }
+    } catch (e) {
+      setFailed(e instanceof Error ? e.message : "Ask failed");
       setPending(false);
-    } else {
-      reply = answer(q, index, meta, summary, segments, people);
+      return;
     }
+    setPending(false);
 
     const userMsg: AskMessage = {
       id: `um-${Date.now().toString(36)}`,
@@ -185,9 +215,9 @@ export function AskPane({ meeting, segments, summaries, people, onSeek, grounded
         {!active && (
           <div className="pt-3">
             <p className="text-[13px] leading-relaxed" style={{ color: "var(--ink-2)" }}>
-              {grounded
-                ? "Claude answers from this recording's transcript, retrieved from the database. Every citation is checked against a real segment before you see it — anything it can't ground is dropped."
-                : "Answers are built from lines that were actually said, with the timestamp attached. Threads are kept, so you can come back to them."}
+              Claude reads this transcript and answers from it. Every citation is checked against a
+              real line before you see it — anything it can&rsquo;t ground is dropped, and an answer
+              with no citations left is labelled unsupported rather than shown as fact.
             </p>
             <div className="mt-3 flex flex-col gap-1.5">
               {SUGGESTIONS.map((s) => (
@@ -409,4 +439,26 @@ function nearestLine(segments: Segment[], ms: number): string {
       Math.abs(x.startMs - ms) < Math.abs(best.startMs - ms) ? x : best,
     );
   return s.text.length > 150 ? s.text.slice(0, 150) + "…" : s.text;
+}
+
+/** Segments in the shape the API expects, with a numeric speaker label. */
+function toRaw(
+  segments: Segment[],
+  roster: string[],
+): { speakerLabel: number; startMs: number; endMs: number; text: string; confidence: number }[] {
+  return segments.map((s) => ({
+    speakerLabel: Math.max(0, roster.indexOf(s.speakerId)),
+    startMs: s.startMs,
+    endMs: s.endMs,
+    text: s.text,
+    confidence: s.confidence,
+  }));
+}
+
+function namesFor(roster: string[], people: Map<string, Person>): Record<number, string> {
+  const out: Record<number, string> = {};
+  roster.forEach((id, i) => {
+    out[i] = people.get(id)?.name ?? `Speaker ${i + 1}`;
+  });
+  return out;
 }
