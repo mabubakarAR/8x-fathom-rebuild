@@ -63,6 +63,27 @@ but only from your half — and a warning during the call tells you that.
 **No call handy?** Choose **"Just this room"** and talk into your mic for
 30 seconds. Same flow, one voice.
 
+### Does it survive the tab?
+
+This is the part worth testing, because it is the part that is easy to fake.
+
+1. Copy the meeting URL.
+2. Close the tab. Open the URL **on your phone**, or in a private window.
+
+The transcript, the speakers, the summary, the action items, the evidence
+ledger and **the audio** all come back — none of it was in your browser. Open
+`/api/setup` and the `audio` field says where the recording actually went:
+`blob` when an object store is attached, `database` otherwise, `browser only`
+if nothing is. On this deployment it says `database` — Vercel's newer Blob
+stores issue a store id rather than a token and the token that makes the store
+id usable isn't injected here, so the audio lives in Postgres beside the rest
+of the call. A few megabytes of Opus in a `bytea` column, served by
+`/api/calls/<id>/audio` with real range support so scrubbing works in Safari.
+
+**Checking:** `curl -I` that URL and you get `accept-ranges: bytes` and the
+byte length. `DELETE /api/calls/<id>` removes the call and every row that
+hangs off it, audio included.
+
 ---
 
 ## 3 · The receipts — 1 minute
