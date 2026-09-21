@@ -6,6 +6,7 @@ import { clock } from "@/lib/format";
 import { CONFIDENCE_THRESHOLD } from "@/lib/types";
 import type { Chapter, Highlight, HighlightCategory, Person, Segment } from "@/lib/types";
 import { Avatar, Badge, Icon, speakerVar } from "../ui";
+import { mapTone } from "@/lib/tone";
 
 // ---------------------------------------------------------------------------
 // The transcript.
@@ -475,25 +476,6 @@ function ClipComposer({
       </div>
     </div>
   );
-}
-
-/** Maps a category's colour name onto a token that exists in the theme. */
-export function mapTone(color: string): string {
-  switch (color) {
-    case "emerald":
-      return "ok";
-    case "rose":
-      return "danger";
-    case "amber":
-      return "warn";
-    case "sky":
-      return "accent";
-    case "violet":
-    case "fuchsia":
-      return "violet";
-    default:
-      return "accent";
-  }
 }
 
 function SpeakerRepair({

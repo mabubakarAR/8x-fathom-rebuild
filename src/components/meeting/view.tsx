@@ -99,6 +99,20 @@ export function MeetingView(props: MeetingViewProps) {
   // you back while you are reading.
   const [follow, setFollow] = useState(true);
 
+  // Deep link from search: /m/<id>?t=<ms> lands on the exact moment. A search
+  // result that drops you at 0:00 is not a search result.
+  //
+  // Read straight off location rather than useSearchParams() — the hook forces
+  // the whole page under a Suspense boundary and opts it out of static
+  // prerendering, which is a lot of machinery for one optional number.
+  const jumped = useRef(false);
+  useEffect(() => {
+    if (jumped.current) return;
+    jumped.current = true;
+    const t = Number(new URLSearchParams(window.location.search).get("t"));
+    if (Number.isFinite(t) && t > 0) setCurrentMs(Math.min(t, meeting.durationMs));
+  }, [meeting.durationMs]);
+
   const activeSegment = useMemo(() => {
     let lo = 0;
     let hi = segments.length - 1;

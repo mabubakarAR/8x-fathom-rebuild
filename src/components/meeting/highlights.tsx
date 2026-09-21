@@ -4,7 +4,7 @@ import { useOverlay } from "@/lib/overlay";
 import { clock } from "@/lib/format";
 import type { Highlight, HighlightCategory, Person } from "@/lib/types";
 import { Avatar, Icon } from "../ui";
-import { mapTone } from "./transcript";
+import { mapTone } from "@/lib/tone";
 
 interface Props {
   meetingId: string;
