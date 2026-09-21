@@ -47,7 +47,7 @@ export async function GET(
           "content-length": String(slice.length),
           "content-range": `bytes ${start}-${end}/${total}`,
           "accept-ranges": "bytes",
-          "cache-control": "private, max-age=31536000, immutable",
+          "cache-control": "private, max-age=3600",
         },
       });
     }
@@ -58,7 +58,7 @@ export async function GET(
       "content-type": type,
       "content-length": String(total),
       "accept-ranges": "bytes",
-      "cache-control": "private, max-age=31536000, immutable",
+      "cache-control": "private, max-age=3600",
     },
   });
 }
