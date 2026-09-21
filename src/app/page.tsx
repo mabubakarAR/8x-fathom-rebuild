@@ -12,6 +12,9 @@ export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   const c = corpus();
+  // Only calls still processing. Finished ones come back through
+  // listCalls() below, with their waveform and counts — the two used to
+  // overlap, which is why every recording appeared twice.
   const live = await listLiveMeetings();
   // Calls saved to the workspace. Newest first, above the demo corpus, and
   // absent entirely when no database is connected — the page still works.
@@ -62,8 +65,8 @@ export default async function HomePage() {
     };
   });
 
-  // Real uploads sit above the seeded workspace, newest first, and carry a
-  // badge so nobody has to guess which is which.
+  // Calls mid-flight: uploaded or recorded, not yet analysed. They carry a
+  // status so the row can say what is happening rather than look broken.
   const liveRows: MeetingRow[] = live.map((m) => ({
     id: m.id,
     title: m.title,
