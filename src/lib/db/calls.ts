@@ -216,14 +216,25 @@ export async function saveCall(
         }));
       if (highlights.length) await tx`insert into highlights ${tx(highlights)}`;
 
-      const ev = analysis.evidence;
+      // The ledger is a claim about the analysis, so it goes missing for the
+      // same reasons the analysis does. An empty ledger is the honest record
+      // of "nothing was proposed", which is exactly true in that case.
+      const ev = analysis.evidence ?? {
+        model: analysis.model,
+        segmentCount: segments.length,
+        maxIdx: Math.max(0, segments.length - 1),
+        proposed: 0,
+        resolved: 0,
+        elapsedMs: 0,
+        dropped: [],
+      };
       await tx`
         insert into evidence (
           meeting_id, model, segment_count, max_idx, proposed, resolved,
           elapsed_ms, dropped
         ) values (
           ${id}, ${ev.model}, ${ev.segmentCount}, ${ev.maxIdx}, ${ev.proposed},
-          ${ev.resolved}, ${ev.elapsedMs}, ${JSON.stringify(ev.dropped)}
+          ${ev.resolved}, ${ev.elapsedMs}, ${JSON.stringify(ev.dropped ?? [])}
         )`;
     });
 
