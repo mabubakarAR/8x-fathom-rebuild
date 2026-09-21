@@ -133,6 +133,18 @@ Received — CAPTURE TEST 2, 8x assignment, Abubakar, second canary logged.
 
 3. **Assuming one file per session UUID was safe.** It was not — see the child-session UUID collision in section 2. Caught it because canary 2 overwrote canary 1's file on the first attempt.
 
+## 5b. Known limitation, stated plainly
+
+The **primary build session is a Cowork session that started before the hook config existed**, so its `Stop` hook never loaded and does not fire. The two canaries prove the hook fires unprompted in sessions that did *not* install it — that requirement is genuinely met — but for this one long-running session the automatic path is not active.
+
+Rather than leave a hole, every commit in this build runs:
+
+```
+python3 .claude/hooks/backfill.py /root/.claude/projects/-home-claude/<session>.jsonl
+```
+
+which regenerates that session's log from the transcript on disk. The content is identical and equally verbatim — it is extracted from the same transcript the `Stop` hook reads, just pulled on a timer instead of on an event. I am flagging it because "a hook that only works in the session that created it is not installed" is the exact failure mode the spec warns about, and mine is the inverse of it: it works everywhere *except* the session that created it.
+
 ## 6. Scope note
 
 This session runs in a cloud container, not on the local Mac. The hook fires in the container, so the repo is built there and mirrored out. Building directly on the local filesystem would have meant no automatic capture at all, which is the wrong trade.
