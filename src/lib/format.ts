@@ -22,14 +22,34 @@ export function duration(ms: Ms): string {
 
 const DAY = 86_400_000;
 
+/**
+ * The timezone every displayed time is rendered in.
+ *
+ * This is not a stylistic choice, it is a correctness one. `toLocaleString`
+ * with no `timeZone` uses whatever zone the runtime is in — UTC inside a
+ * Vercel function, the visitor's own zone in their browser — so the server
+ * sends "16:30", the client hydrates "21:30", and React throws a hydration
+ * error and discards the server HTML. Every page that shows a meeting time
+ * was doing this.
+ *
+ * Pinning one zone makes both sides agree, and it is the honest option for a
+ * shared workspace besides: a note that says "we agreed Thursday 4pm" should
+ * read the same to everyone on the call, not shift by five hours depending on
+ * who opens it. The locale is pinned for the same reason.
+ */
+const TZ = "UTC";
+const LOCALE = "en-GB";
+
 /** Whole calendar days between two instants, ignoring time of day.
  *  Comparing raw millisecond deltas calls a Saturday-evening meeting
  *  "Yesterday" on Monday afternoon, because it is 1.99 days old. */
 function daysApart(a: number, b: number): number {
+  // UTC getters, to match TZ above. The local ones would put the two sides of
+  // a hydration on different calendar days for anyone east of Greenwich.
   const d1 = new Date(a);
   const d2 = new Date(b);
-  const m1 = Date.UTC(d1.getFullYear(), d1.getMonth(), d1.getDate());
-  const m2 = Date.UTC(d2.getFullYear(), d2.getMonth(), d2.getDate());
+  const m1 = Date.UTC(d1.getUTCFullYear(), d1.getUTCMonth(), d1.getUTCDate());
+  const m2 = Date.UTC(d2.getUTCFullYear(), d2.getUTCMonth(), d2.getUTCDate());
   return Math.round((m2 - m1) / DAY);
 }
 
@@ -40,20 +60,31 @@ export function when(iso: string, now = Date.now()): string {
   if (days === 0) return `Today, ${timeOf(iso)}`;
   if (days === 1) return `Yesterday, ${timeOf(iso)}`;
   if (days < 7)
-    return `${new Date(t).toLocaleDateString("en-GB", { weekday: "long" })}, ${timeOf(iso)}`;
-  return new Date(t).toLocaleDateString("en-GB", {
+    return `${new Date(t).toLocaleDateString(LOCALE, { weekday: "long", timeZone: TZ })}, ${timeOf(iso)}`;
+  return new Date(t).toLocaleDateString(LOCALE, {
     day: "numeric",
     month: "short",
-    ...(new Date(t).getFullYear() !== new Date(now).getFullYear()
+    timeZone: TZ,
+    ...(new Date(t).getUTCFullYear() !== new Date(now).getUTCFullYear()
       ? { year: "numeric" }
       : {}),
   });
 }
 
 export function timeOf(iso: string): string {
-  return new Date(iso).toLocaleTimeString("en-GB", {
+  return new Date(iso).toLocaleTimeString(LOCALE, {
     hour: "numeric",
     minute: "2-digit",
+    timeZone: TZ,
+  });
+}
+
+/** "17 Sept" — the compact form used next to a citation. Pinned like the rest. */
+export function shortDate(iso: string): string {
+  return new Date(iso).toLocaleDateString(LOCALE, {
+    day: "numeric",
+    month: "short",
+    timeZone: TZ,
   });
 }
 
@@ -68,9 +99,10 @@ export function bucketOf(iso: string, now = Date.now()): string {
   if (days < 7) return "This week";
   if (days < 14) return "Last week";
   if (days < 31) return "Earlier this month";
-  return new Date(t).toLocaleDateString("en-GB", {
+  return new Date(t).toLocaleDateString(LOCALE, {
     month: "long",
     year: "numeric",
+    timeZone: TZ,
   });
 }
 

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { clock } from "@/lib/format";
+import { clock, shortDate } from "@/lib/format";
 import { Icon } from "./ui";
 
 // Ask the workspace.
@@ -155,7 +155,7 @@ export function WorkspaceAsk({ question }: { question: string }) {
                           {c.meetingTitle}
                         </span>
                         <span className="text-[11.5px] tnum" style={{ color: "var(--ink-faint)" }}>
-                          {c.startedAt ? new Date(c.startedAt).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : ""}
+                          {c.startedAt ? shortDate(c.startedAt) : ""}
                           {" · "}
                           {clock(c.anchorMs)}
                         </span>
