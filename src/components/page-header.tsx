@@ -12,7 +12,8 @@ export function PageHeader({
   return (
     <header className="flex flex-wrap items-end justify-between gap-3 pt-8 pb-5 md:pt-10">
       <div>
-        <h1 className="text-[22px] font-semibold tracking-[-0.02em]" style={{ color: "var(--ink)" }}>
+        <h1
+          className="display text-[30px] leading-[1.05] tracking-[-0.018em] md:text-[36px]" style={{ color: "var(--ink)" }}>
           {title}
         </h1>
         {subtitle && (

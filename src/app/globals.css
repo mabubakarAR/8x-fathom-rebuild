@@ -3,49 +3,67 @@
 /* ---------------------------------------------------------------------------
    Fathom Rebuild — design tokens
 
-   Colour direction is taken from Fathom's published brand — Cerulean #00BEFF
-   against true black and a WARM off-white (#FAF5F5, not a cool grey). That
-   warmth is the distinctive part and the easiest thing to lose by reaching for
-   a default slate palette, so it is preserved deliberately and pushed a little
-   further.
+   INK & SIGNAL.
+
+   Every AI product shipped in the last two years is dark grey with a blue or
+   violet accent. That palette has stopped meaning "modern" and started
+   meaning "built from a template", which is a bad thing for a product whose
+   entire argument is that it was thought about.
+
+   So, three rules:
+
+   1. No blue. The accent is signal vermillion — warm, loud, and the colour
+      of something that needs looking at. It is used for exactly one thing per
+      screen: the action you are meant to take.
+   2. The ground is ink and paper, not slate. Warm near-black and warm bone,
+      both carrying a trace of red so the accent sits in the same family
+      rather than floating on top of a cold grey.
+   3. COLOUR MEANS A VOICE. Chroma is reserved for speaker identity and the
+      one accent. Nothing else in the interface is coloured for decoration —
+      which is what makes eight speakers legible at a glance in a product
+      about who said what.
 
    Everything is OKLCH. Speaker colours in particular need perceptually even
-   lightness — eight speakers rendered in naive HSL collapse into mud on a dark
-   background, and the eight-person call is exactly where that matters.
+   lightness: eight speakers in naive HSL collapse into mud on a dark ground,
+   and the eight-person call is exactly where that matters.
 --------------------------------------------------------------------------- */
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
     Roboto, sans-serif;
+  /* Display face for headlines only. A serif in a product like this is the
+     single cheapest way to stop looking like every other dashboard, and it
+     earns its place by being used four times, not forty. */
+  --font-display: "Instrument Serif", ui-serif, Georgia, "Times New Roman", serif;
   --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, monospace;
 }
 
 :root {
   color-scheme: light;
 
-  /* Surfaces — warm, not grey. */
-  --bg: oklch(98.4% 0.004 40);
-  --bg-sunken: oklch(96.2% 0.006 40);
-  --surface: oklch(100% 0 0);
-  --surface-2: oklch(97.4% 0.005 40);
-  --surface-hover: oklch(95.6% 0.008 40);
+  /* Paper — bone, not white. Warm enough that the vermillion belongs on it. */
+  --bg: oklch(96.6% 0.012 76);
+  --bg-sunken: oklch(94.2% 0.015 76);
+  --surface: oklch(99.1% 0.006 76);
+  --surface-2: oklch(95.4% 0.013 76);
+  --surface-hover: oklch(92.8% 0.017 76);
 
   /* Ink */
-  --ink: oklch(19% 0.012 40);
-  --ink-2: oklch(44% 0.012 40);
-  --ink-3: oklch(60% 0.012 40);
-  --ink-faint: oklch(72% 0.01 40);
+  --ink: oklch(18% 0.014 50);
+  --ink-2: oklch(42% 0.014 50);
+  --ink-3: oklch(58% 0.013 52);
+  --ink-faint: oklch(70% 0.012 55);
 
   /* Lines */
-  --line: oklch(90.5% 0.006 40);
-  --line-strong: oklch(84% 0.008 40);
+  --line: oklch(89% 0.013 72);
+  --line-strong: oklch(80.5% 0.017 72);
 
-  /* Brand — cerulean */
-  --accent: oklch(64% 0.168 233);
-  --accent-ink: oklch(42% 0.14 240);
-  --accent-soft: oklch(95.5% 0.032 233);
-  --accent-line: oklch(84% 0.08 233);
-  --on-accent: oklch(100% 0 0);
+  /* Signal — vermillion */
+  --accent: oklch(57% 0.198 32);
+  --accent-ink: oklch(45% 0.178 32);
+  --accent-soft: oklch(94% 0.042 42);
+  --accent-line: oklch(80% 0.098 36);
+  --on-accent: oklch(99% 0.005 76);
 
   /* Status */
   --ok: oklch(58% 0.13 156);
@@ -62,7 +80,7 @@
   /* Search hit highlight */
   --mark: oklch(92% 0.13 100);
   --mark-ink: oklch(30% 0.07 80);
-  --mark-expanded: oklch(93% 0.06 233);
+  --mark-expanded: oklch(93% 0.05 150);
 
   --shadow-sm: 0 1px 2px oklch(20% 0.02 40 / 0.05),
     0 1px 3px oklch(20% 0.02 40 / 0.04);
@@ -71,7 +89,7 @@
   --shadow-lg: 0 4px 8px oklch(20% 0.02 40 / 0.06),
     0 24px 56px oklch(20% 0.02 40 / 0.14);
 
-  --glow: 0 1px 2px oklch(50% 0.12 233 / 0.24), 0 6px 20px oklch(55% 0.14 233 / 0.20);
+  --glow: 0 1px 2px oklch(50% 0.16 32 / 0.26), 0 6px 20px oklch(55% 0.18 32 / 0.22);
 
   --radius: 10px;
   --radius-sm: 7px;
@@ -81,34 +99,32 @@
 :root[data-theme="dark"] {
   color-scheme: dark;
 
-  /* Deep water.
-     The light theme keeps Fathom's warm off-white. The dark theme goes the
-     other way on purpose: a near-black with a trace of blue in it, because
-     every colour this product cares about — cerulean, and fifteen speaker
-     hues — reads as luminous against cold dark and merely present against
-     warm dark. The name is a depth-sounding instrument. It should look like
-     one. */
-  --bg: oklch(12.5% 0.014 258);
-  --bg-sunken: oklch(9.5% 0.014 258);
-  --surface: oklch(16.5% 0.014 258);
-  --surface-2: oklch(20.5% 0.015 258);
-  --surface-hover: oklch(24.5% 0.016 258);
+  /* Ink.
+     Warm near-black rather than the blue-grey every dark mode defaults to.
+     The warmth is what lets vermillion sit *in* the surface instead of
+     glowing on top of it, and what keeps fifteen speaker hues from all
+     reading as "some kind of blue". */
+  --bg: oklch(13% 0.009 55);
+  --bg-sunken: oklch(9.8% 0.009 55);
+  --surface: oklch(16.8% 0.010 55);
+  --surface-2: oklch(20.6% 0.011 55);
+  --surface-hover: oklch(24.6% 0.013 55);
 
-  --ink: oklch(97% 0.004 258);
-  --ink-2: oklch(79% 0.012 258);
-  --ink-3: oklch(64% 0.014 258);
-  --ink-faint: oklch(51% 0.015 258);
+  --ink: oklch(96.5% 0.006 70);
+  --ink-2: oklch(78% 0.011 66);
+  --ink-3: oklch(62% 0.013 60);
+  --ink-faint: oklch(49% 0.013 58);
 
-  --line: oklch(25.5% 0.016 258);
-  --line-strong: oklch(35% 0.02 258);
+  --line: oklch(25% 0.012 55);
+  --line-strong: oklch(34% 0.015 55);
 
-  --accent: oklch(76% 0.155 226);
-  --accent-ink: oklch(85% 0.13 226);
-  --accent-soft: oklch(25% 0.06 232);
-  --accent-line: oklch(40% 0.09 230);
-  --on-accent: oklch(11% 0.03 244);
-  /* Bloom. Used sparingly — the primary action and the live indicator. */
-  --glow: 0 0 0 1px oklch(76% 0.155 226 / 0.28), 0 6px 28px oklch(70% 0.17 230 / 0.30);
+  --accent: oklch(70% 0.192 34);
+  --accent-ink: oklch(80% 0.158 38);
+  --accent-soft: oklch(25.5% 0.068 34);
+  --accent-line: oklch(40% 0.11 34);
+  --on-accent: oklch(12% 0.022 40);
+  /* Bloom. One per screen — the action you are meant to take. */
+  --glow: 0 0 0 1px oklch(70% 0.192 34 / 0.30), 0 6px 30px oklch(64% 0.20 34 / 0.34);
 
   --ok: oklch(74% 0.14 158);
   --ok-soft: oklch(26% 0.05 158);
@@ -123,7 +139,7 @@
 
   --mark: oklch(48% 0.12 95);
   --mark-ink: oklch(97% 0.03 95);
-  --mark-expanded: oklch(34% 0.07 230);
+  --mark-expanded: oklch(32% 0.06 155);
 
   --shadow-sm: 0 1px 2px oklch(0% 0 0 / 0.4);
   --shadow-md: 0 2px 4px oklch(0% 0 0 / 0.3), 0 8px 24px oklch(0% 0 0 / 0.4);
@@ -133,23 +149,23 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
-    --bg: oklch(12.5% 0.014 258);
-    --bg-sunken: oklch(9.5% 0.014 258);
-    --surface: oklch(16.5% 0.014 258);
-    --surface-2: oklch(20.5% 0.015 258);
-    --surface-hover: oklch(24.5% 0.016 258);
-    --ink: oklch(97% 0.004 258);
-    --ink-2: oklch(79% 0.012 258);
-    --ink-3: oklch(64% 0.014 258);
-    --ink-faint: oklch(51% 0.015 258);
-    --line: oklch(25.5% 0.016 258);
-    --line-strong: oklch(35% 0.02 258);
-    --accent: oklch(76% 0.155 226);
-    --accent-ink: oklch(85% 0.13 226);
-    --accent-soft: oklch(25% 0.06 232);
-    --glow: 0 0 0 1px oklch(76% 0.155 226 / 0.28), 0 6px 28px oklch(70% 0.17 230 / 0.30);
-    --accent-line: oklch(40% 0.08 230);
-    --on-accent: oklch(14% 0.02 240);
+    --bg: oklch(13% 0.009 55);
+    --bg-sunken: oklch(9.8% 0.009 55);
+    --surface: oklch(16.8% 0.010 55);
+    --surface-2: oklch(20.6% 0.011 55);
+    --surface-hover: oklch(24.6% 0.013 55);
+    --ink: oklch(96.5% 0.006 70);
+    --ink-2: oklch(78% 0.011 66);
+    --ink-3: oklch(62% 0.013 60);
+    --ink-faint: oklch(49% 0.013 58);
+    --line: oklch(25% 0.012 55);
+    --line-strong: oklch(34% 0.015 55);
+    --accent: oklch(70% 0.192 34);
+    --accent-ink: oklch(80% 0.158 38);
+    --accent-soft: oklch(25.5% 0.068 34);
+    --glow: 0 0 0 1px oklch(70% 0.192 34 / 0.30), 0 6px 30px oklch(64% 0.20 34 / 0.34);
+    --accent-line: oklch(40% 0.11 34);
+    --on-accent: oklch(12% 0.022 40);
     --ok: oklch(74% 0.14 158);
     --ok-soft: oklch(26% 0.05 158);
     --ok-ink: oklch(82% 0.13 158);
@@ -162,7 +178,7 @@
     --violet-soft: oklch(28% 0.06 300);
     --mark: oklch(48% 0.12 95);
     --mark-ink: oklch(97% 0.03 95);
-    --mark-expanded: oklch(34% 0.07 230);
+    --mark-expanded: oklch(32% 0.06 155);
     --shadow-sm: 0 1px 2px oklch(0% 0 0 / 0.4);
     --shadow-md: 0 2px 4px oklch(0% 0 0 / 0.3), 0 8px 24px oklch(0% 0 0 / 0.4);
     --shadow-lg: 0 4px 8px oklch(0% 0 0 / 0.3), 0 24px 56px oklch(0% 0 0 / 0.55);
@@ -172,7 +188,7 @@
 /* Speaker palette. Fifteen hues at matched chroma and lightness per theme, so
    no speaker is quieter than another and none of them vanish in dark mode. */
 :root {
-  --sp-0: oklch(57% 0.152 250);
+  --sp-0: oklch(57% 0.152 262);
   --sp-1: oklch(57% 0.152 295);
   --sp-2: oklch(57% 0.152 160);
   --sp-3: oklch(57% 0.152 340);
@@ -190,7 +206,7 @@
 }
 
 :root[data-theme="dark"] {
-  --sp-0: oklch(79% 0.145 250);
+  --sp-0: oklch(79% 0.145 262);
   --sp-1: oklch(79% 0.145 295);
   --sp-2: oklch(79% 0.145 160);
   --sp-3: oklch(79% 0.145 340);
@@ -209,7 +225,7 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --sp-0: oklch(79% 0.145 250);
+    --sp-0: oklch(79% 0.145 262);
     --sp-1: oklch(79% 0.145 295);
     --sp-2: oklch(79% 0.145 160);
     --sp-3: oklch(79% 0.145 340);
@@ -360,4 +376,12 @@ mark.hit-expanded {
 @keyframes rec-pulse {
   0%, 100% { opacity: 1; box-shadow: 0 0 0 0 color-mix(in oklab, var(--danger) 55%, transparent); }
   70%      { opacity: .85; box-shadow: 0 0 0 7px transparent; }
+}
+
+/* Display type. Used for page titles and the hero only — a serif that turns
+   up everywhere stops being a decision and becomes a theme. */
+.display {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: -0.015em;
 }

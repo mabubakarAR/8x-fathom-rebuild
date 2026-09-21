@@ -132,12 +132,12 @@ export function HomeHero({ configured, lanes }: { configured: boolean; lanes: La
             </span>
 
             <h1
-              className="mt-4 text-[32px] leading-[1.04] font-semibold tracking-[-0.035em] md:text-[42px] lg:text-[46px]"
+              className="display mt-4 text-[40px] leading-[0.98] tracking-[-0.02em] md:text-[56px] lg:text-[62px]"
               style={{ color: "var(--ink)" }}
             >
               <span className="block">Every AI notetaker</span>
               <span className="block">sounds confident.</span>
-              <span className="block" style={{ color: "var(--accent)" }}>
+              <span className="block italic" style={{ color: "var(--accent)" }}>
                 This one proves it.
               </span>
             </h1>
@@ -207,8 +207,8 @@ export function HomeHero({ configured, lanes }: { configured: boolean; lanes: La
               <button
                 onClick={runSample}
                 disabled={!configured}
-                className="inline-flex items-center gap-2 rounded-[var(--radius-sm)] px-4 py-[11px] text-[13.5px] font-semibold transition-transform hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100"
-                style={{ background: "var(--accent)", color: "var(--on-accent)", boxShadow: "var(--glow)" }}
+                className="inline-flex items-center gap-2 rounded-[var(--radius-sm)] px-4 py-[11px] text-[13.5px] font-medium transition-colors hover:bg-[var(--surface-hover)] disabled:opacity-50"
+                style={{ background: "transparent", color: "var(--ink-2)", border: "1px solid var(--line-strong)" }}
               >
                 <Icon name="sparkle" size={14} /> Or try a sample call
               </button>

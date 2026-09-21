@@ -31,22 +31,40 @@ export function TemplateSelect({
   return (
     <label className="flex items-center gap-2 text-[11.5px]" style={{ color: "var(--ink-faint)" }}>
       {label}
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="rounded-[var(--radius-sm)] px-2 py-[5px] text-[12.5px] font-medium outline-none"
-        style={{ background: "var(--surface-2)", color: "var(--ink)", border: "1px solid var(--line)" }}
-      >
-        {groups.map(({ g, items }) => (
-          <optgroup key={g} label={GROUP_LABEL[g]}>
-            {items.map((t) => (
-              <option key={t.key} value={t.key}>
-                {t.label}
-              </option>
-            ))}
-          </optgroup>
-        ))}
-      </select>
+      {/* appearance-none, because the native control renders with the OS
+          light chrome on a dark page and looks like a bug. */}
+      <div className="relative">
+        <select
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="appearance-none rounded-[var(--radius-sm)] py-[6px] pr-7 pl-2.5 text-[12.5px] font-medium outline-none"
+          style={{
+            background: "var(--surface-2)",
+            color: "var(--ink)",
+            border: "1px solid var(--line)",
+            colorScheme: "dark light",
+          }}
+        >
+          {groups.map(({ g, items }) => (
+            <optgroup key={g} label={GROUP_LABEL[g]}>
+              {items.map((t) => (
+                <option key={t.key} value={t.key}>
+                  {t.label}
+                </option>
+              ))}
+            </optgroup>
+          ))}
+        </select>
+        <span
+          className="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2"
+          style={{ color: "var(--ink-faint)" }}
+          aria-hidden
+        >
+          <svg width="9" height="6" viewBox="0 0 9 6" fill="none">
+            <path d="M1 1l3.5 3.5L8 1" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+          </svg>
+        </span>
+      </div>
     </label>
   );
 }

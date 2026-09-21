@@ -38,6 +38,10 @@ interface Props {
   isLive?: boolean;
   /** True when there is an actual audio file behind the scrubber. */
   hasMedia?: boolean;
+  /** This meeting has no recording, but the browser can read it aloud. */
+  canReadAloud?: boolean;
+  aloud?: boolean;
+  onToggleAloud?: () => void;
 }
 
 export function Player({
@@ -56,6 +60,9 @@ export function Player({
   onRate,
   isLive,
   hasMedia,
+  canReadAloud,
+  aloud,
+  onToggleAloud,
 }: Props) {
   const barRef = useRef<HTMLDivElement>(null);
   const [hoverMs, setHoverMs] = useState<number | null>(null);
@@ -141,10 +148,29 @@ export function Player({
             <span
               className="inline-flex items-center gap-1.5 rounded-full px-2 py-[3px] text-[11px] font-medium"
               style={{ background: "var(--surface-2)", color: "var(--ink-3)", border: "1px solid var(--line)" }}
-              title="Authored demo meeting — the recording bot is simulated for this rebuild, see /about"
+              title="Authored demo meeting — no recording exists for this one, see /about"
             >
-              <Icon name="warn" size={11} /> Demo meeting
+              <Icon name="warn" size={11} /> Transcript only · no recording
             </span>
+          )}
+
+          {/* The honest answer to a meeting with no audio: rather than a
+              player that moves in silence, the browser reads the transcript
+              out loud, one voice per speaker. Obviously synthetic, said so. */}
+          {canReadAloud && (
+            <button
+              onClick={onToggleAloud}
+              className="ml-auto inline-flex items-center gap-1.5 rounded-full px-2.5 py-[4px] text-[11.5px] font-medium transition-colors"
+              style={{
+                background: aloud ? "var(--accent)" : "var(--surface-2)",
+                color: aloud ? "var(--on-accent)" : "var(--ink-2)",
+                border: `1px solid ${aloud ? "transparent" : "var(--line)"}`,
+              }}
+              title="Read the transcript aloud with a different synthesised voice per speaker"
+            >
+              <Icon name={aloud ? "pause" : "play"} size={11} />
+              {aloud ? "Stop reading" : "Read aloud"}
+            </button>
           )}
           {activeChapter && (
             <span className="truncate text-[12px] font-medium" style={{ color: "var(--ink-3)" }}>

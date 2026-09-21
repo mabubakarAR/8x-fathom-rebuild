@@ -16,6 +16,7 @@ import type {
   Template,
 } from "@/lib/types";
 import { Badge, Icon } from "../ui";
+import { readAloud, speechAvailable, type Reader } from "@/lib/read-aloud";
 import type { EvidenceLedger } from "@/lib/evidence";
 import { Player } from "./player";
 import { Transcript } from "./transcript";
@@ -83,6 +84,22 @@ export function MeetingView(props: MeetingViewProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const hasMedia = Boolean(props.mediaUrl);
 
+  // Read aloud.
+  //
+  // A meeting with no recording used to play in silence, which reads as a
+  // broken player rather than as "there is no audio for this one". The
+  // browser's own speech synthesis reads the transcript instead, a different
+  // voice per speaker, and the playhead follows what is actually being
+  // spoken rather than a clock guessing at it.
+  const [aloud, setAloud] = useState(false);
+  const reader = useRef<Reader | null>(null);
+  // Whether the browser can speak is only knowable on the client, so the
+  // control appears after mount. Deciding it during render makes the server
+  // HTML and the first client render disagree, which is a hydration error.
+  const [canSpeak, setCanSpeak] = useState(false);
+  useEffect(() => setCanSpeak(speechAvailable()), []);
+  const canReadAloud = !hasMedia && canSpeak;
+
   useEffect(() => {
     const el = audioRef.current;
     if (!hasMedia || !el) return;
@@ -104,8 +121,46 @@ export function MeetingView(props: MeetingViewProps) {
     else el.pause();
   }, [playing, rate, hasMedia]);
 
+  // Speech drives the playhead when it is running, so the clock stands down.
   useEffect(() => {
-    if (hasMedia) return;
+    if (!aloud) return;
+    let live = true;
+    const lines = segments.map((sg) => ({
+      startMs: sg.startMs,
+      text: sg.text,
+      voiceSlot: peopleById.get(sg.speakerId)?.hue ?? 0,
+    }));
+    void readAloud(lines, {
+      from: currentMs,
+      rate,
+      onSeek: (ms) => setCurrentMs(ms),
+      onEnd: () => {
+        setAloud(false);
+        setPlaying(false);
+      },
+    }).then((r) => {
+      if (!live) {
+        r.stop();
+        return;
+      }
+      reader.current = r;
+    });
+    return () => {
+      live = false;
+      reader.current?.stop();
+      reader.current = null;
+    };
+    // currentMs is the starting point only; re-running on every tick would
+    // restart the speech constantly.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aloud, segments, peopleById]);
+
+  useEffect(() => {
+    if (aloud) reader.current?.setRate(rate);
+  }, [rate, aloud]);
+
+  useEffect(() => {
+    if (hasMedia || aloud) return;
     if (!playing) {
       if (raf.current) cancelAnimationFrame(raf.current);
       raf.current = null;
@@ -129,7 +184,7 @@ export function MeetingView(props: MeetingViewProps) {
     return () => {
       if (raf.current) cancelAnimationFrame(raf.current);
     };
-  }, [playing, rate, meeting.durationMs, hasMedia]);
+  }, [playing, rate, meeting.durationMs, hasMedia, aloud]);
 
   // Auto-scroll follows playback until the user scrolls away, then stops and
   // offers to resume. Nothing is more annoying than a transcript that yanks
@@ -357,7 +412,21 @@ export function MeetingView(props: MeetingViewProps) {
             activeSegment={activeSegment}
             activeChapter={activeChapter}
             onSeek={seek}
-            onTogglePlay={() => setPlaying((p) => !p)}
+            onTogglePlay={() => {
+              setPlaying((p) => {
+                if (p && aloud) setAloud(false);
+                return !p;
+              });
+            }}
+            canReadAloud={canReadAloud}
+            aloud={aloud}
+            onToggleAloud={() => {
+              setAloud((v) => {
+                const next = !v;
+                setPlaying(next);
+                return next;
+              });
+            }}
             onRate={setRate}
             isLive={props.isLive}
             hasMedia={hasMedia}
