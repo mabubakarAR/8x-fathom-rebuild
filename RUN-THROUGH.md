@@ -127,6 +127,36 @@ the absence. If it invents a number, that's a bug — tell me.
 Then ask something it *can* answer and check the citations jump to the right
 moments.
 
+### 5b · Ask *every* meeting at once — 45 seconds
+
+The per-meeting Ask answers "what did we say in this call". This answers the
+question people actually have.
+
+**Search** in the top nav → paste:
+
+> **what did we promise Brightwater about December?**
+
+Then **Ask the workspace**. About eight seconds.
+
+It should tell you that **no such promise was made** — and then explain the two
+December items that do exist, one of which is a deadline *Brightwater* imposed
+on you, not one you gave them. Under the answer, every line it used: the
+meeting, the date, the speaker, the timestamp, quoted. Click one and you land
+on that second of that call.
+
+Try the harder one:
+
+> **did we ever change our mind about the second data source?**
+
+**Checking:** the ledger under the answer — *N citations anchored · read N
+lines across N meetings · Ns · model*. If it ever cites a line it wasn't given,
+that line is **discarded and named** in red rather than silently dropped. The
+answer is drawn from the same retriever the search results below it came from,
+so every claim is one you can reproduce by reading the list underneath.
+
+**The point:** a folder of recordings cannot answer this. Neither can a tool
+that summarises each call in isolation.
+
 ---
 
 ## 6 · Commitments — the closer — 1 minute
