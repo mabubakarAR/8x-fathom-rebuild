@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { saveImported } from "@/lib/imported";
 import { Icon } from "./ui";
+import { TemplateSelect } from "./template-select";
 import { VoicePrint, type Lane } from "./voice-print";
 import { Theatre } from "./theatre";
 
@@ -24,16 +25,6 @@ import { Theatre } from "./theatre";
 // a request for homework. One click that visibly does the real work, with the
 // steps narrated as they happen, is the difference between a reviewer
 // believing the pipeline is real and taking your word for it.
-
-const TEMPLATES = [
-  ["general", "General"],
-  ["sales", "Sales"],
-  ["one-on-one", "One-on-one"],
-  ["project-update", "Project update"],
-  ["retro", "Retrospective"],
-  ["interview", "Interview"],
-  ["qa", "Q&A"],
-] as const;
 
 export function HomeHero({ configured, lanes }: { configured: boolean; lanes: Lane[] }) {
   const router = useRouter();
@@ -239,25 +230,7 @@ export function HomeHero({ configured, lanes }: { configured: boolean; lanes: La
               onChange={(e) => takeFile(e.target.files?.[0])}
             />
 
-            <div className="mt-3.5 flex flex-wrap items-center gap-1.5">
-              <span className="text-[11.5px]" style={{ color: "var(--ink-faint)" }}>
-                Summary style:
-              </span>
-              {TEMPLATES.map(([k, label]) => (
-                <button
-                  key={k}
-                  onClick={() => setTemplate(k)}
-                  className="rounded-full px-2.5 py-[3px] text-[11.5px] font-medium"
-                  style={{
-                    background: template === k ? "var(--accent)" : "var(--surface-2)",
-                    color: template === k ? "var(--on-accent)" : "var(--ink-3)",
-                    border: `1px solid ${template === k ? "transparent" : "var(--line)"}`,
-                  }}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
+            <TemplateSelect value={template} onChange={setTemplate} />
 
             <p className="mt-3 text-[11.5px] leading-[1.55]" style={{ color: "var(--ink-faint)" }}>
               WebVTT, SubRip, <code>Name: what they said</code>, or plain prose. Zoom, Meet and

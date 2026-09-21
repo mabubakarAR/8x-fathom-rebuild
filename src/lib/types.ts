@@ -160,7 +160,15 @@ export type TemplateKey =
   | "project-update"
   | "retro"
   | "interview"
-  | "qa";
+  | "qa"
+  | "meddpicc"
+  | "bant"
+  | "spiced"
+  | "sandler"
+  | "demo"
+  | "expansion"
+  | "project-kickoff"
+  | "standup";
 
 export interface Template {
   key: TemplateKey;
@@ -168,6 +176,8 @@ export interface Template {
   blurb: string;
   /** Section headings this template produces, in order. */
   sections: string[];
+  /** Grouping in the picker: the general one, sales methodologies, etc. */
+  group?: "core" | "sales" | "success" | "team";
 }
 
 export interface AskCitation {

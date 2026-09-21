@@ -5,6 +5,7 @@ import { useOverlay } from "@/lib/overlay";
 import { clock, duration } from "@/lib/format";
 import type { Meeting, Participant, Person, Segment, Summary, Template } from "@/lib/types";
 import { Avatar, Icon, SectionLabel, TalkBar, speakerVar } from "../ui";
+import { TemplatePicker } from "../template-picker";
 
 // The summary pane.
 //
@@ -26,6 +27,9 @@ interface Props {
   speakers: { part: Participant; person: Person }[];
   /** Used by evidence mode to show the line each claim is standing on. */
   segments: Segment[];
+  /** Real meetings can generate a template that has not been run yet. */
+  onGenerate?: (key: string) => void;
+  generating?: string | null;
 }
 
 export function SummaryPane({
@@ -38,6 +42,8 @@ export function SummaryPane({
   onSeek,
   speakers,
   segments,
+  onGenerate,
+  generating,
 }: Props) {
   const overlay = useOverlay();
   const available = summaries.map((s) => s.templateKey);
@@ -133,29 +139,15 @@ export function SummaryPane({
           </button>
           </div>
         </div>
-        <div className="flex flex-wrap gap-1.5">
-          {ordered.map((t) => {
-            const has = available.includes(t.key);
-            const active = t.key === activeKey;
-            return (
-              <button
-                key={t.key}
-                onClick={() => has && switchTemplate(t.key)}
-                disabled={!has}
-                title={has ? t.blurb : `${t.blurb} — not generated for this meeting in the demo seed`}
-                className="rounded-full px-2.5 py-[4px] text-[12px] font-medium transition-colors disabled:cursor-not-allowed"
-                style={{
-                  background: active ? "var(--accent)" : "var(--surface-2)",
-                  color: active ? "var(--on-accent)" : has ? "var(--ink-2)" : "var(--ink-faint)",
-                  border: `1px solid ${active ? "transparent" : "var(--line)"}`,
-                  opacity: has ? 1 : 0.5,
-                }}
-              >
-                {t.label}
-              </button>
-            );
-          })}
-        </div>
+        <TemplatePicker
+          templates={ordered}
+          available={available}
+          activeKey={activeKey}
+          suggested={suggested}
+          onPick={switchTemplate}
+          onGenerate={onGenerate}
+          generating={generating}
+        />
       </div>
 
       {/* stats strip */}

@@ -1,6 +1,7 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import type { RawSegment } from "./transcribe";
+import { TEMPLATES } from "../seed/cast";
 import type { DroppedClaim, EvidenceLedger } from "../evidence";
 import { validateAnalysis } from "./validate";
 
@@ -70,15 +71,15 @@ export interface Analysis {
   evidence: EvidenceLedger;
 }
 
-export const TEMPLATE_SECTIONS: Record<string, string[]> = {
-  general: ["Overview", "Key points", "Decisions", "Next steps"],
-  sales: ["Company context", "Pain and priorities", "Objections raised", "Buying signals", "Next steps"],
-  "one-on-one": ["Updates", "Blockers", "Support needed", "Growth", "Next steps"],
-  "project-update": ["Status by workstream", "What changed", "Slipping", "Decisions", "Next steps"],
-  retro: ["Went well", "Did not go well", "Start doing", "Stop doing", "Next steps"],
-  interview: ["Background", "Technical signal", "Concerns", "Candidate questions", "Next steps"],
-  qa: ["Questions and answers", "Unanswered", "Next steps"],
-};
+/**
+ * Section headings per template, derived from the single source of truth in
+ * the cast rather than restated here. Two lists of headings that have to stay
+ * in step is two lists that eventually do not, and the failure is silent: the
+ * picker offers MEDDPICC and the model writes "Key points".
+ */
+export const TEMPLATE_SECTIONS: Record<string, string[]> = Object.fromEntries(
+  TEMPLATES.map((t) => [t.key, t.sections]),
+);
 
 const CATEGORIES = ["decision", "risk", "quote", "objection", "followup", "idea"];
 

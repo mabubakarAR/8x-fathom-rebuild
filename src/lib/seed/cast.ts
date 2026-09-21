@@ -176,16 +176,32 @@ export const CATEGORY_BY_KEY = new Map(
   HIGHLIGHT_CATEGORIES.map((c) => [c.key, c]),
 );
 
-// Summary templates. Fathom ships 17 and gates them behind Team Edition; the
-// count is marketing. What matters is that switching one re-shapes the summary
-// rather than just re-wording it, so each template here declares its own
-// section structure and the generator fills only those sections.
+// Summary templates.
+//
+// Fathom's picker is a grid of sixteen cards, and the interesting half of it
+// is the named sales methodologies — MEDDPICC, BANT, SPICED, Sandler. That is
+// not decoration: a rep who sells on MEDDPICC wants the summary shaped like
+// MEDDPICC, and a generic "key points" list is useless to them. Getting this
+// right is most of what makes a notetaker feel built for the job rather than
+// for the demo.
+//
+// Each template declares its own section structure, and the generator fills
+// exactly those sections — so switching template re-shapes the summary rather
+// than re-wording it. This array is the single source of truth: the analysis
+// prompt derives its headings from it, so the picker and the model can never
+// disagree about what a template means.
+//
+// One deliberate omission: Fathom lists "Customer Success - REACH™", a
+// proprietary framework belonging to HelloCCO. Reproducing someone's
+// trademarked methodology is not mine to do, so the expansion-focused
+// template here is my own structure under a plain name.
 export const TEMPLATES: Template[] = [
   {
     key: "general",
     label: "General",
     blurb: "Decisions, next steps and the moments that mattered.",
     sections: ["Overview", "Key points", "Decisions", "Next steps"],
+    group: "core",
   },
   {
     key: "sales",
@@ -198,6 +214,7 @@ export const TEMPLATES: Template[] = [
       "Buying signals",
       "Next steps",
     ],
+    group: "sales",
   },
   {
     key: "discovery",
@@ -210,6 +227,7 @@ export const TEMPLATES: Template[] = [
       "Success criteria",
       "Next steps",
     ],
+    group: "sales",
   },
   {
     key: "customer-success",
@@ -222,12 +240,14 @@ export const TEMPLATES: Template[] = [
       "Risk signals",
       "Next steps",
     ],
+    group: "success",
   },
   {
     key: "one-on-one",
     label: "One-on-one",
     blurb: "Updates, blockers, support needed and growth.",
     sections: ["Updates", "Blockers", "Support needed", "Growth", "Next steps"],
+    group: "team",
   },
   {
     key: "project-update",
@@ -240,12 +260,14 @@ export const TEMPLATES: Template[] = [
       "Decisions",
       "Next steps",
     ],
+    group: "team",
   },
   {
     key: "retro",
     label: "Retrospective",
     blurb: "Start, stop, continue — and what actually gets actioned.",
     sections: ["Went well", "Did not go well", "Start doing", "Stop doing", "Next steps"],
+    group: "team",
   },
   {
     key: "interview",
@@ -258,12 +280,121 @@ export const TEMPLATES: Template[] = [
       "Candidate questions",
       "Next steps",
     ],
+    group: "team",
   },
   {
     key: "qa",
     label: "Q&A",
     blurb: "Every question asked, paired with the answer given.",
     sections: ["Questions and answers", "Unanswered", "Next steps"],
+    group: "core",
+  },
+
+  // ---- sales methodologies -------------------------------------------------
+  {
+    key: "meddpicc",
+    label: "Sales — MEDDPICC",
+    blurb: "Qualification against the eight MEDDPICC gates.",
+    sections: [
+      "Metrics",
+      "Economic buyer",
+      "Decision criteria",
+      "Decision process",
+      "Paper process",
+      "Identified pain",
+      "Champion",
+      "Competition",
+      "Next steps",
+    ],
+    group: "sales",
+  },
+  {
+    key: "bant",
+    label: "Sales — BANT",
+    blurb: "Budget, authority, need and timing, in the prospect's words.",
+    sections: ["Budget", "Authority", "Need", "Timing", "Next steps"],
+    group: "sales",
+  },
+  {
+    key: "spiced",
+    label: "Sales — SPICED",
+    blurb: "Situation through to decision, with the critical event named.",
+    sections: [
+      "Situation",
+      "Pain",
+      "Impact",
+      "Critical event",
+      "Decision",
+      "Next steps",
+    ],
+    group: "sales",
+  },
+  {
+    key: "sandler",
+    label: "Sales — Sandler",
+    blurb: "Pain, budget and decision, with the up-front contract.",
+    sections: [
+      "Bonding and rapport",
+      "Up-front contract",
+      "Pain",
+      "Budget",
+      "Decision process",
+      "Fulfilment",
+      "Post-sell",
+    ],
+    group: "sales",
+  },
+  {
+    key: "demo",
+    label: "Demo",
+    blurb: "What you showed, how they reacted, and what was missing.",
+    sections: [
+      "What was shown",
+      "Reactions",
+      "Questions asked",
+      "Gaps and objections",
+      "Next steps",
+    ],
+    group: "sales",
+  },
+
+  // ---- success -------------------------------------------------------------
+  {
+    key: "expansion",
+    label: "Customer Success — Expansion",
+    blurb: "Adoption, advocates and the openings worth acting on.",
+    sections: [
+      "Adoption today",
+      "Unmet needs",
+      "Expansion signals",
+      "Advocates and blockers",
+      "Risks",
+      "Next steps",
+    ],
+    group: "success",
+  },
+
+  // ---- team ----------------------------------------------------------------
+  {
+    key: "project-kickoff",
+    label: "Project Kick-Off",
+    blurb: "Vision, scope, targets and who owns what.",
+    sections: [
+      "Vision",
+      "Scope and non-goals",
+      "Targets and dates",
+      "Resources and owners",
+      "Risks",
+      "Next steps",
+    ],
+    group: "team",
+  },
+  {
+    key: "standup",
+    label: "Stand Up",
+    blurb: "Done, doing, blocked — per person.",
+    sections: ["Shipped since last time", "In progress", "Blockers", "Next steps"],
+    group: "team",
   },
 ];
 

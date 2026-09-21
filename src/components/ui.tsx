@@ -195,7 +195,7 @@ export type IconName =
   | "sparkle" | "list" | "clip" | "home" | "chevron" | "chevronDown" | "close"
   | "sun" | "moon" | "link" | "download" | "warn" | "user" | "back" | "dot"
   | "wand" | "live" | "skipBack" | "skipFwd" | "copy" | "external" | "filter"
-  | "eye" | "eye-off" | "shield";
+  | "eye" | "eye-off" | "shield" | "chart";
 
 const PATHS: Record<IconName, ReactNode> = {
   play: <path {...S} d="M4.5 3.2v9.6l8-4.8z" />,
@@ -229,5 +229,6 @@ const PATHS: Record<IconName, ReactNode> = {
   filter: <path {...S} d="M2.5 4h11l-4.2 4.6v3.6l-2.6 1.3V8.6z" />,
   eye: <g {...S}><path d="M1.6 8S4 3.8 8 3.8 14.4 8 14.4 8 12 12.2 8 12.2 1.6 8 1.6 8z" /><circle cx="8" cy="8" r="2" /></g>,
   "eye-off": <g {...S}><path d="M6.3 4.1A6 6 0 0 1 8 3.8C12 3.8 14.4 8 14.4 8a11 11 0 0 1-2 2.5M4.2 5.3A11 11 0 0 0 1.6 8S4 12.2 8 12.2c.7 0 1.3-.1 1.9-.3" /><path d="m2.6 2.6 10.8 10.8" /></g>,
+  chart: <g {...S}><path d="M2.8 13h10.4" /><path d="M4.6 13V8.4M7.6 13V4.6M10.6 13V6.8" /></g>,
   shield: <g {...S}><path d="M8 2.2 13 4v4c0 3-2.2 5-5 5.8C5.2 13 3 11 3 8V4z" /><path d="m5.9 7.9 1.5 1.5 2.9-3" /></g>,
 };

@@ -14,6 +14,7 @@ import { putAudio } from "@/lib/audio-store";
 import { saveImported } from "@/lib/imported";
 import { clock } from "@/lib/format";
 import { Icon, speakerVar } from "./ui";
+import { TemplateSelect } from "./template-select";
 import { PageHeader } from "./page-header";
 
 // The studio.
@@ -29,16 +30,6 @@ import { PageHeader } from "./page-header";
 // dressed up as data. A human pressing "2" when someone else starts talking
 // is not a limitation — on a real call it is more accurate than any diarizer,
 // and it costs one keystroke.
-
-const TEMPLATES = [
-  ["general", "General"],
-  ["sales", "Sales"],
-  ["one-on-one", "One-on-one"],
-  ["project-update", "Project update"],
-  ["retro", "Retrospective"],
-  ["interview", "Interview"],
-  ["qa", "Q&A"],
-] as const;
 
 type Phase = "idle" | "live" | "analysing";
 
@@ -307,22 +298,7 @@ export function RecordStudio({ configured }: { configured: boolean }) {
           <canvas ref={canvas} className="h-10 min-w-[160px] flex-1" aria-hidden />
 
           {phase === "idle" && (
-            <div className="flex flex-wrap items-center gap-1.5">
-              {TEMPLATES.map(([k, label]) => (
-                <button
-                  key={k}
-                  onClick={() => setTemplate(k)}
-                  className="rounded-full px-2.5 py-[3px] text-[11.5px] font-medium"
-                  style={{
-                    background: template === k ? "var(--accent)" : "var(--surface-2)",
-                    color: template === k ? "var(--on-accent)" : "var(--ink-3)",
-                    border: `1px solid ${template === k ? "transparent" : "var(--line)"}`,
-                  }}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
+            <TemplateSelect value={template} onChange={setTemplate} />
           )}
         </div>
 

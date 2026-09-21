@@ -47,6 +47,12 @@ export interface ImportedMeeting {
   segments: RawSegment[];
   speakerNames: Record<string, string>;
   analysis: ImportedAnalysis;
+  /** Summaries generated later, by picking a template that had not been run.
+   *  Keyed by template. Each is a real model call over the same transcript. */
+  extraSections?: Record<
+    string,
+    { heading: string; bullets: { text: string; segmentIdx: number }[] }[]
+  >;
 }
 
 function readAll(): ImportedMeeting[] {
@@ -101,10 +107,25 @@ export interface ImportedBundle {
 
 export function toBundle(m: ImportedMeeting): ImportedBundle {
   const id = m.id;
+  // The file wins.
+  //
+  // If the transcript literally says <v Helen>, that is a fact and the model
+  // does not get to overwrite it — and it will, because the prompt tells it
+  // to answer "Speaker N" when it cannot tell, and "Speaker 1" is a perfectly
+  // truthy string that silently beat the real name here. The model only fills
+  // labels the file left anonymous.
+  //
+  // The same rule already lives in /api/analyse; this is the second copy,
+  // which is exactly how it drifted. Both now read the same way.
+  const fromFile = (label: number) => m.speakerNames?.[String(label)];
+  const fromModel = (label: number) => {
+    const v = m.analysis.speakerNames?.[String(label)];
+    // A model answer that is just "Speaker 3" carries no information, so it
+    // should not outrank the fallback either.
+    return v && !/^speaker\s*\d+$/i.test(v.trim()) ? v : undefined;
+  };
   const nameOf = (label: number) =>
-    m.analysis.speakerNames?.[String(label)] ||
-    m.speakerNames?.[String(label)] ||
-    `Speaker ${label + 1}`;
+    fromFile(label) || fromModel(label) || `Speaker ${label + 1}`;
 
   const labels = [...new Set(m.segments.map((s) => s.speakerLabel))].sort((a, b) => a - b);
   const spId = (label: number) => `${id}-sp${label}`;
@@ -157,6 +178,25 @@ export function toBundle(m: ImportedMeeting): ImportedBundle {
     };
   });
 
+  const buildSections = (
+    src: { heading: string; bullets: { text: string; segmentIdx: number }[] }[],
+    prefix: string,
+  ) =>
+    src.map((sec, i) => ({
+      id: `${id}-${prefix}${i}`,
+      heading: sec.heading,
+      bullets: sec.bullets
+        // A bullet whose index is not a real segment is dropped rather than
+        // rendered as a citation that goes nowhere.
+        .filter((b) => m.segments[b.segmentIdx])
+        .map((b, j) => ({
+          id: `${id}-${prefix}${i}-b${j}`,
+          text: b.text,
+          anchorMs: m.segments[b.segmentIdx].startMs,
+          speakerId: spId(m.segments[b.segmentIdx].speakerLabel),
+        })),
+    }));
+
   const summaries: Summary[] = [
     {
       id: `${id}-sum`,
@@ -178,6 +218,13 @@ export function toBundle(m: ImportedMeeting): ImportedBundle {
           })),
       })),
     },
+    ...Object.entries(m.extraSections ?? {}).map(([key, secs]) => ({
+      id: `${id}-sum-${key}`,
+      meetingId: id,
+      templateKey: key as Summary["templateKey"],
+      generatedAt: m.createdAt,
+      sections: buildSections(secs, `x${key}-`),
+    })),
   ];
 
   const actionItems: ActionItem[] = m.analysis.actions

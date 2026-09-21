@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getAudio } from "@/lib/audio-store";
-import { getImported, toBundle, type ImportedMeeting } from "@/lib/imported";
+import { useOverlay } from "@/lib/overlay";
+import { getImported, saveImported, toBundle, type ImportedMeeting } from "@/lib/imported";
 import { HIGHLIGHT_CATEGORIES, TEMPLATES } from "@/lib/seed/cast";
 import { MeetingView } from "./meeting/view";
 import { Badge } from "./ui";
@@ -20,6 +21,9 @@ export function ImportedView({ id }: { id: string }) {
   // object URL is all it takes — the player, the scrubber, the active line
   // and the speaker lanes were already written against a media element.
   const [mediaUrl, setMediaUrl] = useState<string | null>(null);
+  // Which template is being written right now, if any.
+  const [generating, setGenerating] = useState<string | null>(null);
+  const overlay = useOverlay();
 
   useEffect(() => {
     setM(getImported(id));
@@ -71,6 +75,45 @@ export function ImportedView({ id }: { id: string }) {
     );
   }
 
+  // Generating a template that was never run.
+  //
+  // Fathom's picker shows sixteen templates whether or not you have used
+  // them. Greying fifteen of them out is honest but useless, so on a meeting
+  // that went through the model, picking an ungenerated template runs it —
+  // a real call over the same transcript, with the same citation validation,
+  // stored alongside the original rather than replacing it.
+  async function generate(key: string) {
+    if (generating || !m) return;
+    setGenerating(key);
+    try {
+      const text = m.segments
+        .map(
+          (s2) =>
+            `${m.speakerNames?.[String(s2.speakerLabel)] ?? `Speaker ${s2.speakerLabel + 1}`}: ${s2.text}`,
+        )
+        .join("\n");
+      const res = await fetch("/api/analyse", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, template: key }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Could not generate that summary");
+      const next: ImportedMeeting = {
+        ...m,
+        extraSections: { ...(m.extraSections ?? {}), [key]: json.analysis.sections },
+      };
+      saveImported(next);
+      setM(next);
+      // Switch the pane to what was just written.
+      overlay.chooseTemplate(m.id, key);
+    } catch {
+      // The picker simply stays where it was; nothing is lost.
+    } finally {
+      setGenerating(null);
+    }
+  }
+
   const b = toBundle(m);
 
   return (
@@ -112,12 +155,14 @@ export function ImportedView({ id }: { id: string }) {
         rosterIds={b.people.map((p) => p.id)}
         categories={HIGHLIGHT_CATEGORIES}
         templates={TEMPLATES}
-        suggested={[m.templateKey]}
+        suggested={[m.templateKey, ...Object.keys(m.extraSections ?? {})]}
         isLive
         askSegments={m.segments}
         askSpeakerNames={m.speakerNames}
         evidence={m.analysis.evidence}
         mediaUrl={mediaUrl}
+        onGenerateTemplate={generate}
+        generatingTemplate={generating}
       />
     </>
   );

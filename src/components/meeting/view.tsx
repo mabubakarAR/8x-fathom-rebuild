@@ -48,6 +48,9 @@ export interface MeetingViewProps {
   askSpeakerNames?: Record<string, string>;
   /** Validation telemetry from the real pipeline. Absent for seeded meetings. */
   evidence?: EvidenceLedger;
+  /** Generate a summary template that has not been run for this meeting yet. */
+  onGenerateTemplate?: (key: string) => void;
+  generatingTemplate?: string | null;
 }
 
 type Tab = "summary" | "ask" | "evidence" | "highlights" | "actions";
@@ -428,6 +431,8 @@ export function MeetingView(props: MeetingViewProps) {
                   onSeek={seek}
                   speakers={speakers}
                   segments={segments}
+                  onGenerate={props.onGenerateTemplate}
+                  generating={props.generatingTemplate}
                 />
               )}
               {tab === "evidence" && props.evidence && (
