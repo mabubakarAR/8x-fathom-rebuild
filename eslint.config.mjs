@@ -28,6 +28,7 @@ const eslintConfig = defineConfig([
       "src/components/upcoming.tsx",
       "src/components/meeting/share.tsx",
       "src/components/meeting/view.tsx",
+      "src/components/commitments.tsx",
     ],
     rules: { "react-hooks/set-state-in-effect": "warn" },
   },

@@ -19,9 +19,10 @@ import { Icon, type IconName } from "./ui";
 
 const NAV: { href: string; label: string; key: string }[] = [
   { href: "/", label: "My Calls", key: "1" },
-  { href: "/actions", label: "Action Items", key: "2" },
-  { href: "/clips", label: "Playlists", key: "3" },
-  { href: "/live", label: "Live Demo", key: "4" },
+  { href: "/commitments", label: "Commitments", key: "2" },
+  { href: "/actions", label: "Action Items", key: "3" },
+  { href: "/clips", label: "Playlists", key: "4" },
+  { href: "/live", label: "Live Demo", key: "5" },
 ];
 
 export function Shell({ children }: { children: React.ReactNode }) {
