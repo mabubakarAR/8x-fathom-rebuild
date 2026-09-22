@@ -170,8 +170,17 @@ export function Theatre() {
           What the model claims
         </div>
 
-        <ul className="flex min-h-[150px] flex-col gap-1.5">
-          {CLAIMS.slice(0, shown).map((c, i) => {
+        {/* Every claim is always in the DOM; the ones not yet revealed are
+            hidden rather than absent.
+
+            They used to be sliced off, so the list grew as claims arrived and
+            shrank again on every loop — and because this panel sits above the
+            meeting list, the whole page jumped under anyone who had scrolled
+            down to read it. An animation that moves the content you are
+            looking at is worse than no animation. Reserving the final height
+            up front fixes it without changing what the sequence looks like. */}
+        <ul className="flex flex-col gap-1.5">
+          {CLAIMS.map((c, i) => {
             const isActive = i === shown - 1;
             const isSettled = i < settledCount;
             const bad = c.cite > MAX_IDX;
@@ -182,7 +191,10 @@ export function Theatre() {
               <li
                 key={i}
                 className="flex items-start gap-2 rounded-[7px] px-2 py-[7px] text-[12px] leading-[1.45] transition-all duration-300"
+                aria-hidden={i >= shown}
                 style={{
+                  // Hidden, not removed: it still occupies its row.
+                  visibility: i >= shown ? "hidden" : undefined,
                   background:
                     verdict === "cut" ? "var(--danger-soft)" : checking ? "var(--surface-2)" : "transparent",
                   border: `1px solid ${verdict === "cut" ? "color-mix(in oklab, var(--danger) 40%, transparent)" : "transparent"}`,

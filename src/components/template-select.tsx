@@ -37,7 +37,12 @@ export function TemplateSelect({
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="appearance-none rounded-[var(--radius-sm)] py-[6px] pr-7 pl-2.5 text-[12.5px] font-medium outline-none"
+          // A <select> sizes itself to its widest <option>, and one of the
+          // seventeen templates has a long label — which is why this control
+          // was rendering four times the width of the word inside it. The
+          // popup is laid out separately, so pinning the closed width costs
+          // nothing: every label still shows in full when it is open.
+          className="w-[142px] appearance-none truncate rounded-[var(--radius-sm)] py-[7px] pr-7 pl-2.5 text-[12.5px] font-medium outline-none"
           style={{
             background: "var(--surface-2)",
             color: "var(--ink)",

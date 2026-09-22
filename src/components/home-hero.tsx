@@ -241,6 +241,17 @@ export function HomeHero({ configured, lanes }: { configured: boolean; lanes: La
               >
                 <Icon name="plus" size={14} /> Bring a transcript
               </button>
+
+              {/* In the row, not under it. It modifies what the two buttons
+                  to its left will do, so it belongs beside them — sitting on
+                  its own line it read as an orphaned form field. The rule
+                  keeps it from being mistaken for a fourth action. */}
+              <span
+                className="mx-0.5 hidden h-6 w-px sm:block"
+                style={{ background: "var(--line)" }}
+                aria-hidden
+              />
+              <TemplateSelect value={template} onChange={setTemplate} />
             </div>
 
             <input
@@ -250,8 +261,6 @@ export function HomeHero({ configured, lanes }: { configured: boolean; lanes: La
               className="hidden"
               onChange={(e) => takeFile(e.target.files?.[0])}
             />
-
-            <TemplateSelect value={template} onChange={setTemplate} />
 
             <p className="mt-3 text-[11.5px] leading-[1.55]" style={{ color: "var(--ink-faint)" }}>
               WebVTT, SubRip, <code>Name: what they said</code>, or plain prose. Zoom, Meet and
