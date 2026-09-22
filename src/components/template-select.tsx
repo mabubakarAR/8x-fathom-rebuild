@@ -42,7 +42,7 @@ export function TemplateSelect({
           // was rendering four times the width of the word inside it. The
           // popup is laid out separately, so pinning the closed width costs
           // nothing: every label still shows in full when it is open.
-          className="w-[142px] appearance-none truncate rounded-[var(--radius-sm)] py-[7px] pr-7 pl-2.5 text-[12.5px] font-medium outline-none"
+          className="h-[38px] w-[142px] appearance-none truncate rounded-[var(--radius-sm)] pr-7 pl-2.5 text-[12.5px] font-medium outline-none"
           style={{
             background: "var(--surface-2)",
             color: "var(--ink)",
