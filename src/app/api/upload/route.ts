@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db/client";
-import { uploadMedia, storageConfigured } from "@/lib/pipeline/ingest";
+import { storeMedia } from "@/lib/pipeline/media";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -12,7 +12,6 @@ export const dynamic = "force-dynamic";
 export async function POST(req: Request) {
   const sql = db();
   if (!sql) return NextResponse.json({ error: "Database is not configured" }, { status: 503 });
-  if (!storageConfigured()) return NextResponse.json({ error: "Storage is not configured" }, { status: 503 });
 
   const form = await req.formData();
   const file = form.get("file");
@@ -30,7 +29,7 @@ export async function POST(req: Request) {
             ${file.type || "audio/mpeg"}, now())`;
 
   try {
-    const path = await uploadMedia(id, bytes, file.name, file.type || "audio/mpeg");
+    const path = await storeMedia(id, bytes, file.name, file.type || "audio/mpeg");
     await sql`update meetings set media_path = ${path} where id = ${id}`;
   } catch (e) {
     const msg = e instanceof Error ? e.message : "upload failed";

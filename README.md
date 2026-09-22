@@ -4,7 +4,7 @@ A rebuild of [Fathom](https://www.fathom.ai), the AI meeting notetaker. Built in
 
 > **On naming:** the repository, the npm package and the log `project` field are all `8x-fathom-rebuild`. The words **Fathom Rebuild** in the interface are the product's display name — a wordmark has to read like one, and `8x-fathom-rebuild` in a sidebar would not. There is no third name.
 
-**Agent capture proof:** [CAPTURE-TEST.md](./CAPTURE-TEST.md) · **Every line of the brief, checked:** [BRIEF-CHECK.md](./BRIEF-CHECK.md) · **Product reasoning and cuts:** [PRODUCT-NOTES.md](./PRODUCT-NOTES.md) · **Walkthrough script:** [WALKTHROUGH.md](./WALKTHROUGH.md) · **What's real vs simulated:** `/about` in the app
+**Agent capture proof:** [CAPTURE-TEST.md](./CAPTURE-TEST.md) · **Every line of the brief, checked:** [BRIEF-CHECK.md](./BRIEF-CHECK.md) · **Product reasoning and cuts:** [PRODUCT-NOTES.md](./PRODUCT-NOTES.md) · **Check it yourself, step by step:** [RUN-THROUGH.md](./RUN-THROUGH.md) · **What's real vs authored:** `/about` in the app
 
 ---
 
@@ -56,7 +56,22 @@ Fathom is very good at the two-person sales call and visibly strains at the eigh
 
 ## The stack
 
-Next.js 16 (App Router) · React 19 · TypeScript · Tailwind v4 · Anthropic SDK · Deepgram (optional) · Postgres (optional).
+| Layer | What | Why this one |
+|---|---|---|
+| Framework | **Next.js 16**, App Router, React Server Components | Server-render the corpus, keep the client bundle to the parts that actually need interactivity |
+| UI | **React 19** with the React Compiler lint rules on | The compiler rules caught three of the hydration bugs in this repo before a user could |
+| Language | **TypeScript 5**, `strict` | |
+| Styling | **Tailwind v4**, OKLCH design tokens, no component library | Every speaker colour is one token; perceptual lightness stays even across hues, which CSS `hsl` cannot promise |
+| AI | **`@anthropic-ai/sdk`** → `claude-sonnet-4-5` | Summaries, templates, Ask, the workspace Ask, contradiction judging |
+| Transcription | **Deepgram `nova-3`**, `diarize=true&utterances=true` | Whisper has no diarization, and speaker attribution is the thesis of this build |
+| Capture | Browser-native: `getDisplayMedia` + `getUserMedia`, mixed via Web Audio, `MediaRecorder`; `webkitSpeechRecognition` for the live pass | No bot, no backend, works on Zoom, Meet and Teams at once |
+| Database | **Postgres** (Neon) via `postgres` (porsager) | One `sql.begin` transaction per save; `prepare: false` for the transaction-mode pooler |
+| File storage | **`@vercel/blob`**, falling back to a Postgres `bytea` column | Newer Blob stores issue a store id rather than a token; audio should not depend on which |
+| Search | Hand-written BM25 + TF-IDF cosine with query expansion | No vector DB. It is ~200 lines, it runs in-process, and it doubles as the retriever for Ask and the contradiction tracker |
+| Testing | `node --experimental-strip-types` | 20 assertions on the citation validator, no framework, no API key |
+| Hosting | **Vercel** | |
+
+Seven runtime dependencies in total: `next`, `react`, `react-dom`, `@anthropic-ai/sdk`, `@vercel/blob`, `postgres`, `server-only`. No component library, no state manager, no ORM, no vector database, no test framework.
 
 ### Two paths through the app, and why
 
@@ -90,11 +105,48 @@ BM25 + TF-IDF cosine similarity with curated query expansion, each normalised to
 
 **Stated plainly, because it matters:** the "meaning" half is sparse retrieval with a hand-curated synonym table, not neural embeddings. It solves the vocabulary-mismatch case Fathom's users complain about — searching *churn risk* finds *cancellation*, *renewal*, *worry* and *switch*, and the UI colour-codes which words were yours and which were expansions. It will not solve true paraphrase with no shared vocabulary. Swapping in real embeddings is an interface change to `semanticScores` and nothing else.
 
-### The capture layer is simulated
+### Capture is real
 
-The brief permits this explicitly and it is where an entire day would otherwise have gone. No bot joins a meeting, no audio is captured, and there is no media file — the player is a clock running over the transcript's own timeline. Everything downstream reads `currentMs` exactly as it would from a `<video>`, so swapping in a real element is a one-hook change.
+The brief permits stubbing this. It is not stubbed.
 
-Stubbing capture should not mean stubbing the *experience* of capture, though, so [`/live`](./src/app/live/page.tsx) streams the hour-long call at 8× with a working mid-call highlight. The boundary detection is copied from Fathom's, because it is the cleverest thing in their product: pressing highlight doesn't mark "now", it walks backwards to where the current speaker started talking. You press the button when you realise it mattered, which is always a few seconds late.
+[`/record`](./src/app/record) captures a **real Zoom, Meet or Teams call** from
+the browser. `getDisplayMedia({ audio: true })` takes the tab's audio — the
+far side of the call — and `getUserMedia` takes your microphone; the two are
+mixed through a Web Audio `MediaStreamDestination` and recorded as one track,
+with echo cancellation on the mic so the far side isn't captured twice. Two
+`AnalyserNode`s drive a two-tone waveform, you above the centre line and the
+call below it, so you can see at a glance that both halves are actually
+arriving. On stop the mix goes to Deepgram `nova-3` with `diarize=true` and
+comes back as separated speakers.
+
+There is no bot and no backend infrastructure, which is the trade: NoteFlow-style
+"paste a link, a bot joins" needs a service standing by to dial into meetings,
+and in a day that service is a form that doesn't work. Tab capture works today,
+on every platform at once, from the machine already in the call.
+
+The live Web Speech API transcript during recording is **microphone-only** —
+the browser cannot transcribe the far side — and the page says so while you
+record rather than after. Deepgram fills in everyone else on stop.
+
+Alongside it, [`/live`](./src/app/live) streams the authored hour-long call at
+8× with a working mid-call highlight, so the capture *experience* is reviewable
+without anyone having to set up a call. The boundary detection is copied from
+Fathom's, because it is the cleverest thing in their product: pressing
+highlight doesn't mark "now", it walks backwards to where the current speaker
+started talking. You press the button when you realise it mattered, which is
+always a few seconds late.
+
+### It outlives the tab
+
+A recorded or uploaded call is written to Postgres in one transaction —
+transcript, speakers, chapters, summary, actions, highlights and the evidence
+ledger. The audio goes to Vercel Blob when a store is attached and into a
+`bytea` column when one isn't, served back by `/api/calls/<id>/audio` with real
+HTTP range support so scrubbing works in Safari.
+
+The test that matters: record something, copy the URL, close the tab, open it
+on your phone. `DELETE /api/calls/<id>` removes a call and everything hanging
+off it.
 
 ## The seed data
 
@@ -114,31 +166,37 @@ npm run typecheck
 npm test           # the citation validator's drop path, no API key needed
 ```
 
-The seeded workspace — every meeting, search, clip and export — runs with **no environment variables and no database**. Open it and it works.
+The seeded workspace — every meeting, search, clip and export — runs with **no
+environment variables and no database**. Open it and it works.
 
-The real pipeline needs one key:
+Everything else degrades one layer at a time rather than breaking, and says
+which layer it is on. `/api/setup` reports exactly what this deployment can do:
 
-```bash
-# .env.local  (gitignored; in production these go in the host's env vars)
-ANTHROPIC_API_KEY=sk-ant-…      # required for /import and grounded Ask
-ANTHROPIC_MODEL=claude-sonnet-4-5   # optional
-DEEPGRAM_API_KEY=…              # optional: audio upload → diarized transcript
-DATABASE_URL=postgres://…       # optional: server-side persistence instead of localStorage
-```
+| Variable | Without it |
+|---|---|
+| `ANTHROPIC_API_KEY` | `/import`, `/record` and Ask return 503 and say so. The seeded workspace is unaffected |
+| `DEEPGRAM_API_KEY` | A recorded call is transcribed from your microphone only, and the page tells you mid-call |
+| `DATABASE_URL` | A recording lives in your browser and nowhere else. Every read path checks |
+| `BLOB_READ_WRITE_TOKEN` | Audio goes into Postgres instead of object storage. Nothing else changes |
 
-Without `ANTHROPIC_API_KEY` the import route returns 503 and Ask falls back to local retrieval, with the UI saying so rather than pretending. See [`.env.example`](./.env.example).
+Names, no values, in [`.env.example`](./.env.example).
 
 ## Layout
 
 ```
 src/
-  app/                    routes: list (+ upcoming), meeting, search, actions, clips, live,
-                          about, /s/<token>
+  app/                    routes: list (+ upcoming), meeting, record, import, upload,
+                          search, commitments, actions, clips, live, about, /s/<token>
+                          api/: analyse, transcribe, calls, ask, commitments, setup
   components/
     meeting/              player, transcript, summary, highlights, actions, ask, share, export
   lib/
     seed/                 the corpus — cast, builder, and one file per meeting
-    pipeline/             parse → transcribe → analyse → ask; validate.ts is the citation check
+    pipeline/             parse → transcribe → analyse → ask; validate.ts is the citation
+                          check; ask-workspace.ts answers across every meeting
+    commitments/          collect promises, pair them across meetings, judge contradictions
+    db/                   schema, one-transaction save, shape-based env detection
+    recorder.ts           tab audio + mic, mixed and recorded in the browser
     evidence.ts           the ledger types that travel to the browser
     search/engine.ts      BM25 + cosine, query expansion, blending
     overlay.tsx           the client-side mutation layer

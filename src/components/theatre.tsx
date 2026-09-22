@@ -18,7 +18,7 @@ import { Icon } from "./ui";
 // reading three paragraphs they were never going to read.
 //
 // Honesty, because the whole point is trust:
-//   - The transcript lines are verbatim from samples/renewal-call.vtt.
+//   - The transcript lines are verbatim from public/samples/renewal-call.vtt.
 //   - The kept claims are what claude-sonnet-4-5 actually returned for that
 //     file, indices included. They are not written for the demo.
 //   - The failing claim is synthetic — it cites line 31 of a 30-line

@@ -22,7 +22,7 @@ create table if not exists meetings (
   status          text not null default 'queued',
   error           text,
   -- Where the audio lives. A Vercel Blob URL for browser-recorded calls, or a
-  -- Supabase Storage object path for uploads — media_url wins when both are
+  -- Where an uploaded recording's audio lives: a blob URL, or this app's
   -- present, because it needs no signing round-trip to play.
   media_path      text,
   media_url       text,

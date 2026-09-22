@@ -1,6 +1,5 @@
 import "server-only";
 import { db } from "@/lib/db/client";
-import { publicMediaUrl } from "@/lib/pipeline/ingest";
 import type {
   ActionItem,
   Chapter,
@@ -239,7 +238,9 @@ export async function getLiveMeeting(id: string): Promise<LiveBundle | null> {
         createdAt: new Date(h.created_at).toISOString(),
       })),
       people,
-      mediaUrl: publicMediaUrl(m.media_path),
+      // media_path now holds the URL itself — a CDN blob URL, or this
+      // app's own /audio route when the bytes are in Postgres.
+      mediaUrl: m.media_path,
       status: m.status,
       error: m.error,
     };

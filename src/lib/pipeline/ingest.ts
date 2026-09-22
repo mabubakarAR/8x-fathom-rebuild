@@ -1,6 +1,6 @@
 import "server-only";
-import { createClient } from "@supabase/supabase-js";
 import { db } from "@/lib/db/client";
+import { loadMedia } from "./media";
 import { transcribe, isCrosstalk, type RawSegment } from "./transcribe";
 import { analyse, TEMPLATE_SECTIONS } from "./analyse";
 
@@ -18,54 +18,7 @@ import { analyse, TEMPLATE_SECTIONS } from "./analyse";
 // `error` carries the actual message, because a pipeline that only says
 // "failed" is one nobody can debug.
 
-const BUCKET = process.env.SUPABASE_BUCKET || "recordings";
 const CONFIDENCE_THRESHOLD = 0.82;
-
-export function storageConfigured(): boolean {
-  return Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
-}
-
-function storage() {
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) throw new Error("Supabase storage is not configured");
-  return createClient(url, key, { auth: { persistSession: false } });
-}
-
-export async function ensureBucket(): Promise<void> {
-  const s = storage();
-  const { data } = await s.storage.listBuckets();
-  if (data?.some((b) => b.name === BUCKET)) return;
-  await s.storage.createBucket(BUCKET, { public: true, fileSizeLimit: "200MB" });
-}
-
-export async function uploadMedia(
-  meetingId: string,
-  bytes: ArrayBuffer,
-  filename: string,
-  mime: string,
-): Promise<string> {
-  await ensureBucket();
-  const ext =
-    filename.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") || "bin";
-  const path = `${meetingId}/source.${ext}`;
-  const { error } = await storage()
-    .storage.from(BUCKET)
-    .upload(path, bytes, { contentType: mime, upsert: true });
-  if (error) throw new Error(`Storage upload failed: ${error.message}`);
-  return path;
-}
-
-export function publicMediaUrl(path: string | null): string | null {
-  if (!path || !storageConfigured()) return null;
-  return storage().storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
-}
-
-export async function downloadMedia(path: string): Promise<ArrayBuffer> {
-  const { data, error } = await storage().storage.from(BUCKET).download(path);
-  if (error || !data) throw new Error(`Storage download failed: ${error?.message}`);
-  return data.arrayBuffer();
-}
 
 export async function setStatus(id: string, status: string, error?: string) {
   const sql = db();
@@ -91,7 +44,7 @@ export async function runTranscription(meetingId: string): Promise<{ segments: n
   if (!row?.media_path) throw new Error("No media stored for this meeting");
 
   await setStatus(meetingId, "transcribing");
-  const bytes = await downloadMedia(row.media_path);
+  const bytes = await loadMedia(meetingId, row.media_path);
   const t = await transcribe(bytes, row.media_mime || "audio/mpeg");
 
   const labels = [...new Set(t.segments.map((s) => s.speakerLabel))].sort((a, b) => a - b);

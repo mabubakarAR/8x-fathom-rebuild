@@ -150,7 +150,7 @@ export function ImportFlow({ configured }: { configured: boolean }) {
         the page says so.
         <br />
         <strong>Haven&rsquo;t got one to hand?</strong> There are two in{" "}
-        <code>samples/</code> in the repository — one clean six-speaker call, and one with no
+        <code>public/samples/</code> in the repository — one clean six-speaker call, and one with no
         timestamps and no speaker labels at all, to see what the pipeline does when the file gives
         it nothing.
       </div>

@@ -40,7 +40,7 @@ export interface MeetingViewProps {
   categories: HighlightCategory[];
   templates: Template[];
   suggested: string[];
-  /** Present for uploaded meetings: the real recording in Supabase Storage. */
+  /** Present for uploaded and recorded meetings: the real audio. */
   mediaUrl?: string | null;
   /** True when this meeting came out of the pipeline rather than the seed. */
   isLive?: boolean;

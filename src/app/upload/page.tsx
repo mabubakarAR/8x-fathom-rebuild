@@ -1,5 +1,5 @@
 import { dbConfigured } from "@/lib/db/client";
-import { storageConfigured } from "@/lib/pipeline/ingest";
+import { storageConfigured } from "@/lib/pipeline/media";
 import { transcriptionConfigured } from "@/lib/pipeline/transcribe";
 import { analysisConfigured } from "@/lib/pipeline/analyse";
 import { UploadFlow } from "@/components/upload-flow";

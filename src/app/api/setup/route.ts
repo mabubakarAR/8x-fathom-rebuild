@@ -8,7 +8,7 @@ import {
   blobConfigured,
   envReport,
 } from "@/lib/db/client";
-import { storageConfigured, ensureBucket } from "@/lib/pipeline/ingest";
+import { storageKind } from "@/lib/pipeline/media";
 import { transcriptionConfigured } from "@/lib/pipeline/transcribe";
 import { analysisConfigured } from "@/lib/pipeline/analyse";
 
@@ -21,19 +21,13 @@ export async function GET() {
   const status = {
     database: dbConfigured(),
     blob: blobConfigured(),
-    storage: storageConfigured(),
     transcription: transcriptionConfigured(),
     analysis: analysisConfigured(),
-    // Where a new recording's audio will actually land. Object storage if
-    // there is any, otherwise the database — which is why this is true even
-    // when both blob and storage are false.
-    audio: blobConfigured()
-      ? "blob"
-      : storageConfigured()
-        ? "storage"
-        : dbConfigured()
-          ? "database"
-          : "browser only",
+    // Where audio actually lands — object storage if a credential exists,
+    // otherwise the database. This is the field worth reading: `blob: false`
+    // on its own looks like a broken integration when it is just the other
+    // branch being taken.
+    audio: storageKind() === "none" ? "browser only" : storageKind(),
   };
   const env = envReport();
   if (!status.database) {
@@ -54,18 +48,12 @@ export async function GET() {
     );
   }
   const m = await migrate();
-  let bucket = "skipped";
-  if (status.storage) {
-    try { await ensureBucket(); bucket = "ready"; }
-    catch (e) { bucket = e instanceof Error ? e.message : "failed"; }
-  }
   return NextResponse.json({
     ok: m.ok,
     status,
     usingVar: databaseUrlVar(),
     blobVar: blobTokenVar() ?? blobStoreIdVar(),
     migration: m.message,
-    bucket,
     env,
   });
 }
