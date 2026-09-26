@@ -42,7 +42,8 @@ function SectionHead({ label, title, body, dark }: { label: string; title: React
   );
 }
 
-export function Landing() {
+export function Landing({ next }: { next?: string }) {
+  const record = next?.startsWith("/record") ? recordTarget(next) : null;
   return (
     <main className="lp relative min-h-screen antialiased">
       <header className="sticky top-0 z-50 border-b border-(--line) bg-[oklch(97.2%_0.006_85/0.82)] backdrop-blur-xl">
@@ -61,15 +62,43 @@ export function Landing() {
           <div className="flex items-center gap-2">
             <GuestSignInButton
               label="Guest"
+              next={next}
               className="hidden h-9 items-center rounded-full px-3.5 text-[14px] font-medium text-(--ink-2) transition-colors hover:text-(--ink) sm:inline-flex"
             />
             <SignInButton
               label="Sign in with Google"
+              next={next}
               className="inline-flex h-9 items-center rounded-full bg-(--ink) px-4 text-[14px] font-medium text-(--bg) transition-transform hover:-translate-y-px"
             />
           </div>
         </nav>
       </header>
+
+      {record && (
+        <div className="px-5 pt-6 md:px-8">
+          <div className="mx-auto flex max-w-[1200px] flex-col gap-4 rounded-[20px] border border-(--accent-line) bg-(--accent-soft) px-5 py-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-center gap-3">
+              <span className="relative flex h-2.5 w-2.5 shrink-0"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-(--accent) opacity-60" /><span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-(--accent)" /></span>
+              <p className="text-[14.5px] text-(--ink)">
+                <span className="font-semibold">Ready to record {record.title}.</span>{" "}
+                <span className="text-(--ink-2)">Sign in once and the recorder opens for this call.</span>
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <SignInButton
+                label="Sign in and record"
+                next={next}
+                className="inline-flex h-10 items-center rounded-full bg-(--accent) px-4 text-[14px] font-medium text-(--on-accent) transition-transform hover:-translate-y-px"
+              />
+              <GuestSignInButton
+                label="Guest"
+                next={next}
+                className="inline-flex h-10 items-center rounded-full border border-(--line-strong) px-3.5 text-[14px] font-medium text-(--ink-2) hover:text-(--ink)"
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       <Hero />
 
@@ -176,4 +205,16 @@ export function Landing() {
       </footer>
     </main>
   );
+}
+
+function recordTarget(next: string): { title: string } {
+  try {
+    const u = new URL(next, "https://noted.local");
+    const title = u.searchParams.get("title")?.trim();
+    const join = u.searchParams.get("join") ?? "";
+    const code = join.match(/meet\.google\.com\/([a-z]{3}-[a-z]{4}-[a-z]{3})/i)?.[1];
+    return { title: title && title !== "Google Meet call" ? `“${title}”` : code ? `Meet ${code}` : "this call" };
+  } catch {
+    return { title: "this call" };
+  }
 }

@@ -2,12 +2,13 @@ import { signIn, signOut, CALENDAR_SCOPES } from "@/auth";
 
 // Server actions, so the buttons work with no client JavaScript at all.
 
-export function SignInButton({ label = "Continue with Google", className, style }: { label?: string; className?: string; style?: React.CSSProperties }) {
+export function SignInButton({ label = "Continue with Google", className, style, next }: { label?: string; className?: string; style?: React.CSSProperties; next?: string }) {
+  const redirectTo = next && next.startsWith("/") && !next.startsWith("//") ? next : "/";
   return (
     <form
       action={async () => {
         "use server";
-        await signIn("google", { redirectTo: "/" });
+        await signIn("google", { redirectTo });
       }}
     >
       <button type="submit" className={className} style={style}>
@@ -78,12 +79,13 @@ export const GUEST_NOTE =
   "Temporary access for reviewers. Use this only if Google sign-in is blocked on your account. " +
   "It creates a throw-away workspace with the sample meetings loaded — no calendar, no Google data, and it is not a product feature.";
 
-export function GuestSignInButton({ className, style, label = "Continue as guest" }: { className?: string; style?: React.CSSProperties; label?: string }) {
+export function GuestSignInButton({ className, style, label = "Continue as guest", next }: { className?: string; style?: React.CSSProperties; label?: string; next?: string }) {
+  const redirectTo = next && next.startsWith("/") && !next.startsWith("//") ? next : "/";
   return (
     <form
       action={async () => {
         "use server";
-        await signIn("guest", { redirectTo: "/" });
+        await signIn("guest", { redirectTo });
       }}
       className="lp-tip relative inline-flex"
     >

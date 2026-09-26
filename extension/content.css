@@ -15,6 +15,16 @@
   box-shadow: 0 6px 22px rgba(229, 72, 77, 0.38), 0 1px 2px rgba(0,0,0,.3);
   transition: transform .18s ease, box-shadow .18s ease;
 }
+/* Inside Meet's own control bar: same height as its buttons, no floating. */
+#noted-record.in-bar {
+  position: static;
+  align-self: center;
+  height: 48px;
+  margin-left: 10px;
+  padding: 0 18px 0 14px;
+  box-shadow: none;
+}
+#noted-record.in-bar:hover { transform: none; background: #ec5d61; box-shadow: none; }
 #noted-record:hover { transform: translateY(-1px); box-shadow: 0 10px 28px rgba(229,72,77,.45); }
 #noted-record .fr-dot {
   width: 10px; height: 10px; border-radius: 50%; background: #fff;

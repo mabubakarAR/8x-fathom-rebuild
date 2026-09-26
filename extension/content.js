@@ -31,10 +31,34 @@
     return Boolean(document.querySelector('[aria-label*="Leave call" i], [aria-label*="leave call" i]'));
   }
 
+  // Meet's class names are minified and change, so the control bar is found
+  // by structure: the "Leave call" button sits inside a grid of control
+  // groups, and that grid's parent is the flex row the bar is laid out in.
+  // Appending to that row puts the button right after the leave button, at
+  // the bar's own height. If the structure ever changes, fall back to a
+  // fixed pill above the bar rather than showing nothing.
+  function controlBar() {
+    const leave = document.querySelector('[aria-label*="Leave call" i], [aria-label*="leave call" i]');
+    if (!leave) return null;
+    let grid = leave;
+    for (let i = 0; i < 8 && grid; i++) {
+      if (getComputedStyle(grid).display === "grid") break;
+      grid = grid.parentElement;
+    }
+    const row = grid && grid.parentElement;
+    return row && getComputedStyle(row).display === "flex" ? row : null;
+  }
+
   function mount() {
-    if (document.getElementById(ID)) return;
+    const existing = document.getElementById(ID);
     const code = meetingCode();
     if (!code || !inCall()) return;
+    const bar = controlBar();
+    if (existing) {
+      // Meet re-renders the bar; if ours fell out of it, put it back.
+      if (bar && existing.parentElement !== bar) bar.appendChild(existing);
+      return;
+    }
 
     const a = document.createElement("a");
     a.id = ID;
@@ -43,7 +67,12 @@
     a.rel = "noopener";
     a.innerHTML = '<span class="fr-dot"></span><span class="fr-label">Record with Noted</span>';
     a.title = "Opens the recorder for this call in a new tab";
-    document.body.appendChild(a);
+    if (bar) {
+      a.classList.add("in-bar");
+      bar.appendChild(a);
+    } else {
+      document.body.appendChild(a);
+    }
   }
 
   // Meet is a single-page app: the toolbar appears after join, and the URL

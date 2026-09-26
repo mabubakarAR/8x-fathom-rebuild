@@ -15,10 +15,13 @@ export const dynamic = "force-dynamic";
 // depends only on whether you are signed in. A stranger gets the landing
 // page; a user gets their workspace. There is no third state.
 
-export default async function HomePage() {
+export default async function HomePage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
   const session = await auth();
   const uid = session?.user?.id;
-  if (!uid) return <Landing />;
+  if (!uid) {
+    const { next } = await searchParams;
+    return <Landing next={safeNext(next)} />;
+  }
 
   const [ws, cal, processing] = await Promise.all([
     loadWorkspace(uid),
@@ -129,4 +132,10 @@ function GuestCalendarNote() {
       />
     </div>
   );
+}
+
+/** Only a same-origin path is ever used as a post-sign-in destination. */
+function safeNext(v?: string): string | undefined {
+  if (!v || !v.startsWith("/") || v.startsWith("//")) return undefined;
+  return v;
 }

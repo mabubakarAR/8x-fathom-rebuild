@@ -26,9 +26,13 @@ export default auth((req) => {
     if (pathname.startsWith("/api/")) {
       return NextResponse.json({ error: "Sign in first" }, { status: 401 });
     }
+    // Remember where they were going. The extension deep-links straight to
+    // /record?join=…, and losing that on the way through sign-in is the
+    // difference between "it worked" and "it dumped me on the front page".
     const url = req.nextUrl.clone();
+    const next = pathname + req.nextUrl.search;
     url.pathname = "/";
-    url.search = "";
+    url.search = next === "/" ? "" : `?next=${encodeURIComponent(next)}`;
     return NextResponse.redirect(url);
   }
   return NextResponse.next();
