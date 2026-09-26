@@ -31,6 +31,11 @@ const SCOPES = [
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
     Google({
+      // Auth.js looks for AUTH_GOOGLE_ID / AUTH_GOOGLE_SECRET by default and
+      // silently sends client_id=undefined when they're absent. The names
+      // used here are the ones Google's own docs use; say so explicitly.
+      clientId: process.env.GOOGLE_CLIENT_ID ?? process.env.AUTH_GOOGLE_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? process.env.AUTH_GOOGLE_SECRET,
       authorization: {
         params: {
           scope: SCOPES,
