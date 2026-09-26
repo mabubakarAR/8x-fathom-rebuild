@@ -68,6 +68,8 @@ export interface OverlayState {
   /** Per-upcoming-meeting capture override, set before the meeting happens. */
   captureChoice: Record<string, string>;
   theme: "light" | "dark" | "system";
+  /** Whether the Ask dock is open. Persists so it survives navigation. */
+  askOpen?: boolean;
 }
 
 const EMPTY: OverlayState = {
@@ -129,6 +131,7 @@ interface OverlayApi {
   chooseTemplate(meetingId: string, key: string): void;
   setCaptureChoice(upcomingId: string, mode: string): void;
   setTheme(t: OverlayState["theme"]): void;
+  setAskOpen(open: boolean): void;
   reset(): void;
 }
 
@@ -240,6 +243,7 @@ export function OverlayProvider({ children }: { children: React.ReactNode }) {
           captureChoice: { ...s.captureChoice, [upcomingId]: mode },
         })),
       setTheme: (theme) => patch((s) => ({ ...s, theme })),
+      setAskOpen: (askOpen) => patch((s) => ({ ...s, askOpen })),
       reset: () => setState(EMPTY),
     };
   }, [state, ready]);

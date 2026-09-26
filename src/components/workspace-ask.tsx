@@ -18,7 +18,7 @@ import { Icon } from "./ui";
 // three meetings, oldest first" is the thing a folder of recordings can
 // never do, and it reads immediately.
 
-interface Citation {
+export interface Citation {
   segmentId: string;
   meetingId: string;
   meetingTitle: string;
@@ -28,7 +28,7 @@ interface Citation {
   snippet: string;
 }
 
-interface Answer {
+export interface Answer {
   text: string;
   citations: Citation[];
   dropped: string[];
@@ -213,7 +213,7 @@ export function WorkspaceAsk({ question }: { question: string }) {
  * Bold and list structure only. Anything else stays as written, which is the
  * safe direction to fail in: nothing here is dangerouslySetInnerHTML.
  */
-function Prose({ text }: { text: string }) {
+export function Prose({ text }: { text: string }) {
   const blocks = text.split(/\n{2,}/).filter((b) => b.trim());
   return (
     <div className="flex flex-col gap-2.5 text-[14px] leading-[1.6]" style={{ color: "var(--ink)" }}>
