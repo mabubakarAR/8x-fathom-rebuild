@@ -2,7 +2,7 @@ import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
 
 export const metadata = {
-  title: "What's real and what isn't — Fathom Rebuild",
+  title: "What's real and what isn't — Verbatim",
 };
 
 export default function AboutPage() {

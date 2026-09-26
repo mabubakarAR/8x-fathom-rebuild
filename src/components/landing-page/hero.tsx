@@ -1,7 +1,6 @@
 import Image from "next/image";
 import { SignInButton } from "../sign-in-button";
 
-const AVATARS = ["/landing/p-maya.jpg", "/landing/p-daniel.jpg", "/landing/p-sofia.jpg", "/landing/p-kenji.jpg"];
 
 export function Hero() {
   return (
@@ -22,7 +21,7 @@ export function Hero() {
           </h1>
 
           <p className="lp-in mt-6 max-w-[48ch] text-[17px] leading-[1.6] text-pretty text-(--ink-2) md:text-[18.5px]" style={{ animationDelay: "0.12s" }}>
-            Fathom Rebuild records, transcribes and summarises your calls without a bot in the room — so you can give people your full attention and still leave with every decision.
+            Verbatim records, transcribes and summarises your calls without a bot in the room — so you can give people your full attention and still leave with every decision.
           </p>
 
           <div className="lp-in mt-9 flex flex-col gap-3 sm:flex-row sm:items-center" style={{ animationDelay: "0.18s" }}>
@@ -39,21 +38,10 @@ export function Hero() {
             </a>
           </div>
 
-          <div className="lp-in mt-10 flex items-center gap-4" style={{ animationDelay: "0.24s" }}>
-            <div className="flex">
-              {AVATARS.map((src, i) => (
-                <Image key={src} src={src} alt="" width={36} height={36} className="-ml-2.5 h-9 w-9 rounded-full border-2 border-(--bg) object-cover first:ml-0" style={{ zIndex: AVATARS.length - i }} />
-              ))}
-            </div>
-            <div className="text-[13.5px] leading-snug">
-              <div className="flex items-center gap-1 text-(--ink)" aria-label="Rated 4.9 out of 5">
-                {Array.from({ length: 5 }, (_, i) => (
-                  <svg key={i} width="13" height="13" viewBox="0 0 20 20" aria-hidden><path fill="currentColor" d="M10 1.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9L10 14.9l-5.2 2.8 1-5.9L1.5 7.7l5.9-.8z" /></svg>
-                ))}
-                <span className="ml-1.5 font-semibold">4.9</span>
-              </div>
-              <div className="text-(--ink-3)">from 2,300+ teams who stopped typing</div>
-            </div>
+          <div className="lp-in mt-10 flex flex-wrap items-center gap-x-5 gap-y-2 text-[13.5px] text-(--ink-3)" style={{ animationDelay: "0.24s" }}>
+            <span className="inline-flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-(--ok)" />No bot joins your call</span>
+            <span className="inline-flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-(--ok)" />Every claim cites its line</span>
+            <span className="inline-flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-(--ok)" />Free while it&rsquo;s a take-home</span>
           </div>
         </div>
 
@@ -92,7 +80,7 @@ function HeroVisual() {
         </div>
         <p className="mt-2.5 text-[14.5px] leading-[1.45] font-medium text-(--ink)">Search slips to late January, after the Brightwater renewal.</p>
         <div className="mt-3 flex items-center gap-2 text-[12px] text-(--ink-3)">
-          <Image src="/landing/p-sofia.jpg" alt="" width={20} height={20} className="h-5 w-5 rounded-full object-cover" />
+          <span className="grid h-5 w-5 place-items-center rounded-full text-[9px] font-bold text-white" style={{ background: "var(--sp-2)" }}>AK</span>
           <span>Ayesha K.</span>
           <span className="mono ml-auto rounded-md border border-(--line) px-1.5 py-0.5 text-[11px] text-(--ink-2)">43:17</span>
         </div>

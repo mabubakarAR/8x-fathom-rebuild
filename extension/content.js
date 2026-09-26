@@ -1,4 +1,4 @@
-// Fathom Rebuild — Google Meet companion.
+// Verbatim — Google Meet companion.
 //
 // One job: put a Record button inside the Meet page. Clicking it opens the
 // recorder in a new tab, already knowing which call this is, so the only
@@ -41,7 +41,7 @@
     a.href = `${APP}/record?join=${encodeURIComponent(`https://meet.google.com/${code}`)}&title=${encodeURIComponent(meetingTitle())}`;
     a.target = "_blank";
     a.rel = "noopener";
-    a.innerHTML = '<span class="fr-dot"></span><span class="fr-label">Record with Fathom Rebuild</span>';
+    a.innerHTML = '<span class="fr-dot"></span><span class="fr-label">Record with Verbatim</span>';
     a.title = "Opens the recorder for this call in a new tab";
     document.body.appendChild(a);
   }

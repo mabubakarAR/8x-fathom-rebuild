@@ -96,7 +96,23 @@ export default async function HomePage() {
       people={ws.people}
       me={me}
       hasSample={ws.hasSample}
-      hero={<WorkspaceHero empty={ws.meetings.length === 0 && processing.length === 0} name={session.user.name ?? ""} />}
+      hero={
+        <WorkspaceHero
+          name={session.user.name ?? ""}
+          empty={ws.meetings.length === 0 && processing.length === 0}
+          meetings={ws.meetings.length}
+          minutes={Math.round(ws.meetings.reduce((a, m) => a + m.durationMs, 0) / 60000)}
+          openActions={ws.actionItems.filter((a) => !a.done).length}
+          next={upcoming.find((u) => u.joinUrl) ?? upcoming[0] ?? null}
+          calendarConnected={Boolean(session.user.calendar)}
+          connectCalendar={
+            <ConnectCalendarButton
+              className="rounded-full px-4 py-[9px] text-[13px] font-semibold"
+              style={{ background: "var(--accent)", color: "var(--on-accent)" }}
+            />
+          }
+        />
+      }
     />
   );
 }

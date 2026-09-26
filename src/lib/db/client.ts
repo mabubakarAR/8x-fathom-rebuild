@@ -249,6 +249,11 @@ export async function migrate(): Promise<{ ok: boolean; message: string }> {
           alter table meetings add column if not exists owner_id text;
           alter table meetings add column if not exists sample boolean not null default false;
         end if;
+        if to_regclass('public.users') is not null then
+          alter table users add column if not exists auto_record text not null default 'all';
+          alter table users add column if not exists default_template text not null default 'general';
+          alter table users add column if not exists auto_share boolean not null default false;
+        end if;
         if to_regclass('public.speakers') is not null then
           alter table speakers add column if not exists person_key text;
           alter table speakers add column if not exists title text;

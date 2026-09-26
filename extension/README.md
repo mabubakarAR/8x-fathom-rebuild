@@ -1,6 +1,6 @@
-# Fathom Rebuild — Chrome extension
+# Verbatim — Chrome extension
 
-Adds a **Record with Fathom Rebuild** button inside Google Meet. Clicking it opens the recorder in a new tab, already knowing which call you are in; the only step left is choosing the Meet tab in Chrome's share dialog and ticking *Share tab audio*.
+Adds a **Record with Verbatim** button inside Google Meet. Clicking it opens the recorder in a new tab, already knowing which call you are in; the only step left is choosing the Meet tab in Chrome's share dialog and ticking *Share tab audio*.
 
 ## Install (10 seconds)
 

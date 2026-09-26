@@ -6,7 +6,7 @@ import { UploadFlow } from "@/components/upload-flow";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = { title: "Upload a recording — Fathom Rebuild" };
+export const metadata = { title: "Upload a recording — Verbatim" };
 
 export default function UploadPage() {
   return (

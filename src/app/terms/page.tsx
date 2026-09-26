@@ -1,11 +1,11 @@
 import { LegalPage } from "@/components/legal-page";
 
-export const metadata = { title: "Terms — Fathom Rebuild" };
+export const metadata = { title: "Terms — Verbatim" };
 
 export default function Terms() {
   return (
     <LegalPage title="Terms of service" updated="26 September 2026">
-      <p>Fathom Rebuild is a demonstration built for a hiring assignment, provided as-is, free of charge, with no guarantee of availability, accuracy or continued existence.</p>
+      <p>Verbatim is a demonstration built for a hiring assignment, provided as-is, free of charge, with no guarantee of availability, accuracy or continued existence.</p>
       <h2>Recording other people</h2>
       <p>You are responsible for getting whatever consent the law where you and your attendees are requires before recording a call. The app captures audio only when you press record; it never joins a meeting on its own.</p>
       <h2>Your content</h2>

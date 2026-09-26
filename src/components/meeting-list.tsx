@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { bucketOf, duration, pluralise, timeOf } from "@/lib/format";
+import { bucketOf, duration, timeOf } from "@/lib/format";
 import { Avatar, AvatarStack, Icon } from "./ui";
 import { CallThumb } from "./call-thumb";
 import type { ThumbSlice } from "@/lib/thumb";
@@ -92,7 +92,7 @@ export function MeetingList({
         r.participants.some((p) => p.name.toLowerCase().includes(needle))
       );
     });
-  }, [rows, filter, q]);
+  }, [rows, filter, q, me]);
 
   const groups = useMemo(() => {
     const out: { bucket: string; rows: MeetingRow[] }[] = [];
@@ -105,8 +105,6 @@ export function MeetingList({
     return out;
   }, [filtered]);
 
-  const totalMin = Math.round(rows.reduce((a, r) => a + r.durationMs, 0) / 60000);
-  const openActions = rows.reduce((a, r) => a + r.openActionCount, 0);
 
   return (
     <div className="mx-auto w-full max-w-[1120px] px-4 pb-24 md:px-8">
@@ -115,19 +113,11 @@ export function MeetingList({
       <Upcoming upcoming={upcoming} error={calendarError} connected={calendarConnected} connect={connectCalendar} />
 
       {hasSample && (
-        <div
-          className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-lg)] px-4 py-3"
-          style={{ background: "var(--surface-2)", border: "1px solid var(--line)" }}
-        >
-          <p className="text-[12.5px] leading-[1.55]" style={{ color: "var(--ink-3)" }}>
-            <strong style={{ color: "var(--ink)" }}>Sample workspace</strong> — nine authored meetings from one team&rsquo;s quarter,
-            {" "}{totalMin} minutes, {pluralise(openActions, "open action item")}, imported into your account so there is something to
-            search, ask and compare. Your own recordings sit alongside them.
-          </p>
+        <p className="mb-3 flex flex-wrap items-center gap-x-3 px-1 text-[12px]" style={{ color: "var(--ink-faint)" }}>
+          <span>Includes the sample workspace — nine authored meetings from one team&rsquo;s quarter. Your recordings sit alongside them.</span>
           <SampleControls />
-        </div>
+        </p>
       )}
-
 
       <div className="mb-5 flex flex-wrap items-center gap-2">
         <div

@@ -99,7 +99,7 @@ export function ShareView({
             <circle cx="12" cy="12" r="6" fill="none" stroke="var(--accent)" strokeWidth="1.7" opacity=".6" />
             <circle cx="12" cy="12" r="10" fill="none" stroke="var(--accent)" strokeWidth="1.7" opacity=".26" />
           </svg>
-          <span className="text-[14px] font-semibold tracking-tight">Fathom Rebuild</span>
+          <span className="text-[14px] font-semibold tracking-tight">Verbatim</span>
           <Badge tone="accent">{isClip ? "Shared clip" : "Shared recording"}</Badge>
           <Link
             href="/"
@@ -334,7 +334,7 @@ export function ShareView({
         </div>
 
         <p className="mt-5 text-center text-[12px]" style={{ color: "var(--ink-faint)" }}>
-          Shared from Fathom Rebuild.{" "}
+          Shared from Verbatim.{" "}
           <Link href="/" className="underline" style={{ color: "var(--accent-ink)" }}>
             Open the workspace
           </Link>

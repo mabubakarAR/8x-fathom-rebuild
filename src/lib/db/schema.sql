@@ -21,6 +21,10 @@ create table if not exists users (
   calendar_connected    boolean not null default false,
   -- Per-user preferences, Fathom's "auto-record all meetings" line.
   auto_record           text not null default 'all',   -- all | external | none
+  default_template      text not null default 'general',
+  -- Fathom's "auto-share with attendees". Off by default here: sharing a
+  -- recording is a decision, not a side effect of having one.
+  auto_share            boolean not null default false
   created_at            timestamptz not null default now(),
   last_seen_at          timestamptz not null default now()
 );

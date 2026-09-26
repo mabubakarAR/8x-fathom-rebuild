@@ -87,8 +87,10 @@ function joinLink(e: GEvent): { url: string | null; platform: Platform | "unknow
 }
 
 /** The recording rule. Deterministic and stated, never a model call. */
-function decide(e: GEvent, external: number, attendees: number, hasLink: boolean): { mode: CaptureMode; reason: string } {
+function decide(e: GEvent, external: number, attendees: number, hasLink: boolean, rule: string): { mode: CaptureMode; reason: string } {
   if (!hasLink) return { mode: "off", reason: "No video link on the invite" };
+  if (rule === "none") return { mode: "off", reason: "Your setting: nothing automatically" };
+  if (rule === "external" && external === 0) return { mode: "off", reason: "Your setting: external meetings only" };
   if (external > 0) return { mode: "full", reason: `${external} external ${external === 1 ? "guest" : "guests"} on the invite` };
   if (attendees <= 2) return { mode: "audio", reason: "Two-person internal" };
   if (e.recurringEventId) return { mode: "transcript", reason: "Recurring internal — transcript is enough" };
@@ -98,8 +100,8 @@ function decide(e: GEvent, external: number, attendees: number, hasLink: boolean
 export async function upcomingMeetings(ownerId: string, days = 7): Promise<{ ok: true; meetings: UpcomingMeeting[] } | { ok: false; reason: string }> {
   const sql = db();
   if (!sql) return { ok: false, reason: "No database" };
-  const rows = await sql<{ google_refresh_token: string | null; email: string }[]>`
-    select google_refresh_token, email from users where id = ${ownerId}`;
+  const rows = await sql<{ google_refresh_token: string | null; email: string; auto_record: string }[]>`
+    select google_refresh_token, email, auto_record from users where id = ${ownerId}`;
   const rt = rows[0]?.google_refresh_token;
   if (!rt) return { ok: false, reason: "Calendar not connected" };
   const token = await accessToken(rt);
@@ -140,7 +142,7 @@ export async function upcomingMeetings(ownerId: string, days = 7): Promise<{ ok:
     });
     const external = attendees.filter((a) => a.external).length;
     const { url: joinUrl, platform } = joinLink(e);
-    const { mode, reason } = decide(e, external, Math.max(1, attendees.length), Boolean(joinUrl));
+    const { mode, reason } = decide(e, external, Math.max(1, attendees.length), Boolean(joinUrl), rows[0]?.auto_record ?? "all");
     out.push({
       id: e.id,
       title: e.summary || "(no title)",

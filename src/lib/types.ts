@@ -1,4 +1,4 @@
-// Domain model for Fathom Rebuild.
+// Domain model for Verbatim.
 //
 // Two deliberate divergences from Fathom's public API schema, both noted in
 // PRODUCT-NOTES.md:

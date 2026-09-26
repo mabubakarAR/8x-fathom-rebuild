@@ -71,6 +71,8 @@ export interface OverlayState {
   theme: "light" | "dark" | "system";
   /** Whether the Ask dock is open. Persists so it survives navigation. */
   askOpen?: boolean;
+  /** Whether the sidebar shows labels or only icons. */
+  railOpen?: boolean;
 }
 
 const EMPTY: OverlayState = {
@@ -82,10 +84,9 @@ const EMPTY: OverlayState = {
   threads: [],
   templateChoice: {},
   captureChoice: {},
-  // Dark by default. The product is a dark-room instrument — waveforms,
-  // speaker lanes, fifteen hues — and it is simply better looking that way.
-  // Light is one click away in the sidebar and fully maintained.
-  theme: "dark",
+  // Light by default, because the landing page is, and "Get started" should
+  // not change the weather. Dark is one click away and fully maintained.
+  theme: "light",
 };
 
 function read(): OverlayState {
@@ -133,6 +134,7 @@ interface OverlayApi {
   setCaptureChoice(upcomingId: string, mode: string): void;
   setTheme(t: OverlayState["theme"]): void;
   setAskOpen(open: boolean): void;
+  setRailOpen(open: boolean): void;
   reset(): void;
 }
 
@@ -276,6 +278,7 @@ export function OverlayProvider({ children }: { children: React.ReactNode }) {
         })),
       setTheme: (theme) => patch((s) => ({ ...s, theme })),
       setAskOpen: (askOpen) => patch((s) => ({ ...s, askOpen })),
+      setRailOpen: (railOpen) => patch((s) => ({ ...s, railOpen })),
       reset: () => setState(EMPTY),
     };
   }, [state, ready, router]);

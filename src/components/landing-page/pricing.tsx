@@ -43,10 +43,11 @@ export function Pricing() {
     <section id="pricing" className="scroll-mt-20 px-5 py-24 md:px-8 md:py-32">
       <div className="mx-auto max-w-[1200px]">
         <div className="lp-reveal mx-auto max-w-[640px] text-center">
-          <h2 className="display text-[42px] text-balance md:text-[56px]">
+          <p className="mono text-[12px] text-(--accent-ink)">Proposed pricing</p>
+          <h2 className="display mt-4 text-[42px] text-balance md:text-[56px]">
             Simple pricing. <em>Start for free.</em>
           </h2>
-          <p className="mt-4 text-[16px] leading-[1.6] text-(--ink-3)">No credit card, no seat minimums. Upgrade when your calendar demands it.</p>
+          <p className="mt-4 text-[16px] leading-[1.6] text-(--ink-3)">How this would be sold. Nothing is charged today &mdash; every plan below is the free one while this is a take-home.</p>
         </div>
 
         <div className="mt-14 grid gap-5 lg:grid-cols-3">

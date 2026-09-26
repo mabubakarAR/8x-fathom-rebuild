@@ -2,9 +2,7 @@ import Link from "next/link";
 import { SignInButton } from "./sign-in-button";
 import { Mark } from "./shell";
 import { Hero } from "./landing-page/hero";
-import { Logos } from "./landing-page/logos";
 import { HeroDemo } from "./landing-page/hero-demo";
-import { Stats, Story, Testimonials } from "./landing-page/proof";
 import { Depth } from "./landing-page/depth";
 import { Features } from "./landing-page/features";
 import { Pricing, Faq } from "./landing-page/pricing";
@@ -19,14 +17,13 @@ const GITHUB = "https://github.com/mabubakarAR/8x-fathom-rebuild";
 const NAV = [
   { href: "#demo", label: "Product" },
   { href: "#how", label: "How it works" },
-  { href: "#customers", label: "Customers" },
   { href: "#pricing", label: "Pricing" },
   { href: "#faq", label: "FAQ" },
 ];
 
 const FOOTER = [
   { h: "Product", l: [["Features", "#features"], ["How it works", "#how"], ["Pricing", "#pricing"], ["Chrome extension", "/extension/fathom-rebuild-extension.zip"]] },
-  { h: "Company", l: [["Customers", "#customers"], ["About", "/about"], ["Contact", "mailto:hello@fathom-rebuild.dev"]] },
+  { h: "Company", l: [["About", "/about"], ["Contact", "https://github.com/mabubakarAR/8x-fathom-rebuild/issues"]] },
   { h: "Resources", l: [["FAQ", "#faq"], ["Source code", GITHUB]] },
   { h: "Legal", l: [["Privacy", "/privacy"], ["Terms", "/terms"]] },
 ];
@@ -50,7 +47,7 @@ export function Landing() {
         <nav className="mx-auto flex h-16 w-full max-w-[1200px] items-center justify-between px-5 md:px-8" aria-label="Main">
           <Link href="/" className="flex items-center gap-2.5 text-(--ink)">
             <Mark size={22} />
-            <span className="text-[15.5px] font-semibold tracking-[-0.02em]">Fathom Rebuild</span>
+            <span className="text-[15.5px] font-semibold tracking-[-0.02em]">Verbatim</span>
           </Link>
           <div className="hidden items-center gap-8 lg:flex">
             {NAV.map((n) => (
@@ -73,7 +70,6 @@ export function Landing() {
       </header>
 
       <Hero />
-      <Logos />
 
       <section id="demo" className="scroll-mt-20 px-3 pt-20 md:px-5 md:pt-28">
         <div className="lp-dark mx-auto max-w-[1360px] overflow-hidden rounded-[32px] px-5 py-16 md:px-12 md:py-24">
@@ -91,8 +87,6 @@ export function Landing() {
         </div>
       </section>
 
-      <Stats />
-      <Story />
 
       <section id="how" className="lp-dark scroll-mt-16 px-5 pt-24 pb-10 md:px-8 md:pt-32">
         <div className="mx-auto max-w-[1200px]">
@@ -121,7 +115,6 @@ export function Landing() {
         </div>
       </section>
 
-      <Testimonials />
       <Pricing />
       <Faq />
 
@@ -153,7 +146,7 @@ export function Landing() {
             <div>
               <div className="flex items-center gap-2.5 text-(--ink)">
                 <Mark size={22} />
-                <span className="text-[15.5px] font-semibold tracking-[-0.02em]">Fathom Rebuild</span>
+                <span className="text-[15.5px] font-semibold tracking-[-0.02em]">Verbatim</span>
               </div>
               <p className="mt-4 max-w-[30ch] text-[14px] leading-[1.6] text-(--ink-3)">The AI notetaker that listens without joining. Cited notes for every call.</p>
             </div>
@@ -173,7 +166,7 @@ export function Landing() {
             ))}
           </div>
           <div className="mt-16 flex flex-col gap-3 border-t border-(--line) pt-6 text-[13px] text-(--ink-faint) md:flex-row md:justify-between">
-            <span>&copy; 2026 Fathom Rebuild. Not affiliated with Fathom.</span>
+            <span>&copy; 2026 Verbatim. Not affiliated with Fathom.</span>
             <span className="mono">Made for people who&apos;d rather listen.</span>
           </div>
         </div>
