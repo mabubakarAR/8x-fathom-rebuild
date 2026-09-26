@@ -64,23 +64,35 @@
   function autoOpen(code) {
     if (opened.has(code)) return;
     opened.add(code);
-    chrome.storage.sync.get({ autoOpen: true }, (v) => {
-      if (!v.autoOpen) return;
-      chrome.runtime.sendMessage({ type: "open", url: recordUrl(code, true) });
-    });
+    // After the extension is reloaded, a Meet tab that was already open keeps
+    // running this script with no extension behind it, and every chrome.*
+    // call throws "Extension context invalidated". The button must not
+    // depend on this, so it is best-effort.
+    try {
+      chrome.storage.sync.get({ autoOpen: true }, (v) => {
+        if (!v.autoOpen) return;
+        try { chrome.runtime.sendMessage({ type: "open", url: recordUrl(code, true) }); } catch { /* tab predates the reload */ }
+      });
+    } catch { /* tab predates the reload */ }
   }
 
   function mount() {
     const existing = document.getElementById(ID);
     const code = meetingCode();
     if (!code || !inCall()) return;
-    autoOpen(code);
     const bar = controlBar();
     if (existing) {
       // Meet re-renders the bar; if ours fell out of it, put it back.
-      if (bar && existing.parentElement !== bar) bar.appendChild(existing);
+      if (bar && existing.parentElement !== bar) {
+        existing.classList.add("in-bar");
+        bar.appendChild(existing);
+      }
       return;
     }
+    // The button comes first; nothing below may stop it from appearing.
+    // Meet's bar may not exist yet on the first pass (it appears a beat
+    // after the leave button), so the floating fallback is used until it
+    // does, and the block above moves the button into the bar later.
 
     const a = document.createElement("a");
     a.id = ID;
@@ -95,6 +107,7 @@
     } else {
       document.body.appendChild(a);
     }
+    autoOpen(code);
   }
 
   // Meet is a single-page app: the toolbar appears after join, and the URL

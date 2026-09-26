@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Noted",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Adds a Record button inside Google Meet, and opens Noted's recorder for the call you're in.",
   "host_permissions": [
     "https://meet.google.com/*"
