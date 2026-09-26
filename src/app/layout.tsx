@@ -6,9 +6,9 @@ import { SignOutButton } from "@/components/sign-in-button";
 import { auth } from "@/auth";
 
 export const metadata: Metadata = {
-  title: "Verbatim — AI meeting notetaker",
+  title: "Noted — AI meeting notetaker",
   description:
-    "A rebuild of Fathom. Auto-chaptered transcripts, cited summaries, speaker repair and blended search — built for the eight-person hour-long call.",
+    "Noted records your calls without a bot in the room, then turns them into cited notes: auto-chaptered transcripts, summaries that link every claim to the line it came from, and one search across every meeting you have ever had.",
 };
 
 // Applied before paint so a dark-mode viewer never sees a white flash. Reading
@@ -20,7 +20,11 @@ export default async function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   const session = await auth();
   const user = session?.user?.id
-    ? { name: session.user.name ?? "", email: session.user.email ?? "", image: session.user.image ?? null }
+    ? {
+        name: session.user.name ?? "",
+        email: session.user.guest ? "Temporary guest workspace" : (session.user.email ?? ""),
+        image: session.user.image ?? null,
+      }
     : null;
   return (
     <html lang="en" data-theme="light" suppressHydrationWarning>

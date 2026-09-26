@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { SignInButton } from "./sign-in-button";
+import { SignInButton, GuestSignInButton } from "./sign-in-button";
+import { Extension } from "./landing-page/extension";
 import { Mark } from "./shell";
 import { Hero } from "./landing-page/hero";
 import { HeroDemo } from "./landing-page/hero-demo";
@@ -17,12 +18,13 @@ const GITHUB = "https://github.com/mabubakarAR/8x-fathom-rebuild";
 const NAV = [
   { href: "#demo", label: "Product" },
   { href: "#how", label: "How it works" },
+  { href: "#extension", label: "Chrome extension" },
   { href: "#pricing", label: "Pricing" },
   { href: "#faq", label: "FAQ" },
 ];
 
 const FOOTER = [
-  { h: "Product", l: [["Features", "#features"], ["How it works", "#how"], ["Pricing", "#pricing"], ["Chrome extension", "/extension/fathom-rebuild-extension.zip"]] },
+  { h: "Product", l: [["Features", "#features"], ["How it works", "#how"], ["Pricing", "#pricing"], ["Chrome extension", "#extension"]] },
   { h: "Company", l: [["About", "/about"], ["Contact", "https://github.com/mabubakarAR/8x-fathom-rebuild/issues"]] },
   { h: "Resources", l: [["FAQ", "#faq"], ["Source code", GITHUB]] },
   { h: "Legal", l: [["Privacy", "/privacy"], ["Terms", "/terms"]] },
@@ -47,7 +49,7 @@ export function Landing() {
         <nav className="mx-auto flex h-16 w-full max-w-[1200px] items-center justify-between px-5 md:px-8" aria-label="Main">
           <Link href="/" className="flex items-center gap-2.5 text-(--ink)">
             <Mark size={22} />
-            <span className="text-[15.5px] font-semibold tracking-[-0.02em]">Verbatim</span>
+            <span className="text-[15.5px] font-semibold tracking-[-0.02em]">Noted</span>
           </Link>
           <div className="hidden items-center gap-8 lg:flex">
             {NAV.map((n) => (
@@ -57,13 +59,13 @@ export function Landing() {
             ))}
           </div>
           <div className="flex items-center gap-2">
-            <SignInButton
-              label="Log in"
-              className="hidden h-9 items-center rounded-full px-3.5 text-[14px] font-medium text-(--ink-2) transition-colors hover:text-(--ink) sm:inline-flex [&>svg]:hidden"
+            <GuestSignInButton
+              label="Guest"
+              className="hidden h-9 items-center rounded-full px-3.5 text-[14px] font-medium text-(--ink-2) transition-colors hover:text-(--ink) sm:inline-flex"
             />
             <SignInButton
-              label="Get started"
-              className="inline-flex h-9 items-center rounded-full bg-(--ink) px-4 text-[14px] font-medium text-(--bg) transition-transform hover:-translate-y-px [&>svg]:hidden"
+              label="Sign in with Google"
+              className="inline-flex h-9 items-center rounded-full bg-(--ink) px-4 text-[14px] font-medium text-(--bg) transition-transform hover:-translate-y-px"
             />
           </div>
         </nav>
@@ -71,7 +73,7 @@ export function Landing() {
 
       <Hero />
 
-      <section id="demo" className="scroll-mt-20 px-3 pt-20 md:px-5 md:pt-28">
+      <section id="demo" className="scroll-mt-20 px-3 py-20 md:px-5 md:py-28">
         <div className="lp-dark mx-auto max-w-[1360px] overflow-hidden rounded-[32px] px-5 py-16 md:px-12 md:py-24">
           <div className="mx-auto max-w-[1080px]">
             <SectionHead
@@ -88,13 +90,13 @@ export function Landing() {
       </section>
 
 
-      <section id="how" className="lp-dark scroll-mt-16 px-5 pt-24 pb-10 md:px-8 md:pt-32">
+      <section id="how" className="lp-dark scroll-mt-16 px-5 pt-24 pb-16 md:px-8 md:pt-32 md:pb-20">
         <div className="mx-auto max-w-[1200px]">
           <SectionHead
             dark
             label="How it works"
             title={<>From the surface <em>to the source.</em></>}
-            body="A fathom is six feet of depth. Here are five of them — from pressing record to asking your whole history a question."
+            body="Five steps down — from pressing record to asking your whole meeting history a question. Each one keeps the line that proves it."
           />
           <div className="mt-14 md:mt-6">
             <Depth />
@@ -102,7 +104,7 @@ export function Landing() {
         </div>
       </section>
 
-      <section id="features" className="scroll-mt-20 px-5 py-24 md:px-8 md:py-32">
+      <section id="features" className="scroll-mt-20 px-5 pt-24 pb-20 md:px-8 md:pt-32 md:pb-28">
         <div className="mx-auto max-w-[1200px]">
           <SectionHead
             label="Built for the hard meeting"
@@ -115,6 +117,7 @@ export function Landing() {
         </div>
       </section>
 
+      <Extension />
       <Pricing />
       <Faq />
 
@@ -132,9 +135,9 @@ export function Landing() {
               label="Start free with Google"
               className="inline-flex h-12 items-center rounded-full bg-(--ink) px-6 text-[15px] font-medium text-(--bg) transition-transform hover:-translate-y-0.5"
             />
-            <a href="#pricing" className="inline-flex h-12 items-center rounded-full border border-(--line-strong) px-6 text-[15px] font-medium text-(--ink) transition-colors hover:bg-(--surface)">
-              See pricing
-            </a>
+            <GuestSignInButton
+              className="inline-flex h-12 items-center rounded-full border border-(--line-strong) px-6 text-[15px] font-medium text-(--ink) transition-colors hover:bg-(--surface)"
+            />
           </div>
           <p className="mt-5 text-[13px] text-(--ink-faint)">Free forever plan · No credit card · Nothing records until you press record</p>
         </div>
@@ -146,7 +149,7 @@ export function Landing() {
             <div>
               <div className="flex items-center gap-2.5 text-(--ink)">
                 <Mark size={22} />
-                <span className="text-[15.5px] font-semibold tracking-[-0.02em]">Verbatim</span>
+                <span className="text-[15.5px] font-semibold tracking-[-0.02em]">Noted</span>
               </div>
               <p className="mt-4 max-w-[30ch] text-[14px] leading-[1.6] text-(--ink-3)">The AI notetaker that listens without joining. Cited notes for every call.</p>
             </div>
@@ -166,7 +169,7 @@ export function Landing() {
             ))}
           </div>
           <div className="mt-16 flex flex-col gap-3 border-t border-(--line) pt-6 text-[13px] text-(--ink-faint) md:flex-row md:justify-between">
-            <span>&copy; 2026 Verbatim. Not affiliated with Fathom.</span>
+            <span>&copy; 2026 Noted. Open source, built as a take-home.</span>
             <span className="mono">Made for people who&apos;d rather listen.</span>
           </div>
         </div>

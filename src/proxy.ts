@@ -10,6 +10,7 @@ const PUBLIC = [
   /^\/s\//,
   /^\/privacy$/,
   /^\/terms$/,
+  /^\/about$/,
   /^\/api\/auth\//,
   /^\/api\/setup$/,
   /^\/api\/calls\/[^/]+\/audio$/, // audio behind a share link

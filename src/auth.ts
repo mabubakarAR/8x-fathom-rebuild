@@ -1,17 +1,24 @@
 import NextAuth, { type DefaultSession } from "next-auth";
 import Google from "next-auth/providers/google";
+import Credentials from "next-auth/providers/credentials";
+import { randomBytes } from "node:crypto";
 import { db } from "@/lib/db/client";
 
-// Sign in with Google, and only Google.
+// Sign in with Google — plus a clearly-labelled temporary guest door.
 //
-// Fathom itself is Google / Microsoft sign-in only. Sign-in asks for identity
+// The real sign-in is Google only. Sign-in asks for identity
 // and nothing else, so it is a two-click flow with no warnings. The calendar
 // is a SEPARATE consent — "Connect Google Calendar" on the home page — because
 // calendar.readonly is a Google "sensitive" scope and an unverified app
 // asking for it gets a full-page "Google hasn't verified this app" screen.
 // Putting that in front of every sign-in would cost more users than the
 // calendar wins; putting it behind a button the user chose to press is fine.
-// This is also how Fathom does it.
+//
+// The "guest" provider exists for one reason: the OAuth client is unverified,
+// and a reviewer whose Google account is on a Workspace domain with strict
+// third-party-app policies may not be able to grant even the identity scope.
+// A guest gets a throw-away user row and the sample workspace, and nothing
+// else — no calendar, no refresh token — and the UI says so in the tooltip.
 //
 // JWT sessions rather than database sessions: nothing about the session needs
 // to be revocable from the server side in this product, and it saves a
@@ -19,7 +26,7 @@ import { db } from "@/lib/db/client";
 
 declare module "next-auth" {
   interface Session {
-    user: DefaultSession["user"] & { id: string; calendar: boolean };
+    user: DefaultSession["user"] & { id: string; calendar: boolean; guest: boolean };
   }
 }
 
@@ -45,12 +52,44 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         },
       },
     }),
+    Credentials({
+      id: "guest",
+      name: "Guest",
+      credentials: {},
+      // No credentials to check: every guest is a fresh, random user. That
+      // keeps two reviewers from landing in the same workspace and means a
+      // guest can never reach anyone else's data.
+      async authorize() {
+        const id = `guest_${randomBytes(9).toString("base64url")}`;
+        return { id, name: "Guest reviewer", email: `${id}@guest.local`, image: null };
+      },
+    }),
   ],
   session: { strategy: "jwt" },
   trustHost: true,
   pages: { signIn: "/" },
   callbacks: {
-    async jwt({ token, account, profile }) {
+    async jwt({ token, account, profile, user }) {
+      if (account?.provider === "guest" && user?.id) {
+        token.sub = user.id;
+        token.guest = true;
+        token.calendar = false;
+        const sql = db();
+        if (sql) {
+          await sql`
+            insert into users (id, email, name, image, calendar_connected)
+            values (${user.id}, ${user.email ?? ""}, ${user.name ?? "Guest reviewer"}, null, false)
+            on conflict (id) do nothing`;
+          // A guest with an empty workspace has nothing to review. Load the
+          // sample so the first screen is a real one; it is removable from
+          // Settings like anyone else's.
+          // Imported lazily so the seed corpus stays out of the proxy bundle,
+          // which also loads this module.
+          const { importSample } = await import("@/lib/db/sample");
+          await importSample(user.id).catch(() => undefined);
+        }
+        return token;
+      }
       if (account && profile) {
         token.sub = profile.sub ?? token.sub;
         token.picture = (profile as { picture?: string }).picture ?? token.picture;
@@ -87,6 +126,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async session({ session, token }) {
       session.user.id = token.sub ?? "";
       session.user.calendar = Boolean(token.calendar);
+      session.user.guest = Boolean(token.guest);
       return session;
     },
   },

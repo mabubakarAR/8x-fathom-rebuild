@@ -1,4 +1,4 @@
-// Verbatim — Google Meet companion.
+// Noted — Google Meet companion.
 //
 // One job: put a Record button inside the Meet page. Clicking it opens the
 // recorder in a new tab, already knowing which call this is, so the only
@@ -11,7 +11,7 @@
 
 (function () {
   const APP = "https://8x-fathom-rebuild.vercel.app";
-  const ID = "fathom-rebuild-record";
+  const ID = "noted-record";
 
   function meetingCode() {
     const m = location.pathname.match(/^\/([a-z]{3}-[a-z]{4}-[a-z]{3})/i);
@@ -41,7 +41,7 @@
     a.href = `${APP}/record?join=${encodeURIComponent(`https://meet.google.com/${code}`)}&title=${encodeURIComponent(meetingTitle())}`;
     a.target = "_blank";
     a.rel = "noopener";
-    a.innerHTML = '<span class="fr-dot"></span><span class="fr-label">Record with Verbatim</span>';
+    a.innerHTML = '<span class="fr-dot"></span><span class="fr-label">Record with Noted</span>';
     a.title = "Opens the recorder for this call in a new tab";
     document.body.appendChild(a);
   }

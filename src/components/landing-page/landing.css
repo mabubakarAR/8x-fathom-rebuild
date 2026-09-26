@@ -251,3 +251,43 @@
     animation: none !important;
   }
 }
+
+/* Tooltip for the guest door — CSS only, so it works on the server-rendered
+   form with no client JavaScript. Shown on hover and on keyboard focus. */
+.lp-tip .lp-tip-body {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 10px);
+  z-index: 60;
+  width: 280px;
+  transform: translate(-50%, -4px);
+  border-radius: 12px;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--ink-2);
+  padding: 10px 12px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  text-align: left;
+  box-shadow: 0 12px 32px oklch(20% 0.02 266 / 0.18);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 140ms ease, transform 140ms ease;
+}
+.lp-tip:hover .lp-tip-body,
+.lp-tip:focus-within .lp-tip-body {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+.lp-tip .lp-tip-body::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -5px;
+  width: 8px;
+  height: 8px;
+  transform: translateX(-50%) rotate(45deg);
+  background: var(--surface);
+  border-left: 1px solid var(--line-strong);
+  border-top: 1px solid var(--line-strong);
+}

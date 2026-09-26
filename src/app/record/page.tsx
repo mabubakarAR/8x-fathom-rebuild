@@ -1,7 +1,7 @@
 import { RecordStudio } from "@/components/record-studio";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Record a meeting — Verbatim" };
+export const metadata = { title: "Record a meeting — Noted" };
 
 export default async function RecordPage({
   searchParams,

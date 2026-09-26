@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { SignInButton } from "../sign-in-button";
+import { SignInButton, GuestSignInButton } from "../sign-in-button";
 
 
 export function Hero() {
@@ -21,7 +21,7 @@ export function Hero() {
           </h1>
 
           <p className="lp-in mt-6 max-w-[48ch] text-[17px] leading-[1.6] text-pretty text-(--ink-2) md:text-[18.5px]" style={{ animationDelay: "0.12s" }}>
-            Verbatim records, transcribes and summarises your calls without a bot in the room — so you can give people your full attention and still leave with every decision.
+            Noted records, transcribes and summarises your calls without a bot in the room — so you can give people your full attention and still leave with every decision.
           </p>
 
           <div className="lp-in mt-9 flex flex-col gap-3 sm:flex-row sm:items-center" style={{ animationDelay: "0.18s" }}>
@@ -36,6 +36,13 @@ export function Hero() {
               <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden><path d="M4.5 3.2v9.6a.6.6 0 0 0 .9.5l7.6-4.8a.6.6 0 0 0 0-1L5.4 2.7a.6.6 0 0 0-.9.5z" fill="currentColor" /></svg>
               Watch it work
             </a>
+          </div>
+          <div className="lp-in mt-3 text-[13px] text-(--ink-faint)" style={{ animationDelay: "0.21s" }}>
+            Google sign-in blocked on your account?{" "}
+            <GuestSignInButton
+              label="Continue as guest"
+              className="inline-flex items-center underline decoration-(--line-strong) underline-offset-4 hover:text-(--ink) hover:decoration-(--ink)"
+            />
           </div>
 
           <div className="lp-in mt-10 flex flex-wrap items-center gap-x-5 gap-y-2 text-[13.5px] text-(--ink-3)" style={{ animationDelay: "0.24s" }}>

@@ -40,60 +40,47 @@ Both fixed. The log went from 9 "turns" to 4 real ones.
 
 ---
 
+## The resubmission brief
+
+8x's follow-up asked for two things on top of the original: an interface of my own design (the reference product as inspiration, not a template), and a real, connected backend — working database and API, no mock or hardcoded data.
+
+| Requirement | Status | Where |
+|---|---|---|
+| Own interface | **done** | Landing page, expandable rail, Ask dock, settings-as-sentences, the Meet extension. Nothing is traced from the reference product |
+| Real backend, no mock data | **done** | Every page is `loadWorkspace(ownerId)` over Postgres; every edit is `POST /api/meetings/<id>/mutate`. The seed corpus is an *importable sample*, marked as such, not a data source |
+| Working DB + API | **done** | Neon Postgres, `src/lib/db/schema.sql`, idempotent `migrate()`. `/api/setup` reports what is attached |
+| One-minute intro video | **you** | |
+
 ## The product — the brief's "at minimum" list
 
 | Requirement | Status | Where |
 |---|---|---|
-| Connect a calendar | **done (simulated OAuth)** | Upcoming band at the top of the meetings list: per-meeting capture decision made *before* the meeting, with the rule that chose it stated in words. The connection itself is seeded |
-| Get the notetaker into a meeting and record | **done — real capture, not the permitted stub** | `/record` takes the tab's audio (the far side of a Zoom/Meet/Teams call) via `getDisplayMedia`, mixes it with your mic through Web Audio, records the mix, and sends it to Deepgram `nova-3` for diarization. No bot, so it works on all three platforms at once. `/live` also streams the authored hour-long call at 8× so the experience is reviewable without setting up a call |
-| Watch playback against the transcript | **done** | Click any line to seek; auto-scroll with an active-line marker; follow mode that yields when you scroll |
-| Read the AI summary | **done** | Structured sections, every bullet anchored to a timestamp |
-| Switch templates | **done** | Post-hoc switch with regeneration; each template produces different *sections*, not reworded text |
-| Pull the action items | **done** | Per-assignee, checkable, anchored, manually addable; plus a cross-meeting board at `/actions` |
-| Highlight a moment mid-call and see where it lands | **done** | `/live` — press a category button and it walks backwards to the start of the speaker's turn |
-| Search across meetings | **done, and then some** | `/search`, one blended ranked list, deep-linked to the moment — plus **Ask the workspace**, which reads the retrieved lines and answers across all nine meetings with citations naming the meeting, speaker and second |
-| Share a clip with someone not on the call | **done** | `/s/<token>` opens signed-out; a clip link carries only that clip's segments |
-| **The eight-person hour-long call** | **done — the thing the build is aimed at** | `Q4 Roadmap Lock`: 54 min, 332 segments, 12 chapters, 8 speakers + 1 silent, written to be hostile |
+| Connect a calendar | **done — real Google OAuth** | Second consent (`calendar.readonly`, offline). Next seven days on the home page with a record / skip decision per meeting and the rule that chose it, from `users.auto_record` |
+| Get the notetaker into a meeting and record | **done — no bot, by design** | Chrome extension puts **Record with Noted** inside Google Meet → `/record?join=…` → tab audio + mic via `getDisplayMedia`/`getUserMedia` → Deepgram `nova-3` diarized. Works on Zoom and Teams links from the calendar too |
+| Watch playback against the transcript | **done** | Audio served with range support; click any line to seek; follow mode yields when you scroll |
+| Read the AI summary | **done** | Every bullet anchored to a line; unanchored claims shown as dropped |
+| Switch templates | **done** | Regenerates with different sections, not reworded text; default template is a setting |
+| Pull the action items | **done** | Per-person, checkable (persisted), addable; cross-meeting board at `/actions` |
+| Highlight a moment mid-call | **done** | Walks back to the start of the speaker's turn; `/live` replays the sample call at 8× so this is reviewable without a meeting |
+| Search across meetings | **done** | `/search` blended BM25 + cosine, per-user index; **Ask** (`?`) answers across every meeting with citations naming meeting, speaker and second |
+| Share a clip with someone not on the call | **done** | `/s/<token>` is public; carries only that clip |
+| The eight-person hour-long call | **done** | *Q4 Roadmap Lock* in the sample: 54 min, 332 lines, 12 chapters, 8 speakers |
 
 ## Hand-in
 
 | Requirement | Status |
 |---|---|
-| Seed with real data — an empty list tells you nothing | **done** — 9 meetings, 625 lines, threads running between them |
-| Live link opens for somebody not signed in as you | **done** — there is no auth at all. Verified from a clean browser context, every route 200 |
-| A live link, deployed, not localhost | **done** — Vercel, with Postgres, Anthropic and Deepgram attached |
-| Public repository with `.agent-logs/` in it | **you** — set `8x-fathom-rebuild` public before submitting |
-| Walkthrough, ≤5 min, camera on, in the walkthrough field | **you** |
-| Paste both links into the links field, labelled | **you** |
-
-## Built after the first draft of this file
-
-Everything above was the brief's floor. These went in afterwards and are the
-part worth judging on product judgement rather than coverage.
-
-| | What | Why |
-|---|---|---|
-| **The evidence ledger** | Every generated summary publishes proposed → anchored → **discarded**, and quotes the discarded claims with the index the model invented | Every notetaker says it is "grounded in your transcript". None show the working, because showing it means admitting the model sometimes cites a line that does not exist. `npm test` proves the drop path without an API call |
-| **Ask the whole workspace** | One question, answered across all nine meetings, each claim citing the meeting, date, speaker and second | A folder of recordings cannot answer "what did we promise them in July". Neither can a tool that summarises each call in isolation |
-| **The contradiction tracker** | Scans every meeting for commitments, pairs them by retrieval score across calls, and judges whether a later one reversed an earlier one. 176 commitments, 36 pairs, 1 contradiction | The failure notes cause is not a bad summary. It is two correct summaries, three weeks apart, that disagree — and nobody re-reads the old one |
-| **Real capture** | Tab audio + microphone, mixed in the browser, diarized by Deepgram | The brief permits stubbing this. Not stubbing it is the difference between a demo and a product |
-| **Persistence** | One transaction to Postgres; audio to Blob, or a `bytea` column when no store is attached, served with HTTP range support | A recording you lose when the tab closes is not a recording |
+| Seed with real data | **done** — the sample workspace, one click from an empty home page, removable from Settings |
+| Live link opens for somebody not signed in as you | **done** — landing, `/about`, `/privacy`, `/terms`, `/s/<token>` are public. The app itself is per-user, and a **Guest** door exists for reviewers whose Google domain blocks unverified apps |
+| A live link, deployed | **done** — Vercel with Postgres, Google OAuth, Anthropic and Deepgram attached |
+| Public repository with `.agent-logs/` | **done** — committed as it went |
+| Intro video (1 min) and walkthrough (≤5 min) | **you** |
 
 ## Deliberately cut
 
-Reasoning for each is in `PRODUCT-NOTES.md`. Short version: CRM sync, deal pipelines and coaching scorecards are Fathom's Business-tier moat and are entirely downstream of the core loop working — a shallow version of any of them would show less judgement than none. Auth and billing would make a reviewer sign up to see a demo. Real calendar OAuth, Slack/Asana/Zapier, mobile, SSO and admin are surface area, not product.
-
-The honest near-miss is **retroactive trackers**. Fathom's own limitation — *"Trackers do not scan past calls retroactively"* — is a backfill-compute constraint rather than a product truth, and it would have been next above the line.
-
-## Recon — what I could not do
-
-I did not sign up for Fathom. Sign-in is Google/Microsoft SSO only, and consumer-domain signups are gated behind having a video meeting scheduled in the next seven days; running a real two-minute Zoom call was not possible from a cloud container. So the recon is documentary rather than experiential: the full help centre, the public API's OpenAPI schema, release notes back to early 2025, the pricing page, and the G2/Capterra corpus for the *correct* product — `g2.com/products/fathom-video`, not `g2.com/products/fathom`, which is unrelated accounting software.
-
-That is a real limitation and it is why `PRODUCT-NOTES.md` carries a confidence column. The single most useful thing it turned up was their API schema: `MeetingSummary` is `{ template_name, markdown_formatted }` — an opaque blob — which caps how good a citation can ever be in their product, and is the gap this rebuild exploits.
+Zoom and Teams *sign-in* (both need marketplace review; links from the calendar still open in the recorder). A desktop app for calls outside a browser tab. CRM sync, deal pipelines, coaching, billing, admin, mobile. Reasoning for each is in `PRODUCT-NOTES.md`.
 
 ## Naming
 
-One slug, one wordmark, no third name:
-
-- `8x-fathom-rebuild` — repository, folder, `package.json` name, log `project` field, localStorage key
-- **Fathom Rebuild** — the display name in the interface, because a wordmark has to read like one
+- `8x-fathom-rebuild` — repository, `package.json` name, log `project` field, because that is what the assignment was called
+- **Noted** — the product, everywhere a person sees it

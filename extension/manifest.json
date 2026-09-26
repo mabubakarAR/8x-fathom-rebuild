@@ -1,13 +1,13 @@
 {
   "manifest_version": 3,
-  "name": "Verbatim",
+  "name": "Noted",
   "version": "1.0.0",
-  "description": "Adds a Record button inside Google Meet that opens Verbatim's recorder for the call you're in.",
+  "description": "Adds a Record button inside Google Meet that opens Noted's recorder for the call you're in.",
   "host_permissions": [
     "https://meet.google.com/*"
   ],
   "action": {
-    "default_title": "Verbatim",
+    "default_title": "Noted",
     "default_popup": "popup.html"
   },
   "content_scripts": [

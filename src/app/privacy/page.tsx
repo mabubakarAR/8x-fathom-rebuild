@@ -1,11 +1,11 @@
 import { LegalPage } from "@/components/legal-page";
 
-export const metadata = { title: "Privacy — Verbatim" };
+export const metadata = { title: "Privacy — Noted" };
 
 export default function Privacy() {
   return (
     <LegalPage title="Privacy" updated="26 September 2026">
-      <p>Verbatim is a take-home project built for a hiring assignment. It is not a commercial service and has no customers. This page exists because Google requires one before an app can ask for calendar access, and because you deserve to know what happens to your data even in a demo.</p>
+      <p>Noted is a take-home project built for a hiring assignment. It is not a commercial service and has no customers. This page exists because Google requires one before an app can ask for calendar access, and because you deserve to know what happens to your data even in a demo.</p>
       <h2>What is collected</h2>
       <p><strong>When you sign in with Google:</strong> your Google account id, email address, name and profile picture. These identify your workspace so only you see your meetings.</p>
       <p><strong>Calendar:</strong> with your consent, read-only access to your primary Google Calendar. Events for the next seven days are read at the moment you open the home page, to show which meetings could be recorded. Calendar data is not stored. A refresh token is stored so the calendar can be read again on your next visit without asking again.</p>

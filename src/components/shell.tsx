@@ -22,15 +22,16 @@ export interface ShellUser {
   image: string | null;
 }
 
-const NAV: { href: string; label: string; icon: IconName; key: string }[] = [
-  { href: "/", label: "Meetings", icon: "home", key: "1" },
-  { href: "/search", label: "Search", icon: "search", key: "2" },
-  { href: "/commitments", label: "Commitments", icon: "shield", key: "3" },
-  { href: "/actions", label: "Action items", icon: "check", key: "4" },
-  { href: "/clips", label: "Clips", icon: "clip", key: "5" },
+const NAV: { href: string; label: string; icon: IconName }[] = [
+  { href: "/", label: "Meetings", icon: "home" },
+  { href: "/search", label: "Search", icon: "search" },
+  { href: "/commitments", label: "Commitments", icon: "shield" },
+  { href: "/actions", label: "Action items", icon: "check" },
+  { href: "/clips", label: "Clips", icon: "clip" },
 ];
 
 const BARE = ["/s/", "/privacy", "/terms"];
+// /about is public: signed out it renders bare (the !user branch below).
 
 export function Shell({ children, user, signOut }: { children: React.ReactNode; user: ShellUser | null; signOut?: React.ReactNode }) {
   const pathname = usePathname() ?? "/";
@@ -54,8 +55,6 @@ function Frame({ children, pathname, user, signOut }: { children: React.ReactNod
       if (e.key === "/") { e.preventDefault(); router.push("/search"); }
       if (e.key === "?") { e.preventDefault(); setAskOpen(!askOpen); }
       if (e.key === "[") { e.preventDefault(); setRailOpen(!open); }
-      const n = NAV.find((x) => x.key === e.key);
-      if (n) router.push(n.href);
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -73,9 +72,9 @@ function Frame({ children, pathname, user, signOut }: { children: React.ReactNod
         aria-label="Main"
       >
         <div className={`mb-3 flex items-center ${open ? "justify-between px-3" : "justify-center"}`}>
-          <Link href="/" className="flex items-center gap-2.5 rounded-[10px] px-1.5 py-1.5" title="Verbatim" style={{ color: "var(--ink)" }}>
+          <Link href="/" className="flex items-center gap-2.5 rounded-[10px] px-1.5 py-1.5" title="Noted" style={{ color: "var(--ink)" }}>
             <Mark size={22} />
-            {open && <span className="text-[15px] font-semibold tracking-[-0.02em]">Verbatim</span>}
+            {open && <span className="text-[15px] font-semibold tracking-[-0.02em]">Noted</span>}
           </Link>
           {open && (
             <button onClick={() => setRailOpen(false)} className="grid h-8 w-8 place-items-center rounded-[8px]" style={{ color: "var(--ink-3)" }} title="Collapse  ·  [" aria-label="Collapse sidebar">
@@ -97,13 +96,12 @@ function Frame({ children, pathname, user, signOut }: { children: React.ReactNod
                 key={n.href}
                 href={n.href}
                 aria-current={on ? "page" : undefined}
-                title={open ? undefined : `${n.label}  ·  ${n.key}`}
+                title={open ? undefined : n.label}
                 className={`group relative flex items-center gap-3 rounded-[10px] text-[13.5px] font-medium transition-colors duration-150 ${open ? "px-3 py-2" : "h-11 w-11 justify-center"}`}
                 style={{ color: on ? "var(--ink)" : "var(--ink-2)", background: on ? "var(--surface)" : "transparent", boxShadow: on ? "var(--shadow-sm)" : undefined }}
               >
                 <span style={{ color: on ? "var(--accent)" : "var(--ink-3)" }}><Icon name={n.icon} size={18} /></span>
                 {open && <span className="flex-1">{n.label}</span>}
-                {open && <kbd className="text-[10.5px] tnum" style={{ color: "var(--ink-faint)" }}>{n.key}</kbd>}
                 {!open && (
                   <span className="pointer-events-none absolute left-full z-50 ml-2 rounded-[7px] px-2 py-1 text-[12px] font-medium whitespace-nowrap opacity-0 transition-opacity group-hover:opacity-100" style={{ background: "var(--ink)", color: "var(--bg)" }}>
                     {n.label}

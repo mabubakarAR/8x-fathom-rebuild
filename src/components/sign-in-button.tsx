@@ -66,3 +66,32 @@ export function ConnectCalendarButton({ className, style, label = "Connect Googl
     </form>
   );
 }
+
+/**
+ * Temporary reviewer access. The Google OAuth client behind this app is
+ * unverified, and some Workspace domains refuse consent to unverified apps
+ * outright. Rather than let that be the end of a review, a guest gets a
+ * throw-away user with the sample workspace loaded. It is deliberately not
+ * dressed up as a real feature: the tooltip says what it is.
+ */
+export const GUEST_NOTE =
+  "Temporary access for reviewers. Use this only if Google sign-in is blocked on your account. " +
+  "It creates a throw-away workspace with the sample meetings loaded — no calendar, no Google data, and it is not a product feature.";
+
+export function GuestSignInButton({ className, style, label = "Continue as guest" }: { className?: string; style?: React.CSSProperties; label?: string }) {
+  return (
+    <form
+      action={async () => {
+        "use server";
+        await signIn("guest", { redirectTo: "/" });
+      }}
+      className="lp-tip relative inline-flex"
+    >
+      <button type="submit" className={className} style={style} aria-describedby="guest-note">
+        {label}
+        <span aria-hidden className="ml-2 rounded-full border border-current px-1.5 py-px text-[10px] font-semibold uppercase tracking-[0.08em] opacity-70">temporary</span>
+      </button>
+      <span role="tooltip" id="guest-note" className="lp-tip-body">{GUEST_NOTE}</span>
+    </form>
+  );
+}

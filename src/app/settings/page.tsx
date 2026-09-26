@@ -6,7 +6,7 @@ import { SettingsForm } from "@/components/settings-form";
 import { ConnectCalendarButton, SignOutButton } from "@/components/sign-in-button";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Settings — Verbatim" };
+export const metadata = { title: "Settings — Noted" };
 
 // Settings, as a sentence and a few switches.
 //

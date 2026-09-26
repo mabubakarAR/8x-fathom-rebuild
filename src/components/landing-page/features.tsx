@@ -71,10 +71,10 @@ export function Features() {
 
       <Card label="Google Meet" title="A Record button, inside the call." body="The Chrome extension opens the recorder already knowing which meeting you're in.">
         <a
-          href="/extension/fathom-rebuild-extension.zip"
+          href="#extension"
           className="inline-flex items-center gap-2 rounded-full bg-(--ink) px-4 py-2.5 text-[13.5px] font-medium text-(--bg) transition-transform hover:-translate-y-0.5"
         >
-          <Icon name="download" size={13} /> Add to Chrome
+          <Icon name="download" size={13} /> See the extension
         </a>
       </Card>
 

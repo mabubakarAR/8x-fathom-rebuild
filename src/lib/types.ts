@@ -1,4 +1,4 @@
-// Domain model for Verbatim.
+// Domain model for Noted.
 //
 // Two deliberate divergences from Fathom's public API schema, both noted in
 // PRODUCT-NOTES.md:

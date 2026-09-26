@@ -19,10 +19,10 @@ export async function generateMetadata({
   const payload = decodeShare(token);
   const ws = payload ? await loadMeetingPublic(payload.m) : null;
   const bundle = ws?.byMeeting.get(payload!.m);
-  if (!bundle) return { title: "Link not found — Verbatim" };
+  if (!bundle) return { title: "Link not found — Noted" };
   const title = payload?.t ? `${payload.t} — clip` : bundle.meeting.title;
   return {
-    title: `${title} — Verbatim`,
+    title: `${title} — Noted`,
     description: bundle.meeting.gist,
   };
 }

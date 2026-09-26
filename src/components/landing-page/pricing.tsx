@@ -40,7 +40,7 @@ function Check() {
 
 export function Pricing() {
   return (
-    <section id="pricing" className="scroll-mt-20 px-5 py-24 md:px-8 md:py-32">
+    <section id="pricing" className="scroll-mt-20 px-5 pt-20 pb-24 md:px-8 md:pt-28 md:pb-32">
       <div className="mx-auto max-w-[1200px]">
         <div className="lp-reveal mx-auto max-w-[640px] text-center">
           <p className="mono text-[12px] text-(--accent-ink)">Proposed pricing</p>
@@ -76,7 +76,9 @@ export function Pricing() {
               <div className="mt-8">
                 {p.name === "Team" ? (
                   <a
-                    href="mailto:hello@fathom-rebuild.dev"
+                    href="https://github.com/mabubakarAR/8x-fathom-rebuild/issues"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="inline-flex h-11 w-full items-center justify-center rounded-full border border-(--line-strong) text-[14.5px] font-medium text-(--ink) transition-colors hover:bg-(--bg)"
                   >
                     {p.cta}
@@ -134,9 +136,9 @@ export function Faq() {
             Questions, <em>answered.</em>
           </h2>
           <p className="mt-4 max-w-[34ch] text-[16px] leading-[1.6] text-(--ink-3)">
-            Something else on your mind? Email{" "}
-            <a href="mailto:hello@fathom-rebuild.dev" className="text-(--ink) underline decoration-(--line-strong) underline-offset-4 hover:decoration-(--ink)">
-              hello@fathom-rebuild.dev
+            Something else on your mind?{" "}
+            <a href="https://github.com/mabubakarAR/8x-fathom-rebuild/issues" target="_blank" rel="noopener noreferrer" className="text-(--ink) underline decoration-(--line-strong) underline-offset-4 hover:decoration-(--ink)">
+              Open an issue on GitHub
             </a>
           </p>
         </div>
