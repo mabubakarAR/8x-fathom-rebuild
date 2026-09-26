@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Inter_Tight, JetBrains_Mono } from "next/font/google";
 import { SignInButton } from "./sign-in-button";
 import { Mark } from "./shell";
 import { Hero } from "./landing-page/hero";
@@ -11,8 +10,9 @@ import { Features } from "./landing-page/features";
 import { Pricing, Faq } from "./landing-page/pricing";
 import "./landing-page/landing.css";
 
-const sans = Inter_Tight({ subsets: ["latin"], variable: "--lp-sans", display: "swap" });
-const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--lp-mono", weight: ["400", "500"], display: "swap" });
+// Fonts come from the <link> in the root layout rather than next/font, so
+// the build does not depend on reaching Google Fonts at build time. The CSS
+// variables next/font would have set are declared in landing.css instead.
 
 const GITHUB = "https://github.com/mabubakarAR/8x-fathom-rebuild";
 
@@ -45,7 +45,7 @@ function SectionHead({ label, title, body, dark }: { label: string; title: React
 
 export function Landing() {
   return (
-    <main className={`lp ${sans.variable} ${mono.variable} relative min-h-screen antialiased`}>
+    <main className="lp relative min-h-screen antialiased">
       <header className="sticky top-0 z-50 border-b border-(--line) bg-[oklch(97.2%_0.006_85/0.82)] backdrop-blur-xl">
         <nav className="mx-auto flex h-16 w-full max-w-[1200px] items-center justify-between px-5 md:px-8" aria-label="Main">
           <Link href="/" className="flex items-center gap-2.5 text-(--ink)">

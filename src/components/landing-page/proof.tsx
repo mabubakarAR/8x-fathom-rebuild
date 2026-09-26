@@ -28,7 +28,7 @@ export function Story() {
       <div className="mx-auto grid max-w-[1200px] items-center gap-10 lg:grid-cols-[1.25fr_1fr] lg:gap-16">
         <div className="lp-reveal relative aspect-[16/10] overflow-hidden rounded-[24px] bg-(--bg-2)">
           <Image
-            src="/landing/team-room.png"
+            src="/landing/team-room.jpg"
             alt="A product team in a sunlit meeting room with remote colleagues on a wall screen"
             fill
             sizes="(min-width: 1024px) 660px, 92vw"
@@ -41,7 +41,7 @@ export function Story() {
             &ldquo;Our planning calls have eight people and three opinions each. Now nobody takes notes, and we still argue about the right things.&rdquo;
           </blockquote>
           <figcaption className="mt-8 flex items-center gap-3.5">
-            <Image src="/landing/p-maya.png" alt="" width={48} height={48} className="h-12 w-12 rounded-full object-cover" />
+            <Image src="/landing/p-maya.jpg" alt="" width={48} height={48} className="h-12 w-12 rounded-full object-cover" />
             <div>
               <div className="text-[15px] font-semibold text-(--ink)">Maya Raman</div>
               <div className="text-[13.5px] text-(--ink-3)">Head of Product, Northwind</div>
@@ -68,19 +68,19 @@ const QUOTES = [
     q: "I used to spend the last ten minutes of every discovery call typing. Now I just ask the next question.",
     n: "Daniel Okafor",
     r: "Sales Director, Brightwater",
-    img: "/landing/p-daniel.png",
+    img: "/landing/p-daniel.jpg",
   },
   {
     q: "The citations are the whole thing. When someone says 'we agreed to that?', I send them the second it was said.",
     n: "Sofia Lindqvist",
     r: "Engineering Manager, Fjord",
-    img: "/landing/p-sofia.png",
+    img: "/landing/p-sofia.jpg",
   },
   {
     q: "It's the first AI tool our legal team didn't push back on. No bot, clear consent, nothing records by surprise.",
     n: "Kenji Watanabe",
     r: "Co-founder, Lumen Labs",
-    img: "/landing/p-kenji.png",
+    img: "/landing/p-kenji.jpg",
   },
 ];
 

@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { SignInButton } from "../sign-in-button";
 
-const AVATARS = ["/landing/p-maya.png", "/landing/p-daniel.png", "/landing/p-sofia.png", "/landing/p-kenji.png"];
+const AVATARS = ["/landing/p-maya.jpg", "/landing/p-daniel.jpg", "/landing/p-sofia.jpg", "/landing/p-kenji.jpg"];
 
 export function Hero() {
   return (
@@ -68,7 +68,7 @@ function HeroVisual() {
     <div className="lp-in relative mx-auto w-full max-w-[520px] lg:max-w-none" style={{ animationDelay: "0.2s" }}>
       <div className="relative aspect-[4/5] overflow-hidden rounded-[28px] bg-(--bg-2)">
         <Image
-          src="/landing/hero-call.png"
+          src="/landing/hero-call.jpg"
           alt="A product manager laughing on a video call at her desk while notes are taken for her"
           fill
           priority
@@ -92,7 +92,7 @@ function HeroVisual() {
         </div>
         <p className="mt-2.5 text-[14.5px] leading-[1.45] font-medium text-(--ink)">Search slips to late January, after the Brightwater renewal.</p>
         <div className="mt-3 flex items-center gap-2 text-[12px] text-(--ink-3)">
-          <Image src="/landing/p-sofia.png" alt="" width={20} height={20} className="h-5 w-5 rounded-full object-cover" />
+          <Image src="/landing/p-sofia.jpg" alt="" width={20} height={20} className="h-5 w-5 rounded-full object-cover" />
           <span>Ayesha K.</span>
           <span className="mono ml-auto rounded-md border border-(--line) px-1.5 py-0.5 text-[11px] text-(--ink-2)">43:17</span>
         </div>
