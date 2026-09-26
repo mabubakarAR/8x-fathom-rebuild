@@ -280,6 +280,14 @@ export async function migrate(): Promise<{ ok: boolean; message: string }> {
       alter table speakers add column if not exists company text;
       alter table speakers add column if not exists email text;
     `);
+    // Recordings made before sign-in existed have no owner. When there is
+    // exactly one user, they are unambiguously theirs; adopt them rather than
+    // leave them invisible. With more than one user there is no honest
+    // answer, so they stay unowned.
+    await sql.unsafe(`
+      update meetings set owner_id = (select id from users)
+      where owner_id is null and (select count(*) from users) = 1;
+    `);
     return { ok: true, message: "schema applied" };
   } catch (e) {
     return { ok: false, message: e instanceof Error ? e.message : String(e) };
