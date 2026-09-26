@@ -67,14 +67,14 @@ export function Depth() {
             <span className="absolute top-1 bottom-1 left-[5px] w-px" style={{ background: "var(--line-strong)" }} aria-hidden />
             <span
               className="absolute left-[5px] top-1 w-px transition-all duration-700"
-              style={{ height: `calc(${(active / (STEPS.length - 1)) * 100}% - 8px)`, background: "var(--accent)", boxShadow: "0 0 10px var(--accent)" }}
+              style={{ height: `calc(${(active / (STEPS.length - 1)) * 100}% - 8px)`, background: "var(--accent)" }}
               aria-hidden
             />
             {STEPS.map((s, i) => (
               <li key={s.verb} className="relative flex items-center gap-3 text-[14px] transition-colors duration-500" style={{ color: i <= active ? "var(--ink)" : "var(--ink-faint)" }}>
                 <span
                   className="absolute -left-6 top-1/2 h-[11px] w-[11px] -translate-y-1/2 rounded-full transition-all duration-500"
-                  style={{ background: i <= active ? "var(--accent)" : "var(--bg)", border: `1px solid ${i <= active ? "var(--accent)" : "var(--line-strong)"}`, boxShadow: i === active ? "0 0 0 4px oklch(84% 0.15 172 / 0.18)" : "none" }}
+                  style={{ background: i <= active ? "var(--accent)" : "var(--bg)", border: `1px solid ${i <= active ? "var(--accent)" : "var(--line-strong)"}`, boxShadow: i === active ? "0 0 0 4px var(--accent-soft)" : "none" }}
                   aria-hidden
                 />
                 <span className="w-5 text-[11px] tnum" style={{ color: "var(--ink-faint)" }}>{i}</span>
@@ -119,7 +119,7 @@ function RecordVisual() {
       <div className="flex items-center gap-3 rounded-[12px] px-3.5 py-3" style={{ background: "oklch(100% 0 0 / 0.04)", border: "1px solid var(--line)" }}>
         <span className="h-2 w-2 rounded-full lp-rec" style={{ background: "var(--danger)" }} />
         <span className="flex-1 truncate text-[13px]" style={{ color: "var(--ink-2)" }}>meet.google.com/qrt-lock-q4</span>
-        <span className="rounded-full px-2.5 py-1 text-[11px] font-semibold" style={{ background: "var(--accent)", color: "oklch(18% 0.03 172)" }}>Sharing tab audio</span>
+        <span className="rounded-full px-2.5 py-1 text-[11px] font-semibold" style={{ background: "var(--accent)", color: "var(--on-accent)" }}>Sharing tab audio</span>
       </div>
       <div className="mt-4 text-[11px] font-semibold tracking-[0.12em] uppercase" style={{ color: "var(--ink-faint)" }}>Participants · 8</div>
       <div className="mt-2 flex items-center">
@@ -217,7 +217,7 @@ function CiteVisual() {
 function AskVisual() {
   return (
     <div>
-      <div className="ml-auto w-fit max-w-[85%] rounded-[14px] rounded-br-[4px] px-3.5 py-2 text-[13.5px]" style={{ background: "var(--accent)", color: "oklch(18% 0.03 172)" }}>
+      <div className="ml-auto w-fit max-w-[85%] rounded-[14px] rounded-br-[4px] px-3.5 py-2 text-[13.5px]" style={{ background: "var(--accent)", color: "var(--on-accent)" }}>
         Did we ever reverse the SSO decision?
       </div>
       <div className="mt-3 rounded-[14px] rounded-bl-[4px] px-3.5 py-3 text-[13.5px] leading-[1.55]" style={{ background: "oklch(100% 0 0 / 0.04)", border: "1px solid var(--line)", color: "var(--ink-2)" }}>

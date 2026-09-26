@@ -1,180 +1,180 @@
 import Link from "next/link";
+import { Inter_Tight, JetBrains_Mono } from "next/font/google";
 import { SignInButton } from "./sign-in-button";
 import { Mark } from "./shell";
-import { Sonar } from "./landing-page/sonar";
+import { Hero } from "./landing-page/hero";
+import { Logos } from "./landing-page/logos";
 import { HeroDemo } from "./landing-page/hero-demo";
+import { Stats, Story, Testimonials } from "./landing-page/proof";
 import { Depth } from "./landing-page/depth";
 import { Features } from "./landing-page/features";
+import { Pricing, Faq } from "./landing-page/pricing";
 import "./landing-page/landing.css";
 
-// The front door. The name is a unit of depth, so the page is a descent:
-// a sonar ping at the surface, a live room being turned into cited notes,
-// then five fathoms down from "record" to "ask".
+const sans = Inter_Tight({ subsets: ["latin"], variable: "--lp-sans", display: "swap" });
+const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--lp-mono", weight: ["400", "500"], display: "swap" });
 
 const GITHUB = "https://github.com/mabubakarAR/8x-fathom-rebuild";
-const PLATFORMS = ["Google Meet", "Zoom", "Microsoft Teams", "Google Calendar", "Chrome", "Any browser tab", "Webex", "Whereby"];
-const STATS = [
-  { v: "0", l: "bots in your meeting" },
-  { v: "8", l: "voices kept apart" },
-  { v: "100%", l: "of claims cited" },
-  { v: "4", l: "export formats" },
+
+const NAV = [
+  { href: "#demo", label: "Product" },
+  { href: "#how", label: "How it works" },
+  { href: "#customers", label: "Customers" },
+  { href: "#pricing", label: "Pricing" },
+  { href: "#faq", label: "FAQ" },
 ];
 
-const primaryCta =
-  "inline-flex items-center rounded-full px-6 py-[14px] text-[15px] font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_10px_40px_-8px_oklch(84%_0.15_172/0.6)]";
+const FOOTER = [
+  { h: "Product", l: [["Features", "#features"], ["How it works", "#how"], ["Pricing", "#pricing"], ["Chrome extension", "/extension/fathom-rebuild-extension.zip"]] },
+  { h: "Company", l: [["Customers", "#customers"], ["About", "/about"], ["Contact", "mailto:hello@fathom-rebuild.dev"]] },
+  { h: "Resources", l: [["FAQ", "#faq"], ["Source code", GITHUB]] },
+  { h: "Legal", l: [["Privacy", "/privacy"], ["Terms", "/terms"]] },
+];
+
+function SectionHead({ label, title, body, dark }: { label: string; title: React.ReactNode; body: string; dark?: boolean }) {
+  return (
+    <div className="lp-reveal flex flex-col justify-between gap-5 md:flex-row md:items-end">
+      <div>
+        <p className={`mono text-[12px] ${dark ? "text-(--accent-ink)" : "text-(--accent-ink)"}`}>{label}</p>
+        <h2 className="display mt-4 max-w-[17ch] text-[42px] text-balance md:text-[60px]">{title}</h2>
+      </div>
+      <p className="max-w-[40ch] text-[16px] leading-[1.6] text-(--ink-3)">{body}</p>
+    </div>
+  );
+}
 
 export function Landing() {
   return (
-    <main className="lp relative min-h-screen font-sans">
-      <header className="frosted sticky top-0 z-50 border-b" style={{ borderColor: "var(--line)", background: "oklch(12% 0.02 245 / 0.88)" }}>
-        <nav className="mx-auto flex w-full max-w-[1160px] items-center justify-between px-5 py-3.5 md:px-6" aria-label="Main">
-          <Link href="/" className="flex items-center gap-2.5" style={{ color: "var(--ink)" }}>
-            <Mark />
-            <span className="text-[15px] font-semibold tracking-tight">Fathom Rebuild</span>
+    <main className={`lp ${sans.variable} ${mono.variable} relative min-h-screen antialiased`}>
+      <header className="sticky top-0 z-50 border-b border-(--line) bg-[oklch(97.2%_0.006_85/0.82)] backdrop-blur-xl">
+        <nav className="mx-auto flex h-16 w-full max-w-[1200px] items-center justify-between px-5 md:px-8" aria-label="Main">
+          <Link href="/" className="flex items-center gap-2.5 text-(--ink)">
+            <Mark size={22} />
+            <span className="text-[15.5px] font-semibold tracking-[-0.02em]">Fathom Rebuild</span>
           </Link>
-          <div className="flex items-center gap-6">
-            <a href="#depth" className="hidden text-[13.5px] font-medium transition-colors hover:text-white md:block" style={{ color: "var(--ink-3)" }}>How it works</a>
-            <a href="#features" className="hidden text-[13.5px] font-medium transition-colors hover:text-white md:block" style={{ color: "var(--ink-3)" }}>Features</a>
-            <a href={GITHUB} className="hidden text-[13.5px] font-medium transition-colors hover:text-white sm:block" style={{ color: "var(--ink-3)" }} rel="noopener noreferrer" target="_blank">Source</a>
+          <div className="hidden items-center gap-8 lg:flex">
+            {NAV.map((n) => (
+              <a key={n.href} href={n.href} className="text-[14px] text-(--ink-2) transition-colors hover:text-(--ink)">
+                {n.label}
+              </a>
+            ))}
+          </div>
+          <div className="flex items-center gap-2">
             <SignInButton
-              label="Sign in"
-              className="inline-flex items-center rounded-full px-4 py-[8px] text-[13px] font-semibold transition-colors hover:bg-white/10"
-              style={{ color: "var(--ink)", border: "1px solid var(--line-strong)" }}
+              label="Log in"
+              className="hidden h-9 items-center rounded-full px-3.5 text-[14px] font-medium text-(--ink-2) transition-colors hover:text-(--ink) sm:inline-flex [&>svg]:hidden"
+            />
+            <SignInButton
+              label="Get started"
+              className="inline-flex h-9 items-center rounded-full bg-(--ink) px-4 text-[14px] font-medium text-(--bg) transition-transform hover:-translate-y-px [&>svg]:hidden"
             />
           </div>
         </nav>
       </header>
 
-      {/* hero */}
-      <section className="relative isolate px-5 pt-20 md:px-6 md:pt-28">
-        <div className="lp-grid-bg pointer-events-none absolute inset-0 -z-10" aria-hidden />
-        <div
-          className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[900px]"
-          style={{ background: "radial-gradient(60% 50% at 50% 20%, oklch(60% 0.12 190 / 0.22), transparent 70%)" }}
-          aria-hidden
-        />
-        <Sonar size={1100} className="-top-[330px] -z-10 opacity-80" />
+      <Hero />
+      <Logos />
 
-        <div className="mx-auto flex max-w-[900px] flex-col items-center text-center">
-          <div
-            className="lp-in inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[12.5px] font-medium"
-            style={{ background: "oklch(100% 0 0 / 0.05)", border: "1px solid var(--line-strong)", color: "var(--ink-2)" }}
-          >
-            <span className="lp-rec h-1.5 w-1.5 rounded-full" style={{ background: "var(--danger)" }} />
-            AI meeting notes · no bot required
+      <section id="demo" className="scroll-mt-20 px-3 pt-20 md:px-5 md:pt-28">
+        <div className="lp-dark mx-auto max-w-[1360px] overflow-hidden rounded-[32px] px-5 py-16 md:px-12 md:py-24">
+          <div className="mx-auto max-w-[1080px]">
+            <SectionHead
+              dark
+              label="Live, as it happens"
+              title={<>One hour. Eight voices. <em>One page of notes.</em></>}
+              body="Watch a real planning call get split into speaker lanes, then condensed into decisions and actions — each one linked to the moment it was said."
+            />
+            <div className="lp-reveal mt-12 md:mt-16">
+              <HeroDemo />
+            </div>
           </div>
-          <h1 className="display lp-in mt-7 text-[58px] leading-[0.95] text-balance sm:text-[84px] md:text-[112px]" style={{ animationDelay: "0.08s" }}>
-            Every meeting, <em>fathomed.</em>
-          </h1>
-          <p className="lp-in mt-7 max-w-[56ch] text-[16.5px] leading-[1.6] text-pretty md:text-[18px]" style={{ color: "var(--ink-3)", animationDelay: "0.16s" }}>
-            It listens to the whole room — eight voices, one hour, zero bots — and hands back notes where every claim points to the second it was said.
-          </p>
-          <div className="lp-in mt-9 flex flex-col items-center gap-3 sm:flex-row" style={{ animationDelay: "0.24s" }}>
-            <SignInButton className={primaryCta} style={{ background: "var(--ink)", color: "oklch(13% 0.02 245)" }} />
-            <a href="#depth" className="inline-flex items-center gap-2 px-4 py-3 text-[14.5px] font-medium transition-colors hover:text-white" style={{ color: "var(--ink-2)" }}>
-              See how deep it goes
-              <svg width="12" height="12" viewBox="0 0 16 16" aria-hidden><path d="M8 2v12m-5-5 5 5 5-5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
-            </a>
-          </div>
-          <p className="lp-in mt-4 text-[12.5px]" style={{ color: "var(--ink-faint)", animationDelay: "0.3s" }}>
-            Free to start · Google sign-in · Nothing records until you press record
-          </p>
-        </div>
-
-        <div className="lp-in relative mx-auto mt-16 max-w-[1080px] md:mt-20" style={{ animationDelay: "0.4s" }}>
-          <div className="absolute -inset-x-10 -inset-y-6 -z-10 rounded-[40px] blur-3xl" style={{ background: "radial-gradient(50% 50% at 50% 50%, oklch(84% 0.15 172 / 0.12), transparent)" }} aria-hidden />
-          <HeroDemo />
         </div>
       </section>
 
-      {/* platforms */}
-      <section className="mt-20 md:mt-24" aria-label="Works with">
-        <p className="text-center text-[11.5px] font-semibold tracking-[0.16em] uppercase" style={{ color: "var(--ink-faint)" }}>Works where you already meet</p>
-        <div className="lp-marquee mt-6 overflow-hidden">
-          <ul className="lp-marquee-track flex w-max gap-14 pr-14">
-            {[...PLATFORMS, ...PLATFORMS].map((p, i) => (
-              <li key={i} aria-hidden={i >= PLATFORMS.length} className="display whitespace-nowrap text-[28px] md:text-[34px]" style={{ color: "var(--ink-3)" }}>
-                {p}
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
+      <Stats />
+      <Story />
 
-      {/* descent */}
-      <section id="depth" className="relative mt-28 scroll-mt-20 px-5 md:mt-36 md:px-6" style={{ background: "linear-gradient(180deg, var(--bg), var(--bg-deep) 40%, var(--bg-deep) 70%, var(--bg))" }}>
-        <div className="mx-auto max-w-[1160px]">
-          <div className="lp-reveal max-w-[720px]">
-            <p className="text-[12px] font-semibold tracking-[0.16em] uppercase" style={{ color: "var(--accent)" }}>How it works</p>
-            <h2 className="display mt-3 text-[44px] leading-[1] text-balance md:text-[68px]">
-              From the surface to <em>the source.</em>
-            </h2>
-            <p className="mt-4 max-w-[52ch] text-[16px] leading-[1.6]" style={{ color: "var(--ink-3)" }}>
-              A fathom is six feet of depth. Here are five of them — from pressing record to asking your whole history a question.
-            </p>
-          </div>
-          <div className="mt-14 md:mt-4">
+      <section id="how" className="lp-dark scroll-mt-16 px-5 pt-24 pb-10 md:px-8 md:pt-32">
+        <div className="mx-auto max-w-[1200px]">
+          <SectionHead
+            dark
+            label="How it works"
+            title={<>From the surface <em>to the source.</em></>}
+            body="A fathom is six feet of depth. Here are five of them — from pressing record to asking your whole history a question."
+          />
+          <div className="mt-14 md:mt-6">
             <Depth />
           </div>
         </div>
       </section>
 
-      {/* stats */}
-      <section className="mx-auto mt-24 max-w-[1160px] px-5 md:px-6">
-        <dl className="lp-reveal grid grid-cols-2 gap-px overflow-hidden rounded-[22px] md:grid-cols-4" style={{ border: "1px solid var(--line)", background: "var(--line)" }}>
-          {STATS.map((s) => (
-            <div key={s.l} className="p-6 md:p-8" style={{ background: "var(--bg)" }}>
-              <dt className="sr-only">{s.l}</dt>
-              <dd>
-                <div className="display text-[52px] leading-none tnum md:text-[64px]">{s.v}</div>
-                <div className="mt-2 text-[13.5px]" style={{ color: "var(--ink-3)" }}>{s.l}</div>
-              </dd>
+      <section id="features" className="scroll-mt-20 px-5 py-24 md:px-8 md:py-32">
+        <div className="mx-auto max-w-[1200px]">
+          <SectionHead
+            label="Built for the hard meeting"
+            title={<>Two-person calls are easy. <em>We built for eight.</em></>}
+            body="The details that hold up when a room full of people talk over each other for an hour."
+          />
+          <div className="mt-14">
+            <Features />
+          </div>
+        </div>
+      </section>
+
+      <Testimonials />
+      <Pricing />
+      <Faq />
+
+      <section className="px-3 pb-3 md:px-5 md:pb-5">
+        <div className="lp-dark mx-auto flex max-w-[1360px] flex-col items-center overflow-hidden rounded-[32px] px-6 py-24 text-center md:py-32">
+          <span className="text-(--ink)"><Mark size={40} /></span>
+          <h2 className="display lp-reveal mt-8 max-w-[18ch] text-[46px] text-balance md:text-[76px]">
+            Your next call is the first <em>you won&apos;t have to remember.</em>
+          </h2>
+          <p className="mt-6 max-w-[44ch] text-[16.5px] leading-[1.6] text-(--ink-3)">
+            Sign in with Google, press record, and read the notes before you&apos;ve closed the tab.
+          </p>
+          <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row">
+            <SignInButton
+              label="Start free with Google"
+              className="inline-flex h-12 items-center rounded-full bg-(--ink) px-6 text-[15px] font-medium text-(--bg) transition-transform hover:-translate-y-0.5"
+            />
+            <a href="#pricing" className="inline-flex h-12 items-center rounded-full border border-(--line-strong) px-6 text-[15px] font-medium text-(--ink) transition-colors hover:bg-(--surface)">
+              See pricing
+            </a>
+          </div>
+          <p className="mt-5 text-[13px] text-(--ink-faint)">Free forever plan · No credit card · Nothing records until you press record</p>
+        </div>
+      </section>
+
+      <footer className="px-5 pt-16 pb-10 md:px-8">
+        <div className="mx-auto max-w-[1200px]">
+          <div className="grid gap-10 md:grid-cols-[1.4fr_repeat(4,1fr)]">
+            <div>
+              <div className="flex items-center gap-2.5 text-(--ink)">
+                <Mark size={22} />
+                <span className="text-[15.5px] font-semibold tracking-[-0.02em]">Fathom Rebuild</span>
+              </div>
+              <p className="mt-4 max-w-[30ch] text-[14px] leading-[1.6] text-(--ink-3)">The AI notetaker that listens without joining. Cited notes for every call.</p>
             </div>
-          ))}
-        </dl>
-      </section>
-
-      {/* features */}
-      <section id="features" className="mx-auto mt-28 max-w-[1160px] scroll-mt-20 px-5 md:mt-36 md:px-6">
-        <div className="lp-reveal mb-10 flex flex-col justify-between gap-4 md:flex-row md:items-end">
-          <h2 className="display max-w-[14ch] text-[44px] leading-[1] text-balance md:text-[60px]">
-            Built for the <em>hard</em> meeting.
-          </h2>
-          <p className="max-w-[40ch] text-[15px] leading-[1.6]" style={{ color: "var(--ink-3)" }}>
-            Two-person calls are easy. These are the details that hold up when eight people talk for an hour.
-          </p>
-        </div>
-        <Features />
-      </section>
-
-      {/* final cta */}
-      <section className="relative isolate mt-32 overflow-hidden px-5 pt-28 pb-32 md:mt-40 md:px-6 md:pt-36 md:pb-40">
-        <Sonar size={900} className="top-1/2 -z-10 -translate-y-1/2 opacity-70" />
-        <div className="pointer-events-none absolute inset-0 -z-10" style={{ background: "radial-gradient(40% 50% at 50% 50%, oklch(60% 0.12 190 / 0.18), transparent 70%)" }} aria-hidden />
-        <div className="lp-reveal mx-auto flex max-w-[760px] flex-col items-center text-center">
-          <Mark size={44} />
-          <h2 className="display mt-8 text-[48px] leading-[0.98] text-balance md:text-[84px]">
-            Stop taking notes. <em>Start listening.</em>
-          </h2>
-          <p className="mt-6 max-w-[46ch] text-[16px] leading-[1.6]" style={{ color: "var(--ink-3)" }}>
-            Sign in with Google, press record on your next call, and read the notes before you&apos;ve left the tab.
-          </p>
-          <div className="mt-9">
-            <SignInButton className={primaryCta} style={{ background: "var(--accent)", color: "oklch(16% 0.03 172)" }} />
+            {FOOTER.map((col) => (
+              <div key={col.h}>
+                <h3 className="text-[13px] font-semibold text-(--ink)">{col.h}</h3>
+                <ul className="mt-4 flex flex-col gap-3">
+                  {col.l.map(([label, href]) => (
+                    <li key={label}>
+                      <a href={href} className="text-[14px] text-(--ink-3) transition-colors hover:text-(--ink)" {...(href.startsWith("http") ? { target: "_blank", rel: "noopener noreferrer" } : {})}>
+                        {label}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
-        </div>
-      </section>
-
-      <footer className="border-t" style={{ borderColor: "var(--line)" }}>
-        <div className="mx-auto flex max-w-[1160px] flex-col gap-4 px-5 py-8 text-[12.5px] md:flex-row md:items-center md:justify-between md:px-6" style={{ color: "var(--ink-faint)" }}>
-          <div className="flex items-center gap-2.5">
-            <Mark size={18} />
-            <span>Fathom Rebuild — not affiliated with Fathom.</span>
-          </div>
-          <div className="flex gap-6">
-            <a href={GITHUB} className="transition-colors hover:text-white" rel="noopener noreferrer" target="_blank">GitHub</a>
-            <Link href="/privacy" className="transition-colors hover:text-white">Privacy</Link>
-            <Link href="/terms" className="transition-colors hover:text-white">Terms</Link>
+          <div className="mt-16 flex flex-col gap-3 border-t border-(--line) pt-6 text-[13px] text-(--ink-faint) md:flex-row md:justify-between">
+            <span>&copy; 2026 Fathom Rebuild. Not affiliated with Fathom.</span>
+            <span className="mono">Made for people who&apos;d rather listen.</span>
           </div>
         </div>
       </footer>

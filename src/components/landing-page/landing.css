@@ -1,79 +1,94 @@
-/* Landing page — always the deep-water palette, regardless of the app theme,
-   so the front door looks the same to everyone. Tokens are scoped to .lp so
-   nothing leaks into the signed-in product. */
+/* Landing page tokens. Scoped to .lp so nothing leaks into the signed-in
+   product. Warm paper by default; .lp-dark flips a band to near-black ink.
+   One accent (cobalt) carries every emphasis on both grounds. */
 
 .lp {
-  --bg: oklch(13% 0.02 245);
-  --bg-deep: oklch(9.5% 0.022 248);
-  --surface: oklch(17% 0.022 245);
-  --surface-2: oklch(21% 0.024 245);
+  --bg: oklch(97.2% 0.006 85);
+  --bg-2: oklch(94.6% 0.008 85);
+  --surface: oklch(100% 0 0);
+  --line: oklch(20% 0.01 260 / 0.09);
+  --line-strong: oklch(20% 0.01 260 / 0.16);
+  --ink: oklch(19% 0.012 260);
+  --ink-2: oklch(34% 0.012 260);
+  --ink-3: oklch(52% 0.01 260);
+  --ink-faint: oklch(66% 0.008 260);
+  --accent: oklch(50% 0.22 266);
+  --accent-ink: oklch(46% 0.22 266);
+  --accent-soft: oklch(94% 0.035 266);
+  --on-accent: oklch(99% 0 0);
+  --danger: oklch(60% 0.21 25);
+  --ok: oklch(55% 0.14 155);
+  --warn: oklch(62% 0.14 70);
+
+  --sp-0: oklch(58% 0.17 262);
+  --sp-1: oklch(55% 0.17 300);
+  --sp-2: oklch(56% 0.13 160);
+  --sp-3: oklch(58% 0.18 350);
+  --sp-4: oklch(64% 0.15 60);
+  --sp-5: oklch(58% 0.11 210);
+  --sp-6: oklch(58% 0.14 125);
+  --sp-7: oklch(58% 0.18 28);
+
+  color-scheme: light;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--lp-sans), ui-sans-serif, system-ui, sans-serif;
+  font-feature-settings: "ss01", "cv11";
+  overflow-x: clip;
+}
+
+.lp-dark {
+  --bg: oklch(15.5% 0.006 260);
+  --bg-deep: oklch(12.5% 0.006 260);
+  --surface: oklch(19% 0.007 260);
   --line: oklch(100% 0 0 / 0.08);
   --line-strong: oklch(100% 0 0 / 0.15);
-  --ink: oklch(97% 0.006 245);
-  --ink-2: oklch(82% 0.012 245);
-  --ink-3: oklch(67% 0.014 245);
-  --ink-faint: oklch(53% 0.014 245);
-  --accent: oklch(84% 0.15 172);
-  --accent-ink: oklch(87% 0.13 172);
-  --accent-soft: oklch(28% 0.06 172);
-  --danger: oklch(68% 0.2 25);
-  --ok: oklch(78% 0.15 158);
-  --warn: oklch(82% 0.13 82);
+  --ink: oklch(97% 0.004 85);
+  --ink-2: oklch(84% 0.006 85);
+  --ink-3: oklch(66% 0.008 260);
+  --ink-faint: oklch(52% 0.008 260);
+  --accent: oklch(74% 0.14 266);
+  --accent-ink: oklch(80% 0.11 266);
+  --accent-soft: oklch(30% 0.07 266);
+  --on-accent: oklch(17% 0.03 266);
+  --danger: oklch(66% 0.2 25);
+  --ok: oklch(76% 0.14 155);
+  --warn: oklch(80% 0.13 80);
 
-  --sp-0: oklch(79% 0.145 262);
-  --sp-1: oklch(79% 0.145 295);
-  --sp-2: oklch(79% 0.145 160);
-  --sp-3: oklch(79% 0.145 340);
-  --sp-4: oklch(79% 0.145 70);
-  --sp-5: oklch(79% 0.145 205);
-  --sp-6: oklch(79% 0.145 115);
-  --sp-7: oklch(79% 0.145 25);
+  --sp-0: oklch(78% 0.13 262);
+  --sp-1: oklch(78% 0.13 300);
+  --sp-2: oklch(78% 0.12 160);
+  --sp-3: oklch(78% 0.13 350);
+  --sp-4: oklch(80% 0.13 70);
+  --sp-5: oklch(78% 0.11 210);
+  --sp-6: oklch(80% 0.13 125);
+  --sp-7: oklch(76% 0.14 28);
 
   color-scheme: dark;
   background: var(--bg);
   color: var(--ink);
-  overflow-x: clip;
 }
 
-.lp .display em {
-  background: linear-gradient(100deg, oklch(88% 0.14 172), oklch(82% 0.13 205) 55%, oklch(86% 0.12 172));
-  background-size: 200% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  animation: lp-sheen 8s ease-in-out infinite;
-  padding-right: 0.06em;
+/* Display type: a tight grotesk, two-tone. The second clause steps back to a
+   muted ink instead of a gradient — emphasis by restraint. */
+.lp .display {
+  font-family: var(--lp-sans), ui-sans-serif, system-ui, sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.042em;
+  line-height: 0.98;
 }
-@keyframes lp-sheen {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
+.lp .display em,
+.lp .display i {
+  font-style: normal;
+  color: var(--ink-3);
 }
-
-/* ---- sonar ---------------------------------------------------------------- */
-.lp-ping {
-  position: absolute;
-  inset: 0;
-  border-radius: 9999px;
-  border: 1px solid oklch(84% 0.15 172 / 0.5);
-  animation: lp-ping 8s cubic-bezier(0.2, 0.6, 0.3, 1) infinite;
-  opacity: 0;
+.lp .mono {
+  font-family: var(--lp-mono), ui-monospace, monospace;
+  letter-spacing: -0.01em;
 }
-@keyframes lp-ping {
-  0% { transform: scale(0.08); opacity: 0; }
-  8% { opacity: 0.9; }
-  100% { transform: scale(1); opacity: 0; }
-}
-.lp-sweep {
-  position: absolute;
-  inset: 0;
-  border-radius: 9999px;
-  background: conic-gradient(from 0deg, transparent 0deg, oklch(84% 0.15 172 / 0.14) 40deg, transparent 70deg);
-  animation: lp-spin 10s linear infinite;
-  -webkit-mask: radial-gradient(circle, #000 0 68%, transparent 70%);
-  mask: radial-gradient(circle, #000 0 68%, transparent 70%);
-}
-@keyframes lp-spin {
-  to { transform: rotate(360deg); }
+.lp ::selection {
+  background: var(--accent);
+  color: var(--on-accent);
 }
 
 /* ---- entrance ------------------------------------------------------------- */
@@ -81,54 +96,97 @@
   animation: lp-in 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 @keyframes lp-in {
-  from { opacity: 0; transform: translateY(18px); filter: blur(8px); }
-  to { opacity: 1; transform: none; filter: none; }
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
 }
 
-/* Scroll reveal, where the browser can do it without JavaScript. */
 @supports (animation-timeline: view()) {
   .lp-reveal {
     animation: lp-reveal linear both;
     animation-timeline: view();
-    animation-range: entry 0% cover 22%;
+    animation-range: entry 0% cover 20%;
   }
 }
 @keyframes lp-reveal {
-  from { opacity: 0; transform: translateY(40px) scale(0.98); }
+  from { opacity: 0; transform: translateY(28px); }
   to { opacity: 1; transform: none; }
 }
 
-/* ---- demo window ---------------------------------------------------------- */
+.lp-float {
+  animation: lp-float 7s ease-in-out infinite;
+}
+.lp-float-slow {
+  animation: lp-float 9s ease-in-out -3s infinite;
+}
+@keyframes lp-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+/* ---- surfaces ------------------------------------------------------------- */
+.lp-panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow:
+    0 1px 0 oklch(100% 0 0 / 0.6) inset,
+    0 1px 2px oklch(20% 0.01 260 / 0.04),
+    0 12px 32px -12px oklch(20% 0.01 260 / 0.12);
+}
+.lp-float-card {
+  background: oklch(100% 0 0 / 0.92);
+  border: 1px solid var(--line);
+  box-shadow:
+    0 2px 4px oklch(20% 0.01 260 / 0.05),
+    0 24px 48px -16px oklch(20% 0.01 260 / 0.25);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
 .lp-window {
   position: relative;
-  border-radius: 22px;
-  background: linear-gradient(180deg, oklch(19% 0.024 245 / 0.92), oklch(15% 0.022 245 / 0.96));
+  border-radius: 18px;
+  background: linear-gradient(180deg, oklch(20% 0.007 260), oklch(17% 0.007 260));
   border: 1px solid var(--line-strong);
   box-shadow:
-    inset 0 1px 0 oklch(100% 0 0 / 0.08),
-    0 30px 80px -20px oklch(0% 0 0 / 0.7),
-    0 0 0 1px oklch(0% 0 0 / 0.3),
-    0 0 120px -30px oklch(84% 0.15 172 / 0.35);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+    inset 0 1px 0 oklch(100% 0 0 / 0.07),
+    0 40px 80px -30px oklch(0% 0 0 / 0.8);
 }
 
+.lp-card {
+  position: relative;
+  border-radius: 18px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  transition: border-color 0.3s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease;
+  overflow: hidden;
+}
+.lp-card:hover {
+  border-color: var(--line-strong);
+  transform: translateY(-2px);
+  box-shadow: 0 20px 40px -24px oklch(20% 0.01 260 / 0.25);
+}
+.lp-dark .lp-card {
+  background: var(--surface);
+}
+.lp-dark .lp-card:hover {
+  box-shadow: 0 20px 40px -24px oklch(0% 0 0 / 0.6);
+}
+
+/* ---- demo bits (used inside dark bands) ----------------------------------- */
 .lp-crystal {
-  animation: lp-crystal 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: lp-crystal 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 @keyframes lp-crystal {
-  from { opacity: 0; transform: translateY(10px) scale(0.97); filter: blur(10px); }
-  to { opacity: 1; transform: none; filter: none; }
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: none; }
 }
-
 .lp-caption {
-  animation: lp-caption 0.45s ease-out both;
+  animation: lp-caption 0.4s ease-out both;
 }
 @keyframes lp-caption {
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: none; }
 }
-
 .lp-skeleton {
   background: linear-gradient(90deg, oklch(100% 0 0 / 0.04), oklch(100% 0 0 / 0.09), oklch(100% 0 0 / 0.04));
   background-size: 200% 100%;
@@ -138,7 +196,6 @@
   from { background-position: 200% 0; }
   to { background-position: -200% 0; }
 }
-
 .lp-bars span {
   display: block;
   width: 3px;
@@ -151,60 +208,42 @@
   0%, 100% { transform: scaleY(0.3); }
   50% { transform: scaleY(1); }
 }
-
 .lp-rec {
   animation: lp-rec 1.6s ease-out infinite;
 }
 @keyframes lp-rec {
-  0% { box-shadow: 0 0 0 0 oklch(68% 0.2 25 / 0.6); }
-  70%, 100% { box-shadow: 0 0 0 8px transparent; }
+  0% { box-shadow: 0 0 0 0 oklch(60% 0.21 25 / 0.55); }
+  70%, 100% { box-shadow: 0 0 0 7px transparent; }
 }
 
-/* ---- marquee -------------------------------------------------------------- */
-.lp-marquee {
-  -webkit-mask: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
-  mask: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+/* ---- logos ---------------------------------------------------------------- */
+.lp-logo {
+  filter: grayscale(1);
+  opacity: 0.55;
+  transition: filter 0.3s ease, opacity 0.3s ease;
 }
-.lp-marquee-track {
-  animation: lp-marquee 36s linear infinite;
-}
-@keyframes lp-marquee {
-  to { transform: translateX(-50%); }
-}
-
-/* ---- cards ---------------------------------------------------------------- */
-.lp-card {
-  position: relative;
-  border-radius: 22px;
-  background: linear-gradient(180deg, oklch(18% 0.022 245), oklch(15% 0.02 245));
-  border: 1px solid var(--line);
-  box-shadow: inset 0 1px 0 oklch(100% 0 0 / 0.05);
-  transition: border-color 0.4s ease, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-  overflow: hidden;
-}
-.lp-card:hover {
-  border-color: oklch(84% 0.15 172 / 0.3);
-  transform: translateY(-3px);
-}
-.lp-card::after {
-  content: "";
-  position: absolute;
-  inset: -1px;
-  border-radius: inherit;
-  background: radial-gradient(420px circle at 50% 0%, oklch(84% 0.15 172 / 0.09), transparent 60%);
-  opacity: 0;
-  transition: opacity 0.4s ease;
-  pointer-events: none;
-}
-.lp-card:hover::after {
+.lp-logo-item:hover .lp-logo {
+  filter: none;
   opacity: 1;
 }
 
-.lp-grid-bg {
-  background-image:
-    linear-gradient(oklch(100% 0 0 / 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, oklch(100% 0 0 / 0.035) 1px, transparent 1px);
-  background-size: 56px 56px;
-  -webkit-mask: radial-gradient(ellipse 70% 60% at 50% 30%, #000, transparent 75%);
-  mask: radial-gradient(ellipse 70% 60% at 50% 30%, #000, transparent 75%);
+/* ---- faq ------------------------------------------------------------------ */
+.lp-faq summary {
+  list-style: none;
+  cursor: pointer;
+}
+.lp-faq summary::-webkit-details-marker {
+  display: none;
+}
+.lp-faq .lp-faq-icon {
+  transition: transform 0.3s ease;
+}
+.lp-faq[open] .lp-faq-icon {
+  transform: rotate(45deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-in, .lp-reveal, .lp-float, .lp-float-slow, .lp-rec, .lp-skeleton, .lp-bars span {
+    animation: none !important;
+  }
 }
