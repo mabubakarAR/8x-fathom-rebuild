@@ -33,7 +33,7 @@ export function WorkspaceHero({ empty, name }: { empty: boolean; name: string })
         Hi {first}. Nothing here yet.
       </h1>
       <p className="mt-1.5 max-w-[60ch] text-[14px] leading-[1.55]" style={{ color: "var(--ink-3)" }}>
-        Your upcoming calendar is above. When one of those meetings starts, join it from here and it gets recorded. Or start with something now:
+        Connect your calendar below and your next meetings show up with a one-click join. Or start with something now:
       </p>
       <div className="mt-5 flex flex-wrap items-center gap-2.5">
         <Link href="/record" className="inline-flex items-center gap-2 rounded-[var(--radius-sm)] px-4 py-[11px] text-[13.5px] font-semibold" style={{ background: "var(--danger)", color: "oklch(100% 0 0)" }}>

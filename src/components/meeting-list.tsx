@@ -58,6 +58,7 @@ export function MeetingList({
   upcoming,
   calendarError,
   calendarConnected,
+  connectCalendar,
   people,
   hero,
   me = "",
@@ -67,6 +68,7 @@ export function MeetingList({
   upcoming: UpcomingMeeting[];
   calendarError: string | null;
   calendarConnected: boolean;
+  connectCalendar?: React.ReactNode;
   people: Person[];
   /** Rendered above the list. */
   hero?: React.ReactNode;
@@ -110,7 +112,7 @@ export function MeetingList({
     <div className="mx-auto w-full max-w-[1120px] px-4 pb-24 md:px-8">
       {hero}
 
-      <Upcoming upcoming={upcoming} error={calendarError} connected={calendarConnected} />
+      <Upcoming upcoming={upcoming} error={calendarError} connected={calendarConnected} connect={connectCalendar} />
 
       {hasSample && (
         <div

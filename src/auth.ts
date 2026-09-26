@@ -4,12 +4,14 @@ import { db } from "@/lib/db/client";
 
 // Sign in with Google, and only Google.
 //
-// Fathom itself is Google / Microsoft sign-in only, and the calendar is the
-// reason: a meeting notetaker that does not know when your meetings are is a
-// voice recorder. So the sign-in is also the calendar connection — one
-// consent screen asks for identity and read access to the calendar together,
-// and a refresh token is kept server-side so the calendar can be read again
-// later without the user present.
+// Fathom itself is Google / Microsoft sign-in only. Sign-in asks for identity
+// and nothing else, so it is a two-click flow with no warnings. The calendar
+// is a SEPARATE consent — "Connect Google Calendar" on the home page — because
+// calendar.readonly is a Google "sensitive" scope and an unverified app
+// asking for it gets a full-page "Google hasn't verified this app" screen.
+// Putting that in front of every sign-in would cost more users than the
+// calendar wins; putting it behind a button the user chose to press is fine.
+// This is also how Fathom does it.
 //
 // JWT sessions rather than database sessions: nothing about the session needs
 // to be revocable from the server side in this product, and it saves a
@@ -21,7 +23,8 @@ declare module "next-auth" {
   }
 }
 
-const SCOPES = [
+const SIGN_IN_SCOPES = ["openid", "email", "profile"].join(" ");
+export const CALENDAR_SCOPES = [
   "openid",
   "email",
   "profile",
@@ -38,11 +41,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? process.env.AUTH_GOOGLE_SECRET,
       authorization: {
         params: {
-          scope: SCOPES,
-          // offline + consent is what makes Google hand back a refresh token,
-          // and it only does so on the FIRST consent unless prompt=consent.
-          access_type: "offline",
-          prompt: "consent",
+          scope: SIGN_IN_SCOPES,
         },
       },
     }),
@@ -72,7 +71,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               calendar_connected = users.calendar_connected or excluded.calendar_connected,
               last_seen_at = now()`;
         }
-        token.calendar = hasCalendar;
+        // Whether the calendar is connected is a fact about the user row, not
+        // about this particular sign-in: someone who connected it last week
+        // and signs in again today still has it.
+        if (sql && token.sub) {
+          const rows = await sql<{ calendar_connected: boolean }[]>`
+            select calendar_connected from users where id = ${token.sub}`;
+          token.calendar = Boolean(rows[0]?.calendar_connected) || hasCalendar;
+        } else {
+          token.calendar = hasCalendar;
+        }
       }
       return token;
     },

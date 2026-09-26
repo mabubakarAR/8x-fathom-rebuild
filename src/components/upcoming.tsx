@@ -27,6 +27,8 @@ interface Props {
   /** Null when the calendar could not be read; the string says why. */
   error: string | null;
   connected: boolean;
+  /** The server-action form that starts the calendar consent. */
+  connect?: React.ReactNode;
 }
 
 function relative(mins: number): string {
@@ -38,7 +40,7 @@ function relative(mins: number): string {
   return d === 1 ? "tomorrow" : `in ${d} days`;
 }
 
-export function Upcoming({ upcoming, error, connected }: Props) {
+export function Upcoming({ upcoming, error, connected, connect }: Props) {
   const overlay = useOverlay();
   const [open, setOpen] = useState(true);
   const [showAll, setShowAll] = useState(false);
@@ -65,7 +67,7 @@ export function Upcoming({ upcoming, error, connected }: Props) {
             <span className="h-1.5 w-1.5 rounded-full" style={{ background: "var(--ok)" }} />
             Google Calendar · next 7 days
           </span>
-        ) : (
+        ) : connected ? (
           <span
             className="inline-flex items-center gap-1.5 rounded-full px-2 py-[2px] text-[11px] font-medium"
             style={{ background: "var(--warn-soft)", color: "var(--warn)" }}
@@ -74,7 +76,7 @@ export function Upcoming({ upcoming, error, connected }: Props) {
             <Icon name="warn" size={11} />
             {error ?? "Calendar not connected"}
           </span>
-        )}
+        ) : null}
         {upcoming.length > 0 && (
           <button onClick={() => setOpen((v) => !v)} className="ml-auto text-[12px] font-medium" style={{ color: "var(--ink-3)" }} aria-expanded={open}>
             {open ? "Hide" : `Show ${upcoming.length}`}
@@ -82,7 +84,17 @@ export function Upcoming({ upcoming, error, connected }: Props) {
         )}
       </div>
 
-      {!error && upcoming.length === 0 && (
+      {!connected && (
+        <div className="flex flex-wrap items-center gap-3 rounded-[var(--radius-lg)] px-4 py-3" style={{ background: "var(--surface)", border: "1px dashed var(--line-strong)" }}>
+          <div className="min-w-0 flex-1 text-[12.5px] leading-[1.5]" style={{ color: "var(--ink-3)" }}>
+            <strong style={{ color: "var(--ink)" }}>Connect your calendar</strong> and the next seven days appear here, each meeting with a recording decision already made and a one-click join.
+            <span className="block text-[11.5px]" style={{ color: "var(--ink-faint)" }}>Read-only. Google will show an &ldquo;unverified app&rdquo; warning because this is a take-home, not a registered product — Advanced → continue.</span>
+          </div>
+          {connect}
+        </div>
+      )}
+
+      {connected && !error && upcoming.length === 0 && (
         <p className="px-1 text-[12.5px]" style={{ color: "var(--ink-faint)" }}>
           Nothing with a video link in the next seven days. Put a Google Meet on your calendar and it appears here with a recording decision already made.
         </p>

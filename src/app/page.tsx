@@ -5,6 +5,7 @@ import { listProcessing } from "@/lib/db/calls";
 import { MeetingList, type MeetingRow } from "@/components/meeting-list";
 import { WorkspaceHero } from "@/components/workspace-hero";
 import { Landing } from "@/components/landing";
+import { ConnectCalendarButton } from "@/components/sign-in-button";
 import type { ThumbSlice } from "@/lib/thumb";
 import { sliceMeeting } from "@/lib/thumb";
 
@@ -21,7 +22,9 @@ export default async function HomePage() {
 
   const [ws, cal, processing] = await Promise.all([
     loadWorkspace(uid),
-    upcomingMeetings(uid).catch((e) => ({ ok: false as const, reason: e instanceof Error ? e.message : "Calendar failed" })),
+    session.user.calendar
+      ? upcomingMeetings(uid).catch((e) => ({ ok: false as const, reason: e instanceof Error ? e.message : "Calendar failed" }))
+      : Promise.resolve({ ok: false as const, reason: "Calendar not connected" }),
     listProcessing(uid),
   ]);
 
@@ -84,6 +87,12 @@ export default async function HomePage() {
       upcoming={upcoming}
       calendarError={cal.ok ? null : cal.reason}
       calendarConnected={Boolean(session.user.calendar)}
+      connectCalendar={
+        <ConnectCalendarButton
+          className="shrink-0 rounded-[var(--radius-sm)] px-3.5 py-[8px] text-[13px] font-semibold"
+          style={{ background: "var(--accent)", color: "var(--on-accent)" }}
+        />
+      }
       people={ws.people}
       me={me}
       hasSample={ws.hasSample}

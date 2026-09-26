@@ -1,4 +1,4 @@
-import { signIn, signOut } from "@/auth";
+import { signIn, signOut, CALENDAR_SCOPES } from "@/auth";
 
 // Server actions, so the buttons work with no client JavaScript at all.
 
@@ -32,6 +32,37 @@ export function SignOutButton({ className, style }: { className?: string; style?
       }}
     >
       <button type="submit" className={className} style={style}>Sign out</button>
+    </form>
+  );
+}
+
+/**
+ * The second consent: calendar. Google shows its "unverified app" warning
+ * here because calendar.readonly is a sensitive scope and this app has not
+ * been through verification. That is stated next to the button rather than
+ * discovered on the next screen.
+ */
+export function ConnectCalendarButton({ className, style, label = "Connect Google Calendar" }: { className?: string; style?: React.CSSProperties; label?: string }) {
+  return (
+    <form
+      action={async () => {
+        "use server";
+        await signIn(
+          "google",
+          { redirectTo: "/" },
+          {
+            scope: CALENDAR_SCOPES,
+            // offline + consent is what makes Google hand back a refresh
+            // token, which is what lets the calendar be read later without
+            // the user present.
+            access_type: "offline",
+            prompt: "consent",
+            include_granted_scopes: "true",
+          },
+        );
+      }}
+    >
+      <button type="submit" className={className} style={style}>{label}</button>
     </form>
   );
 }

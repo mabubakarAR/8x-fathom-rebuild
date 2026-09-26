@@ -67,10 +67,14 @@ export function emptyWorkspace(ownerId: string): Workspace {
   };
 }
 
-// A short cache so one page render — which may ask for the workspace from
-// several components — costs one load. Keyed by owner; a write invalidates.
+// A cache so one page render — which may ask for the workspace from several
+// components — costs one load. The TTL is deliberately tiny: on a serverless
+// host a write on one instance cannot invalidate another instance's copy, and
+// a user who ticks an action item and sees it un-tick on refresh has lost
+// trust in the product for nothing. 300ms covers a single render; it does
+// not cover a round-trip.
 const cache = new Map<string, { at: number; ws: Workspace }>();
-const TTL_MS = 5_000;
+const TTL_MS = 300;
 export function invalidateWorkspace(ownerId: string) {
   cache.delete(ownerId);
 }
