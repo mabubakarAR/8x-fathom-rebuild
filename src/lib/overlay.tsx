@@ -9,6 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useRouter } from "next/navigation";
 import type { AskThread, Highlight, Ms } from "./types";
 
 // ---------------------------------------------------------------------------
@@ -113,10 +114,10 @@ function write(state: OverlayState) {
 interface OverlayApi {
   state: OverlayState;
   ready: boolean;
-  setActionDone(id: string, done: boolean): void;
+  setActionDone(id: string, done: boolean, meetingId?: string): void;
   addAction(meetingId: string, text: string, assigneeId: string | null, anchorMs: Ms): void;
   addHighlight(h: Highlight): void;
-  removeHighlight(id: string): void;
+  removeHighlight(id: string, meetingId?: string): void;
   fixSpeaker(meetingId: string, segmentId: string, toSpeakerId: string): void;
   /** Apply the same correction to every segment currently attributed to `from`. */
   fixSpeakerEverywhere(
@@ -137,7 +138,30 @@ interface OverlayApi {
 
 const Ctx = createContext<OverlayApi | null>(null);
 
+// Write-through.
+//
+// Every mutation is sent to the server first. If the server accepts it, the
+// page is refreshed from the database and NOTHING is kept locally — the
+// database is the record. Only when the server is unreachable does the change
+// fall back to the local overlay, so a flaky connection degrades to "kept in
+// this browser" rather than to "lost". The overlay is the fallback, not the
+// store.
+async function persist(meetingId: string | undefined, body: Record<string, unknown>): Promise<boolean> {
+  if (!meetingId) return false;
+  try {
+    const r = await fetch(`/api/meetings/${encodeURIComponent(meetingId)}/mutate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return r.ok;
+  } catch {
+    return false;
+  }
+}
+
 export function OverlayProvider({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
   const [state, setState] = useState<OverlayState>(EMPTY);
   const [ready, setReady] = useState(false);
   const first = useRef(true);
@@ -171,54 +195,62 @@ export function OverlayProvider({ children }: { children: React.ReactNode }) {
     return {
       state,
       ready,
-      setActionDone: (id, done) =>
-        patch((s) => ({ ...s, actionsDone: { ...s.actionsDone, [id]: done } })),
-      addAction: (meetingId, text, assigneeId, anchorMs) =>
-        patch((s) => ({
-          ...s,
-          addedActions: [
-            ...s.addedActions,
-            { id: `ua-${Date.now().toString(36)}`, meetingId, text, assigneeId, anchorMs },
-          ],
-        })),
-      addHighlight: (h) =>
-        patch((s) => ({ ...s, addedHighlights: [...s.addedHighlights, h] })),
-      removeHighlight: (id) =>
+      setActionDone: (id, done, meetingId) => {
+        // Optimistic locally, then the server; on success the local mark is
+        // cleared so the refreshed row is the only source.
+        patch((s) => ({ ...s, actionsDone: { ...s.actionsDone, [id]: done } }));
+        void persist(meetingId, { op: "action.done", id, done }).then((ok) => {
+          if (!ok) return;
+          patch((s) => { const n = { ...s.actionsDone }; delete n[id]; return { ...s, actionsDone: n }; });
+          router.refresh();
+        });
+      },
+      addAction: (meetingId, text, assigneeId, anchorMs) => {
+        void persist(meetingId, { op: "action.add", text, assigneeId, anchorMs }).then((ok) => {
+          if (ok) { router.refresh(); return; }
+          patch((s) => ({
+            ...s,
+            addedActions: [...s.addedActions, { id: `ua-${Date.now().toString(36)}`, meetingId, text, assigneeId, anchorMs }],
+          }));
+        });
+      },
+      addHighlight: (h) => {
+        void persist(h.meetingId, { op: "highlight.add", id: h.id, categoryKey: h.categoryKey, startMs: h.startMs, endMs: h.endMs, title: h.title, note: h.note ?? null }).then((ok) => {
+          if (ok) { router.refresh(); return; }
+          patch((s) => ({ ...s, addedHighlights: [...s.addedHighlights, h] }));
+        });
+      },
+      removeHighlight: (id, meetingId) => {
         patch((s) => ({
           ...s,
           removedHighlightIds: [...s.removedHighlightIds, id],
           addedHighlights: s.addedHighlights.filter((h) => h.id !== id),
-        })),
-      fixSpeaker: (meetingId, segmentId, toSpeakerId) =>
-        patch((s) => {
-          const existing = (s.speakerFixes[meetingId] ?? []).filter(
-            (f) => f.segmentId !== segmentId,
-          );
-          return {
-            ...s,
-            speakerFixes: {
-              ...s.speakerFixes,
-              [meetingId]: [...existing, { segmentId, toSpeakerId }],
-            },
-          };
-        }),
-      fixSpeakerEverywhere: (meetingId, _from, toSpeakerId, segmentIds) =>
-        patch((s) => {
-          const set = new Set(segmentIds);
-          const kept = (s.speakerFixes[meetingId] ?? []).filter(
-            (f) => !set.has(f.segmentId),
-          );
-          return {
-            ...s,
-            speakerFixes: {
-              ...s.speakerFixes,
-              [meetingId]: [
-                ...kept,
-                ...segmentIds.map((segmentId) => ({ segmentId, toSpeakerId })),
-              ],
-            },
-          };
-        }),
+        }));
+        void persist(meetingId, { op: "highlight.remove", id }).then((ok) => {
+          if (!ok) return;
+          patch((s) => ({ ...s, removedHighlightIds: s.removedHighlightIds.filter((x) => x !== id) }));
+          router.refresh();
+        });
+      },
+      fixSpeaker: (meetingId, segmentId, toSpeakerId) => {
+        void persist(meetingId, { op: "speaker.fix", segmentIds: [segmentId], toPersonId: toSpeakerId }).then((ok) => {
+          if (ok) { router.refresh(); return; }
+          patch((s) => {
+            const existing = (s.speakerFixes[meetingId] ?? []).filter((f) => f.segmentId !== segmentId);
+            return { ...s, speakerFixes: { ...s.speakerFixes, [meetingId]: [...existing, { segmentId, toSpeakerId }] } };
+          });
+        });
+      },
+      fixSpeakerEverywhere: (meetingId, _from, toSpeakerId, segmentIds) => {
+        void persist(meetingId, { op: "speaker.fix", segmentIds, toPersonId: toSpeakerId }).then((ok) => {
+          if (ok) { router.refresh(); return; }
+          patch((s) => {
+            const set = new Set(segmentIds);
+            const kept = (s.speakerFixes[meetingId] ?? []).filter((f) => !set.has(f.segmentId));
+            return { ...s, speakerFixes: { ...s.speakerFixes, [meetingId]: [...kept, ...segmentIds.map((segmentId) => ({ segmentId, toSpeakerId }))] } };
+          });
+        });
+      },
       undoSpeakerFixes: (meetingId) =>
         patch((s) => {
           const next = { ...s.speakerFixes };
@@ -246,7 +278,7 @@ export function OverlayProvider({ children }: { children: React.ReactNode }) {
       setAskOpen: (askOpen) => patch((s) => ({ ...s, askOpen })),
       reset: () => setState(EMPTY),
     };
-  }, [state, ready]);
+  }, [state, ready, router]);
 
   return <Ctx.Provider value={api}>{children}</Ctx.Provider>;
 }

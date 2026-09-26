@@ -86,7 +86,7 @@ export function ActionsBoard({ rows, people }: { rows: Row[]; people: Person[] }
                       style={{ borderTop: i ? "1px solid var(--line)" : undefined }}
                     >
                       <button
-                        onClick={() => overlay.setActionDone(a.id, !done)}
+                        onClick={() => overlay.setActionDone(a.id, !done, a.meetingId)}
                         role="checkbox"
                         aria-checked={done}
                         aria-label={done ? `Reopen: ${a.text}` : `Complete: ${a.text}`}

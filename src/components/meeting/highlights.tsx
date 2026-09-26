@@ -78,7 +78,7 @@ export function HighlightsPane({
                       <Icon name="share" size={13} />
                     </button>
                     <button
-                      onClick={() => overlay.removeHighlight(h.id)}
+                      onClick={() => overlay.removeHighlight(h.id, h.meetingId)}
                       aria-label="Delete this clip"
                       className="grid h-6 w-6 place-items-center rounded-[6px]"
                       style={{ color: "var(--ink-3)" }}

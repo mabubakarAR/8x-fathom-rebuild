@@ -135,7 +135,7 @@ function Row({
   return (
     <li className="group flex items-start gap-2 rounded-[var(--radius-sm)] p-1.5 transition-colors hover:bg-[var(--surface-2)]">
       <button
-        onClick={() => overlay.setActionDone(a.id, !done)}
+        onClick={() => overlay.setActionDone(a.id, !done, a.meetingId)}
         role="checkbox"
         aria-checked={done}
         aria-label={done ? `Mark "${a.text}" not done` : `Mark "${a.text}" done`}

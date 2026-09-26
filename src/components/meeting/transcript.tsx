@@ -129,7 +129,7 @@ export function Transcript({
       startMs: start.startMs,
       endMs: endSeg.endMs,
       title: start.text.slice(0, 68).replace(/\s+\S*$/, "") + (start.text.length > 68 ? "…" : ""),
-      createdById: "p-abubakar",
+      createdById: "you",
       createdAt: new Date().toISOString(),
     };
     overlay.addHighlight(h);
