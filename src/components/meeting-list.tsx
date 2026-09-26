@@ -10,12 +10,15 @@ import { Upcoming } from "./upcoming";
 import type { UpcomingMeeting } from "@/lib/google/calendar";
 import type { Person } from "@/lib/types";
 import { SampleControls } from "./sample-controls";
+import { MeetingMenu } from "./meeting-menu";
 
 export interface MeetingRow {
   id: string;
   /** Where this row links. Seeded meetings live at /m, saved calls at
    *  /imported — the row knows, so the card does not have to guess. */
   href?: string;
+  /** Part of the imported sample workspace. */
+  sample?: boolean;
   title: string;
   kind: string;
   platform: string;
@@ -211,10 +214,14 @@ function Card({ r }: { r: MeetingRow }) {
     // stack of avatars and a few badges, so twelve of them is a few thousand
     // boxes the browser was styling on every scroll. The intrinsic size is
     // supplied so the scrollbar doesn't jump as cards enter and leave.
+    <div className="group relative" style={{ contentVisibility: "auto", containIntrinsicSize: "auto 280px" }}>
+    {/* The menu sits outside the link so a click on it is never a navigation. */}
+    <div className="absolute top-2 right-2 z-10 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+      <MeetingMenu id={r.id} title={r.title} compact sample={r.sample} />
+    </div>
     <Link
       href={r.href ?? `/m/${r.id}`}
-      className="group block"
-      style={{ contentVisibility: "auto", containIntrinsicSize: "auto 280px" }}
+      className="block"
     >
       {/* The tile.
           Hover does three things at once, which is what makes it feel like a
@@ -314,6 +321,7 @@ function Card({ r }: { r: MeetingRow }) {
         </div>
       </div>
     </Link>
+    </div>
   );
 }
 

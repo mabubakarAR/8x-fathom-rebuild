@@ -27,6 +27,7 @@ import { AskPane } from "./ask";
 import { EvidencePane } from "./evidence";
 import { ShareDialog } from "./share";
 import { ExportMenu } from "./export";
+import { MeetingMenu } from "../meeting-menu";
 
 export interface MeetingViewProps {
   meeting: Meeting;
@@ -389,6 +390,14 @@ export function MeetingView(props: MeetingViewProps) {
             >
               <Icon name="share" size={14} /> Share
             </button>
+            <MeetingMenu
+              id={meeting.id}
+              title={meeting.title}
+              mediaUrl={props.mediaUrl}
+              sample={meeting.sample}
+              onShare={() => openShare()}
+              afterDelete="home"
+            />
           </div>
         </div>
       </header>

@@ -39,7 +39,8 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
       .sort((a, b) => b.p.talkMs - a.p.talkMs);
     return {
       id: m.id,
-      href: m.origin === "sample" ? `/m/${m.id}` : `/m/${m.id}`,
+      href: `/m/${m.id}`,
+      sample: m.origin === "sample",
       title: m.title,
       kind: m.kind,
       platform: m.platform,

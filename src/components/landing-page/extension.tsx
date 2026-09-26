@@ -3,9 +3,9 @@ import { Icon } from "../ui";
 const ZIP = "/extension/noted-extension.zip";
 
 const STEPS = [
-  { n: "01", t: "Download the extension", b: "A 5 KB zip. No account, no permissions beyond meet.google.com." },
+  { n: "01", t: "Download the extension", b: "A 6 KB zip. Runs only on meet.google.com; the one permission it asks for stores its on/off switch." },
   { n: "02", t: "Load it in Chrome", b: "chrome://extensions → Developer mode → Load unpacked → pick the unzipped folder." },
-  { n: "03", t: "Join any Meet", b: "A Record button appears in the call bar. Press it, choose the tab, and Noted takes it from there." },
+  { n: "03", t: "Join any Meet", b: "The recorder opens by itself with your calendar rule applied, and a Record button sits in the call bar. Approve the share dialog and Noted takes it from there." },
 ];
 
 /**

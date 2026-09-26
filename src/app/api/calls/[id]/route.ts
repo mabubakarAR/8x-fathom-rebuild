@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { loadCall } from "@/lib/db/calls";
 import { db } from "@/lib/db/client";
+import { currentUserId } from "@/auth";
+import { invalidateWorkspace } from "@/lib/data/workspace";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -11,7 +13,9 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
-  const call = await loadCall(id);
+  const uid = await currentUserId();
+  if (!uid) return NextResponse.json({ error: "Sign in first" }, { status: 401 });
+  const call = await loadCall(id, uid);
   if (!call) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json(call);
 }
@@ -29,9 +33,14 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
+  const uid = await currentUserId();
+  if (!uid) return NextResponse.json({ error: "Sign in first" }, { status: 401 });
   const sql = db();
   if (!sql) return NextResponse.json({ error: "No database" }, { status: 503 });
-  const rows = await sql`delete from meetings where id = ${id} returning id`;
+  // Ownership is in the WHERE clause, not a check before it: a meeting you
+  // do not own is indistinguishable from one that does not exist.
+  const rows = await sql`delete from meetings where id = ${id} and owner_id = ${uid} returning id`;
   if (!rows.length) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  invalidateWorkspace(uid);
   return NextResponse.json({ deleted: id });
 }

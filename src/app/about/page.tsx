@@ -27,9 +27,10 @@ export default function AboutPage() {
               colleague started sharing.
             </Li>
             <Li label="Chrome extension">
-              A Manifest V3 extension adds one button inside Google Meet. It opens the recorder
-              with the meeting title and link already filled in. It deliberately does not use the
-              silent <code>tabCapture</code> API — the share dialog is the consent step.
+              A Manifest V3 extension adds one button inside Google Meet, and opens the recorder by
+              itself the moment you join a call, with your calendar rule already applied — record or
+              skip, and why. It deliberately does not use the silent <code>tabCapture</code> API: the
+              share dialog is the consent step, and it is the one click a browser cannot remove.
             </Li>
             <Li label="Calendar">
               Connecting Google Calendar is a separate consent from signing in, because it is a

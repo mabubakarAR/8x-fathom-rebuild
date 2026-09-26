@@ -283,7 +283,7 @@ export interface StoredCall {
 }
 
 /** Read a saved call back into the exact shape the meeting UI already speaks. */
-export async function loadCall(id: string): Promise<StoredCall | null> {
+export async function loadCall(id: string, ownerId: string): Promise<StoredCall | null> {
   const sql = db();
   if (!sql) return null;
 
@@ -294,7 +294,7 @@ export async function loadCall(id: string): Promise<StoredCall | null> {
       select id, title, kind, platform, started_at, duration_ms, gist, status,
              media_url, media_mime, origin, transcript_source,
              low_confidence_ratio, shape
-      from meetings where id = ${id}`;
+      from meetings where id = ${id} and owner_id = ${ownerId}`;
     if (!meeting) return null;
 
     const [speakers, segs, chaps, sums, acts, hls, [ev]] = await Promise.all([

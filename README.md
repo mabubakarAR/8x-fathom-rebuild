@@ -16,11 +16,12 @@ Live: **https://8x-fathom-rebuild.vercel.app** · Built for the 8x take-home (th
 |---|---|
 | Sign in with Google | Creates your workspace. Identity only — no calendar permission yet |
 | Connect Google Calendar | Shows the next seven days with a **record / skip** decision per meeting, and says which rule decided |
-| Join a Meet, press **Record with Noted** | The Chrome extension opens the recorder already knowing the call. Chrome's share dialog is the consent step; nothing joins the meeting |
+| Join a Meet | The Chrome extension opens the recorder by itself with your calendar rule applied (record / skip, and why), and puts **Record with Noted** in the call bar. Chrome's share dialog is the one click left; nothing joins the meeting |
 | Stop | Transcribed with speakers, chaptered, summarised. Every summary bullet cites a transcript line, and the ones that could not be anchored are shown struck through, not hidden |
 | Fix one speaker | Fixed across every meeting that person is in |
 | Ask anything | One answer across your whole history, each claim naming the meeting, speaker and second |
 | Share a clip | A signed-out link carrying only that clip |
+| ··· on any meeting | Share, copy link, download the audio, delete — one cascade, no trash |
 
 No bot. No desktop agent. No mock data: every page reads from Postgres and every edit writes back.
 
@@ -28,7 +29,7 @@ No bot. No desktop agent. No mock data: every page reads from Postgres and every
 
 The changed brief asked for an interface of my own design and a real backend. These are the product calls, with the reasoning:
 
-- **No bot, ever.** A bot in the participant list is the thing people dislike most about notetakers, and it needs a fleet of dial-in workers. Recording from the browser that is already in the call works on Meet, Zoom and Teams today, with the share dialog everyone can see as consent. The Chrome extension makes that one click from inside Meet.
+- **No bot, ever.** A bot in the participant list is the thing people dislike most about notetakers, and it needs a fleet of dial-in workers. Recording from the browser that is already in the call works on Meet, Zoom and Teams today, with the share dialog everyone can see as consent. The Chrome extension makes that as automatic as a browser allows: the recorder opens itself when you join, and the share dialog is the only click. Fully hands-off capture needs a bot or a desktop app, and `/about` says so.
 - **Two consents, not one.** Sign-in asks for identity only, so it is two clicks with no warning. Calendar is a separate button because it is a Google "sensitive" scope and an unverified app asking for it shows a full-page warning — that cost belongs behind a button the user chose to press.
 - **Citations are structural, not decorative.** The model never emits a timestamp. It cites numbered lines; every index is checked against the real transcript; an index that does not resolve is dropped and *shown as dropped*. `npm test` proves the drop path without an API call.
 - **People, not speakers.** A voice fixed once becomes a person with a `person_key` shared across meetings. The action-item board and the commitment tracker are per-person because of it.
@@ -47,7 +48,7 @@ The changed brief asked for an interface of my own design and a real backend. Th
 | Database | **Postgres** (Neon) via `postgres` | Users, meetings, segments, speakers, chapters, summaries, actions, highlights, settings. One `sql.begin` per save; idempotent migrations |
 | Audio | **Vercel Blob**, falling back to a Postgres `bytea` column | Served by `/api/calls/<id>/audio` with HTTP range support so seeking works in Safari |
 | Capture | `getDisplayMedia` + `getUserMedia` mixed via Web Audio, `MediaRecorder` | Tab audio is the far side of the call; mic is you; echo-cancelled so nobody is recorded twice |
-| Extension | Chrome Manifest V3, ~130 lines | One host permission (`meet.google.com`). Deliberately not `tabCapture` |
+| Extension | Chrome Manifest V3, ~170 lines | Runs on `meet.google.com` only; `storage` for its one switch. Deliberately not `tabCapture` |
 | Transcription | **Deepgram `nova-3`**, `diarize=true` | Whisper has no diarization; speaker attribution is the thesis |
 | AI | **`@anthropic-ai/sdk`** → `claude-sonnet-4-5` | Summaries, templates, Ask, workspace Ask, contradiction judging — all index-cited and validated |
 | Search | Hand-written BM25 + TF-IDF cosine, query expansion | ~200 lines, in-process, per-user index; doubles as the retriever for Ask and commitments |

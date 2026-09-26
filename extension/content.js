@@ -4,6 +4,9 @@
 // recorder in a new tab, already knowing which call this is, so the only
 // thing left to do there is pick this tab in the share dialog.
 //
+// It can also open the recorder by itself when you join (a setting, on by
+// default) so that the only click left is the share dialog.
+//
 // Deliberately no audio capture in the extension itself. Chrome's
 // tabCapture API would let an extension record the tab silently, and that is
 // exactly the kind of quiet recording the product refuses to do. The
@@ -49,10 +52,29 @@
     return row && getComputedStyle(row).display === "flex" ? row : null;
   }
 
+  function recordUrl(code, auto) {
+    return `${APP}/record?join=${encodeURIComponent(`https://meet.google.com/${code}`)}&title=${encodeURIComponent(meetingTitle())}${auto ? "&auto=1" : ""}`;
+  }
+
+  // Auto-open: the moment you are in the call, the recorder opens in a
+  // background tab — once per meeting, and only if the setting is on. The
+  // app then applies your calendar rule (record / skip and why). The share
+  // dialog is still yours to approve; this only removes the click before it.
+  const opened = new Set();
+  function autoOpen(code) {
+    if (opened.has(code)) return;
+    opened.add(code);
+    chrome.storage.sync.get({ autoOpen: true }, (v) => {
+      if (!v.autoOpen) return;
+      chrome.runtime.sendMessage({ type: "open", url: recordUrl(code, true) });
+    });
+  }
+
   function mount() {
     const existing = document.getElementById(ID);
     const code = meetingCode();
     if (!code || !inCall()) return;
+    autoOpen(code);
     const bar = controlBar();
     if (existing) {
       // Meet re-renders the bar; if ours fell out of it, put it back.
@@ -62,7 +84,7 @@
 
     const a = document.createElement("a");
     a.id = ID;
-    a.href = `${APP}/record?join=${encodeURIComponent(`https://meet.google.com/${code}`)}&title=${encodeURIComponent(meetingTitle())}`;
+    a.href = recordUrl(code, false);
     a.target = "_blank";
     a.rel = "noopener";
     a.innerHTML = '<span class="fr-dot"></span><span class="fr-label">Record with Noted</span>';

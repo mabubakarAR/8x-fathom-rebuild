@@ -47,6 +47,7 @@ export function RecordStudio({
   configured,
   transcription,
   join = null,
+  autoDecision = null,
   calendarTitle = null,
 }: {
   configured: boolean;
@@ -54,6 +55,8 @@ export function RecordStudio({
   transcription: boolean;
   /** Arrived from the calendar: the call's join link, opened alongside. */
   join?: string | null;
+  /** Opened automatically by the extension: what the calendar rule said. */
+  autoDecision?: AutoDecision | null;
   /** The invite's title, which beats whatever the model guesses. */
   calendarTitle?: string | null;
 }) {
@@ -424,6 +427,9 @@ export function RecordStudio({
         subtitle="Share the tab your call is in and it records the whole room — not just your half of it."
       />
 
+      {/* ---- opened by the extension ---- */}
+      {autoDecision && phase === "idle" && <AutoBanner d={autoDecision} />}
+
       {/* ---- from the calendar ---- */}
       {join && phase === "idle" && (
         <div
@@ -767,5 +773,39 @@ function SourceCard({
         </p>
       )}
     </button>
+  );
+}
+
+export type AutoDecision =
+  | { kind: "record"; reason: string; title: string }
+  | { kind: "skip"; reason: string; title: string }
+  | { kind: "not-on-calendar" }
+  | { kind: "no-calendar" };
+
+/**
+ * The extension opened this page because you joined a call. Say what your
+ * own rule decided, in one line, and never nag: "skip" means the page is
+ * calm and the record control is still there if you change your mind.
+ */
+function AutoBanner({ d }: { d: AutoDecision }) {
+  const line =
+    d.kind === "record" ? <>Your rule says <strong>record</strong> — {d.reason}. Approve the share dialog and it starts.</>
+    : d.kind === "skip" ? <>Your rule says <strong>skip this one</strong> — {d.reason}. Nothing will happen unless you press record.</>
+    : d.kind === "not-on-calendar" ? <>This call isn&rsquo;t on your calendar, so there&rsquo;s no rule for it. Record it or close this tab.</>
+    : <>Connect Google Calendar on the home page and this banner will show what your rule decided for each call.</>;
+  return (
+    <div
+      className="mb-3 flex items-center gap-3 rounded-[var(--radius-lg)] px-4 py-2.5 text-[12.5px]"
+      style={{
+        background: d.kind === "skip" ? "var(--surface-2)" : "var(--accent-soft)",
+        border: `1px solid ${d.kind === "skip" ? "var(--line)" : "var(--accent-line)"}`,
+        color: "var(--ink-2)",
+      }}
+    >
+      <span className="shrink-0 rounded-full px-2 py-0.5 text-[10.5px] font-semibold uppercase tracking-[0.08em]" style={{ background: "var(--surface)", color: "var(--ink-3)", border: "1px solid var(--line)" }}>
+        Opened by the extension
+      </span>
+      <span>{line}</span>
+    </div>
   );
 }
