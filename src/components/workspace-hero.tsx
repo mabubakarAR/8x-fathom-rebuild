@@ -113,7 +113,7 @@ function NextUp({ next, connected, connect }: { next: UpcomingMeeting | null; co
           <p className="mt-1.5 text-[13.5px] leading-[1.5]" style={{ color: "var(--ink-2)" }}>
             Connect Google Calendar and your next meeting appears here with a recording decision already made and a one-click join.
           </p>
-          <p className="mt-1 text-[11.5px]" style={{ color: "var(--ink-faint)" }}>Read-only. Google shows an &ldquo;unverified app&rdquo; screen because this is a take-home — Advanced → continue.</p>
+          <p className="mt-1 text-[11.5px]" style={{ color: "var(--ink-faint)" }}>Read-only. Takes two extra clicks on Google&rsquo;s side — the next page shows them.</p>
         </div>
         <div className="mt-4">{connect}</div>
       </div>

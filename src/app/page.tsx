@@ -5,7 +5,8 @@ import { listProcessing } from "@/lib/db/calls";
 import { MeetingList, type MeetingRow } from "@/components/meeting-list";
 import { WorkspaceHero } from "@/components/workspace-hero";
 import { Landing } from "@/components/landing";
-import { ConnectCalendarButton, SignInButton } from "@/components/sign-in-button";
+import { SignInButton } from "@/components/sign-in-button";
+import Link from "next/link";
 import type { ThumbSlice } from "@/lib/thumb";
 import { sliceMeeting } from "@/lib/thumb";
 
@@ -87,13 +88,18 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
 
   // A guest has no Google account behind the session, so "connect calendar"
   // would really be "sign in with Google as someone else". Say that instead.
+  // The button goes to a page that shows Google's warning screen before
+  // Google does, so nobody stops at "unsafe".
   const connect = session.user.guest ? (
     <GuestCalendarNote />
   ) : (
-    <ConnectCalendarButton
-      className="rounded-full px-4 py-[9px] text-[13px] font-semibold"
+    <Link
+      href="/connect-calendar"
+      className="inline-flex rounded-full px-4 py-[9px] text-[13px] font-semibold"
       style={{ background: "var(--accent)", color: "var(--on-accent)" }}
-    />
+    >
+      Connect Google Calendar
+    </Link>
   );
 
   return (

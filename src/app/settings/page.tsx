@@ -3,7 +3,8 @@ import { loadSettings } from "@/lib/db/settings";
 import { TEMPLATES } from "@/lib/seed/cast";
 import { PageHeader } from "@/components/page-header";
 import { SettingsForm } from "@/components/settings-form";
-import { ConnectCalendarButton, SignOutButton } from "@/components/sign-in-button";
+import { SignOutButton } from "@/components/sign-in-button";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Settings — Noted" };
@@ -29,11 +30,13 @@ export default async function SettingsPage() {
           user.guest ? (
             <span className="text-[12.5px]" style={{ color: "var(--ink-3)" }}>Not available in a guest workspace — there is no Google account behind it.</span>
           ) : (
-            <ConnectCalendarButton
-              label={settings?.calendarConnected ? "Reconnect" : "Connect Google Calendar"}
-              className="rounded-full px-3.5 py-[8px] text-[13px] font-semibold"
+            <Link
+              href="/connect-calendar"
+              className="inline-flex rounded-full px-3.5 py-[8px] text-[13px] font-semibold"
               style={{ background: "var(--accent)", color: "var(--on-accent)" }}
-            />
+            >
+              {settings?.calendarConnected ? "Reconnect" : "Connect Google Calendar"}
+            </Link>
           )
         }
         signOut={<SignOutButton className="rounded-full px-3.5 py-[8px] text-[13px] font-medium" style={{ color: "var(--ink-2)", border: "1px solid var(--line-strong)" }} />}

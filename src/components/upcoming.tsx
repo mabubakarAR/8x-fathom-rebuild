@@ -88,7 +88,7 @@ export function Upcoming({ upcoming, error, connected, connect }: Props) {
         <div className="flex flex-wrap items-center gap-3 rounded-[var(--radius-lg)] px-4 py-3" style={{ background: "var(--surface)", border: "1px dashed var(--line-strong)" }}>
           <div className="min-w-0 flex-1 text-[12.5px] leading-[1.5]" style={{ color: "var(--ink-3)" }}>
             <strong style={{ color: "var(--ink)" }}>Connect your calendar</strong> and the next seven days appear here, each meeting with a recording decision already made and a one-click join.
-            <span className="block text-[11.5px]" style={{ color: "var(--ink-faint)" }}>Read-only. Google will show an &ldquo;unverified app&rdquo; warning because this is a take-home, not a registered product — Advanced → continue.</span>
+            <span className="block text-[11.5px]" style={{ color: "var(--ink-faint)" }}>Read-only. Two extra clicks on Google&rsquo;s side — the next page shows exactly what to press.</span>
           </div>
           {connect}
         </div>
