@@ -2,7 +2,7 @@
 
 An AI meeting notetaker that listens without joining. Sign in with Google, connect your calendar, press one button inside Google Meet, and read notes where every claim links to the second it was said.
 
-Live: **https://8x-fathom-rebuild.vercel.app** · Built for the 8x take-home (the brief's reference product was Fathom; the interface here is my own).
+Live: **https://ainoted.vercel.app** · Built for the 8x take-home (the brief's reference product was Fathom; the interface here is my own).
 
 **Agent capture proof:** [CAPTURE-TEST.md](./CAPTURE-TEST.md) · **The brief, line by line:** [BRIEF-CHECK.md](./BRIEF-CHECK.md) · **Product reasoning and cuts:** [PRODUCT-NOTES.md](./PRODUCT-NOTES.md) · **What's real vs not:** `/about` in the app
 

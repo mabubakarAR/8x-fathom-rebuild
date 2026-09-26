@@ -1,6 +1,6 @@
 # Sample transcripts
 
-Drop either of these into [`/import`](https://8x-fathom-rebuild.vercel.app/import) to watch the real pipeline run.
+Drop either of these into [`/import`](https://ainoted.vercel.app/import) to watch the real pipeline run.
 
 | File | What it's for |
 |---|---|

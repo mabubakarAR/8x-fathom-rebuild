@@ -13,7 +13,7 @@
 // share-tab dialog is the consent step, and it stays.
 
 (function () {
-  const APP = "https://8x-fathom-rebuild.vercel.app";
+  const APP = "https://ainoted.vercel.app";
   const ID = "noted-record";
 
   function meetingCode() {
