@@ -7,8 +7,9 @@ import { Avatar, AvatarStack, Icon } from "./ui";
 import { CallThumb } from "./call-thumb";
 import type { ThumbSlice } from "@/lib/thumb";
 import { Upcoming } from "./upcoming";
-import type { UpcomingMeeting } from "@/lib/seed/upcoming";
+import type { UpcomingMeeting } from "@/lib/google/calendar";
 import type { Person } from "@/lib/types";
+import { SampleControls } from "./sample-controls";
 
 export interface MeetingRow {
   id: string;
@@ -51,19 +52,27 @@ const KIND_LABEL: Record<string, string> = {
   "all-hands": "All hands",
 };
 
-const ME = "p-abubakar";
 
 export function MeetingList({
   rows,
   upcoming,
+  calendarError,
+  calendarConnected,
   people,
   hero,
+  me = "",
+  hasSample,
 }: {
   rows: MeetingRow[];
   upcoming: UpcomingMeeting[];
+  calendarError: string | null;
+  calendarConnected: boolean;
   people: Person[];
-  /** The import surface. Rendered above the demo corpus on the home page. */
+  /** Rendered above the list. */
   hero?: React.ReactNode;
+  /** The signed-in user's seed person id, for the "mine" filter. Empty when unknown. */
+  me?: string;
+  hasSample: boolean;
 }) {
   const [filter, setFilter] = useState<Filter>("all");
   const [q, setQ] = useState("");
@@ -73,7 +82,7 @@ export function MeetingList({
     return rows.filter((r) => {
       if (filter === "external" && !r.hasExternal) return false;
       if (filter === "internal" && r.hasExternal) return false;
-      if (filter === "mine" && !r.participants.some((p) => p.id === ME)) return false;
+      if (filter === "mine" && !r.participants.some((p) => p.id === me)) return false;
       if (!needle) return true;
       return (
         r.title.toLowerCase().includes(needle) ||
@@ -101,44 +110,22 @@ export function MeetingList({
     <div className="mx-auto w-full max-w-[1120px] px-4 pb-24 md:px-8">
       {hero}
 
-      {/* The demo corpus, labelled as what it is.
-          Nine authored meetings exist so the interface — chapters, the speaker
-          minimap, repair, search across calls — is reviewable in thirty
-          seconds without anyone uploading an hour of audio first. Calling them
-          "Meetings" and leaving the reader to work it out was the single most
-          misleading thing about the first version of this page. */}
-      <div
-        className="mb-4 flex flex-wrap items-end justify-between gap-3 rounded-[var(--radius-lg)] px-4 py-3.5"
-        style={{ background: "var(--surface-2)", border: "1px solid var(--line)" }}
-      >
-        <div className="min-w-0">
-          <h2 className="text-[15px] font-semibold tracking-[-0.01em]" style={{ color: "var(--ink)" }}>
-            Demo workspace{" "}
-            <span className="text-[12px] font-normal" style={{ color: "var(--ink-faint)" }}>
-              — fiction, on purpose
-            </span>
-          </h2>
-          <p className="mt-1 max-w-[62ch] text-[12.5px] leading-[1.55]" style={{ color: "var(--ink-3)" }}>
-            {rows.length} authored meetings, {totalMin} minutes, {pluralise(openActions, "open action item")}.
-            Nothing here was recorded and no model wrote it — it exists so the parts that are hard to
-            show on a two-minute clip (an eight-person hour, crosstalk, search across calls) are
-            there to poke at.{" "}
-            <Link href="/m/m-roadmap-lock" className="underline" style={{ color: "var(--accent-ink)" }}>
-              Start with the 54-minute one
-            </Link>
-            .
-          </p>
-        </div>
-        <Link
-          href="/about"
-          className="shrink-0 text-[12.5px] font-medium underline"
-          style={{ color: "var(--accent-ink)" }}
-        >
-          What&rsquo;s real vs simulated
-        </Link>
-      </div>
+      <Upcoming upcoming={upcoming} error={calendarError} connected={calendarConnected} />
 
-      <Upcoming upcoming={upcoming} people={people} />
+      {hasSample && (
+        <div
+          className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-lg)] px-4 py-3"
+          style={{ background: "var(--surface-2)", border: "1px solid var(--line)" }}
+        >
+          <p className="text-[12.5px] leading-[1.55]" style={{ color: "var(--ink-3)" }}>
+            <strong style={{ color: "var(--ink)" }}>Sample workspace</strong> — nine authored meetings from one team&rsquo;s quarter,
+            {" "}{totalMin} minutes, {pluralise(openActions, "open action item")}, imported into your account so there is something to
+            search, ask and compare. Your own recordings sit alongside them.
+          </p>
+          <SampleControls />
+        </div>
+      )}
+
 
       <div className="mb-5 flex flex-wrap items-center gap-2">
         <div

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { corpus } from "@/lib/data/store";
-import { PEOPLE } from "@/lib/seed/cast";
+import { loadMeetingPublic } from "@/lib/data/workspace";
 import { decodeShare } from "@/lib/sharelink";
 import { ShareView } from "@/components/share-view";
 
@@ -18,7 +17,8 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { token } = await params;
   const payload = decodeShare(token);
-  const bundle = payload ? corpus().byMeeting.get(payload.m) : null;
+  const ws = payload ? await loadMeetingPublic(payload.m) : null;
+  const bundle = ws?.byMeeting.get(payload!.m);
   if (!bundle) return { title: "Link not found — Fathom Rebuild" };
   const title = payload?.t ? `${payload.t} — clip` : bundle.meeting.title;
   return {
@@ -36,8 +36,9 @@ export default async function SharePage({
   const payload = decodeShare(token);
   if (!payload) notFound();
 
-  const bundle = corpus().byMeeting.get(payload.m);
-  if (!bundle) notFound();
+  const ws = await loadMeetingPublic(payload.m);
+  const bundle = ws?.byMeeting.get(payload.m);
+  if (!ws || !bundle) notFound();
 
   const isClip = payload.s != null && payload.e != null;
   const startMs = isClip ? payload.s! : 0;
@@ -59,7 +60,7 @@ export default async function SharePage({
       chapters={isClip ? [] : bundle.chapters}
       summary={isClip ? null : (bundle.summaries[0] ?? null)}
       actionItems={isClip ? [] : bundle.actionItems}
-      people={PEOPLE.filter((p) => rosterIds.has(p.id) || !isClip)}
+      people={ws.people.filter((p) => rosterIds.has(p.id) || !isClip)}
       startMs={startMs}
       endMs={endMs}
       isClip={isClip}

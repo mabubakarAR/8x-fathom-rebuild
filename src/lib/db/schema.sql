@@ -10,6 +10,21 @@
 -- That is the line the first version of this build got wrong. Read paths merge
 -- the two sources; write paths only ever touch Postgres.
 
+-- One row per Google account that has signed in. The refresh token is what
+-- lets the calendar be read while the user is not on the page.
+create table if not exists users (
+  id                    text primary key,   -- Google's stable subject id
+  email                 text not null,
+  name                  text not null default '',
+  image                 text,
+  google_refresh_token  text,
+  calendar_connected    boolean not null default false,
+  -- Per-user preferences, Fathom's "auto-record all meetings" line.
+  auto_record           text not null default 'all',   -- all | external | none
+  created_at            timestamptz not null default now(),
+  last_seen_at          timestamptz not null default now()
+);
+
 create table if not exists meetings (
   id              text primary key,
   title           text not null,
@@ -38,8 +53,14 @@ create table if not exists meetings (
   -- means loading every segment of every call to render the home page.
   shape           jsonb not null default '[]'::jsonb,
   low_confidence_ratio real not null default 0,
+  -- Whose workspace this meeting belongs to. Every read filters on it.
+  owner_id        text,
+  -- Set when this row came from the sample workspace, so it can be told
+  -- apart from a real recording and removed in one go.
+  sample          boolean not null default false,
   created_at      timestamptz not null default now()
 );
+create index if not exists meetings_owner on meetings(owner_id, started_at desc);
 
 -- Speakers are per meeting, not global: an uploaded file has whatever voices
 -- the diarizer found, and the user renames them afterwards. "Speaker 0" is a
@@ -54,7 +75,15 @@ create table if not exists speakers (
   hue             integer not null default 0,
   talk_ms         integer not null default 0,
   word_count      integer not null default 0,
-  is_external     boolean not null default false
+  is_external     boolean not null default false,
+  -- A stable identity across meetings, when one is known. The sample
+  -- workspace sets it so the same person is one person on the action board
+  -- and in the commitment tracker; a diarized recording leaves it null
+  -- until someone names the voice.
+  person_key      text,
+  title           text,
+  company         text,
+  email           text
 );
 create index if not exists speakers_meeting on speakers(meeting_id);
 

@@ -2,6 +2,7 @@ import "server-only";
 import { db } from "./client";
 import type { Analysis } from "@/lib/pipeline/analyse";
 import type { RawSegment } from "@/lib/pipeline/transcribe";
+import { invalidateWorkspace } from "@/lib/data/workspace";
 import { sliceMeeting } from "@/lib/thumb";
 
 // Saving a call, and getting it back.
@@ -29,6 +30,8 @@ export interface SaveCallInput {
   origin: "call" | "mic" | "import" | "upload";
   templateKey: string;
   transcriptSource: string;
+  /** Whose workspace this lands in. */
+  ownerId: string;
   mediaUrl?: string | null;
   mediaMime?: string | null;
   /**
@@ -100,7 +103,7 @@ export async function saveCall(
         insert into meetings (
           id, title, kind, platform, started_at, duration_ms, gist, status,
           media_url, media_mime, media_bytes, origin, transcript_source,
-          low_confidence_ratio, shape
+          low_confidence_ratio, shape, owner_id
         ) values (
           ${id}, ${input.title}, 'planning',
           ${input.origin === "call" ? "browser" : "upload"},
@@ -118,7 +121,8 @@ export async function saveCall(
               })),
               durationMs,
             ),
-          )}
+          )},
+          ${input.ownerId}
         )`;
 
       for (const label of labels) {
@@ -238,9 +242,28 @@ export async function saveCall(
         )`;
     });
 
+    invalidateWorkspace(input.ownerId);
     return { ok: true };
   } catch (e) {
     return { ok: false, reason: e instanceof Error ? e.message : String(e) };
+  }
+}
+
+/** Calls still in the pipeline — uploaded but not yet ready. */
+export async function listProcessing(ownerId: string) {
+  const sql = db();
+  if (!sql) return [];
+  try {
+    const rows = await sql<{ id: string; title: string; started_at: Date; duration_ms: number; origin: string; status: string }[]>`
+      select id, title, started_at, duration_ms, origin, status from meetings
+      where owner_id = ${ownerId} and status <> 'ready'
+      order by created_at desc limit 20`;
+    return rows.map((r) => ({
+      id: r.id, title: r.title, startedAt: new Date(r.started_at).toISOString(),
+      durationMs: r.duration_ms, origin: r.origin, status: r.status,
+    }));
+  } catch {
+    return [];
   }
 }
 

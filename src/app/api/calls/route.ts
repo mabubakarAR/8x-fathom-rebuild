@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 import { dbConfigured, blobAuth } from "@/lib/db/client";
 import { saveCall, type SaveCallInput } from "@/lib/db/calls";
+import { currentUserId } from "@/auth";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -21,6 +22,10 @@ export const dynamic = "force-dynamic";
  * acceptable, and neither is claiming it saved when it did not.
  */
 export async function POST(req: Request) {
+  const ownerId = await currentUserId();
+  if (!ownerId) {
+    return NextResponse.json({ error: "Sign in to save a recording to your workspace." }, { status: 401 });
+  }
   if (!dbConfigured()) {
     return NextResponse.json(
       { error: "No database is connected, so this call can only live in your browser. Check /api/setup." },
@@ -40,7 +45,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Missing meta" }, { status: 400 });
   }
 
-  let meta: Omit<SaveCallInput, "mediaUrl" | "mediaMime">;
+  let meta: Omit<SaveCallInput, "mediaUrl" | "mediaMime" | "ownerId">;
   try {
     meta = JSON.parse(metaRaw);
   } catch {
@@ -104,7 +109,7 @@ export async function POST(req: Request) {
   }
 
   // ---- the meeting --------------------------------------------------------
-  const saved = await saveCall({ ...meta, mediaUrl, mediaMime, mediaBytes });
+  const saved = await saveCall({ ...meta, ownerId, mediaUrl, mediaMime, mediaBytes });
   if (!saved.ok) {
     return NextResponse.json(
       {

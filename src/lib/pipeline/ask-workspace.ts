@@ -1,8 +1,8 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
-import { corpus } from "@/lib/data/store";
-import { PERSON_BY_ID } from "@/lib/seed/cast";
-import { buildIndex, search, type Index } from "@/lib/search/engine";
+import { search } from "@/lib/search/engine";
+import { workspaceIndex } from "@/lib/search/workspace-index";
+import type { Workspace } from "@/lib/data/workspace";
 
 // Ask the whole workspace.
 //
@@ -45,27 +45,6 @@ export interface WorkspaceAnswer {
   grounded: boolean;
 }
 
-// Built once per process. Rebuilding a BM25 index per question is how a
-// feature that should feel instant feels broken.
-let cached: Index | null = null;
-function index(): Index {
-  if (cached) return cached;
-  const c = corpus();
-  const summaryDocs = c.summaries.flatMap((s) =>
-    s.sections.flatMap((sec) =>
-      sec.bullets.map((b) => ({
-        segmentId: b.id,
-        meetingId: s.meetingId,
-        anchorMs: b.anchorMs,
-        text: b.text,
-        speakerId: b.speakerId ?? "",
-      })),
-    ),
-  );
-  cached = buildIndex(c.segments, summaryDocs);
-  return cached;
-}
-
 const SYSTEM = `You answer questions about a team's meeting history using only the transcript lines provided.
 
 The lines come from several different meetings. Each is tagged with its meeting
@@ -85,12 +64,11 @@ Rules:
 Reply with JSON only, no markdown fence:
 { "answer": "...", "citations": ["seg-id", "seg-id"] }`;
 
-export async function askWorkspace(question: string): Promise<WorkspaceAnswer> {
+export async function askWorkspace(c: Workspace, question: string): Promise<WorkspaceAnswer> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not set");
 
   const t0 = Date.now();
-  const c = corpus();
   const meta = new Map(
     c.meetings.map((m) => [m.id, { title: m.title, startedAt: m.startedAt }]),
   );
@@ -98,7 +76,7 @@ export async function askWorkspace(question: string): Promise<WorkspaceAnswer> {
   // A wider alpha than the search page defaults to: a question is phrased
   // nothing like the sentence that answers it, so recall matters more here
   // than the precision a keyword search wants.
-  const hits = search(index(), question, meta, { alpha: 0.5, limit: 48 });
+  const hits = search(workspaceIndex(c), question, meta, { alpha: 0.5, limit: 48 });
 
   // Widen each hit to its neighbours inside the same meeting. A decision is
   // almost never stated in one sentence — the line before it is the question
@@ -143,7 +121,7 @@ export async function askWorkspace(question: string): Promise<WorkspaceAnswer> {
     };
   }
 
-  const nameOf = (speakerId: string) => PERSON_BY_ID.get(speakerId)?.name ?? "Unknown";
+  const nameOf = (speakerId: string) => c.personById.get(speakerId)?.name ?? "Unknown";
   const context = picked
     .map((s) => {
       const m = meta.get(s.meetingId);

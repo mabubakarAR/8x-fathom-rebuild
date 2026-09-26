@@ -228,6 +228,13 @@ export async function migrate(): Promise<{ ok: boolean; message: string }> {
       alter table meetings add column if not exists transcript_source text;
       alter table meetings add column if not exists shape jsonb not null default '[]'::jsonb;
       alter table meetings add column if not exists media_bytes bytea;
+      alter table meetings add column if not exists owner_id text;
+      alter table meetings add column if not exists sample boolean not null default false;
+      create index if not exists meetings_owner on meetings(owner_id, started_at desc);
+      alter table speakers add column if not exists person_key text;
+      alter table speakers add column if not exists title text;
+      alter table speakers add column if not exists company text;
+      alter table speakers add column if not exists email text;
     `);
     return { ok: true, message: "schema applied" };
   } catch (e) {

@@ -149,6 +149,12 @@ export interface Meeting {
   hasExternal: boolean;
   /** Fraction of segments below the confidence threshold. Surfaced on the hard case. */
   lowConfidenceRatio: number;
+  /** Where the audio is, when there is any. Null for transcript-only meetings. */
+  mediaUrl?: string | null;
+  /** How the meeting came to exist: call | mic | import | upload | sample. */
+  origin?: string;
+  /** Part of the imported sample workspace rather than something the user recorded. */
+  sample?: boolean;
 }
 
 export type TemplateKey =

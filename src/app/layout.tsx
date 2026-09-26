@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { OverlayProvider } from "@/lib/overlay";
 import { Shell } from "@/components/shell";
+import { SignOutButton } from "@/components/sign-in-button";
+import { auth } from "@/auth";
 
 export const metadata: Metadata = {
   title: "Fathom Rebuild — AI meeting notetaker",
@@ -13,9 +15,13 @@ export const metadata: Metadata = {
 // localStorage here can throw (private mode), hence the try/catch.
 const THEME_BOOT = `(function(){var t="dark";try{var s=localStorage.getItem("8x-fathom-rebuild.overlay.v1");if(s){var v=JSON.parse(s).theme;if(v==="light"||v==="dark")t=v;else if(v==="system")t="";}}catch(e){}if(t)document.documentElement.setAttribute("data-theme",t);})();`;
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const session = await auth();
+  const user = session?.user?.id
+    ? { name: session.user.name ?? "", email: session.user.email ?? "", image: session.user.image ?? null }
+    : null;
   return (
     <html lang="en" data-theme="dark" suppressHydrationWarning>
       <head>
@@ -29,7 +35,17 @@ export default function RootLayout({
       </head>
       <body className="antialiased">
         <OverlayProvider>
-          <Shell>{children}</Shell>
+          <Shell
+            user={user}
+            signOut={
+              <SignOutButton
+                className="flex w-full items-center gap-2.5 rounded-[7px] px-2.5 py-[7px] text-left text-[13px]"
+                style={{ color: "var(--ink-2)" }}
+              />
+            }
+          >
+            {children}
+          </Shell>
         </OverlayProvider>
       </body>
     </html>

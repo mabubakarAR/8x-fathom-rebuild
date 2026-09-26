@@ -25,19 +25,41 @@ const NAV: { href: string; label: string; key: string }[] = [
   { href: "/live", label: "Live Demo", key: "5" },
 ];
 
-export function Shell({ children }: { children: React.ReactNode }) {
+export interface ShellUser {
+  name: string;
+  email: string;
+  image: string | null;
+}
+
+export function Shell({
+  children,
+  user,
+  signOut,
+}: {
+  children: React.ReactNode;
+  user: ShellUser | null;
+  /** A server-action form, rendered inside the menu. */
+  signOut?: React.ReactNode;
+}) {
   const pathname = usePathname() ?? "/";
-  if (pathname.startsWith("/s/")) return <>{children}</>;
+  // Share links and the signed-out front door render without the chrome.
+  if (pathname.startsWith("/s/") || !user) return <>{children}</>;
 
   return (
     <div className="flex min-h-screen flex-col" style={{ background: "var(--bg)" }}>
-      <TopBar pathname={pathname} />
+      <TopBar pathname={pathname} user={user} signOut={signOut} />
       <div className="min-w-0 flex-1">{children}</div>
     </div>
   );
 }
 
-function TopBar({ pathname }: { pathname: string }) {
+function initialsOf(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return "?";
+  return ((parts[0][0] ?? "") + (parts.length > 1 ? parts[parts.length - 1][0] : "")).toUpperCase();
+}
+
+function TopBar({ pathname, user, signOut }: { pathname: string; user: ShellUser; signOut?: React.ReactNode }) {
   const { state, setTheme } = useOverlay();
   const router = useRouter();
   const [q, setQ] = useState("");
@@ -134,11 +156,16 @@ function TopBar({ pathname }: { pathname: string }) {
             onClick={() => setMenu((v) => !v)}
             aria-haspopup="menu"
             aria-expanded={menu}
-            className="grid h-8 w-8 place-items-center rounded-full text-[12px] font-semibold"
+            className="grid h-8 w-8 place-items-center overflow-hidden rounded-full text-[12px] font-semibold"
             style={{ background: "var(--accent)", color: "var(--on-accent)" }}
-            title="Workspace"
+            title={user.name}
           >
-            AM
+            {user.image ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={user.image} alt="" className="h-full w-full object-cover" referrerPolicy="no-referrer" />
+            ) : (
+              initialsOf(user.name)
+            )}
           </button>
           {menu && (
             <>
@@ -149,11 +176,11 @@ function TopBar({ pathname }: { pathname: string }) {
                 style={{ background: "var(--surface)", border: "1px solid var(--line)", boxShadow: "var(--shadow-lg)" }}
               >
                 <div className="px-2.5 py-2" style={{ borderBottom: "1px solid var(--line)" }}>
-                  <div className="text-[13px] font-semibold" style={{ color: "var(--ink)" }}>
-                    Abubakar M
+                  <div className="truncate text-[13px] font-semibold" style={{ color: "var(--ink)" }}>
+                    {user.name || user.email}
                   </div>
-                  <div className="text-[11.5px]" style={{ color: "var(--ink-faint)" }}>
-                    Lumen Labs workspace
+                  <div className="truncate text-[11.5px]" style={{ color: "var(--ink-faint)" }}>
+                    {user.email}
                   </div>
                 </div>
                 <MenuLink href="/settings" label="Settings" icon="filter" onGo={() => setMenu(false)} />
@@ -172,6 +199,11 @@ function TopBar({ pathname }: { pathname: string }) {
                   </span>
                   {state.theme === "dark" ? "Light theme" : "Dark theme"}
                 </button>
+                {signOut && (
+                  <div className="mt-1 pt-1" style={{ borderTop: "1px solid var(--line)" }}>
+                    {signOut}
+                  </div>
+                )}
               </div>
             </>
           )}

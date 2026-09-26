@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { corpus, HIGHLIGHT_CATEGORIES } from "@/lib/data/store";
-import { PERSON_BY_ID } from "@/lib/seed/cast";
+import { HIGHLIGHT_CATEGORIES } from "@/lib/seed/cast";
+import { requireWorkspace } from "@/lib/data/session";
 import { clock } from "@/lib/format";
 import { encodeShare } from "@/lib/sharelink";
 import { PageHeader } from "@/components/page-header";
@@ -8,8 +8,10 @@ import { Avatar, Icon } from "@/components/ui";
 import { mapTone } from "@/lib/tone";
 import { CopyLink } from "@/components/copy-link";
 
-export default function ClipsPage() {
-  const c = corpus();
+export const dynamic = "force-dynamic";
+
+export default async function ClipsPage() {
+  const { ws: c } = await requireWorkspace();
   const byKey = new Map(HIGHLIGHT_CATEGORIES.map((x) => [x.key, x]));
 
   const clips = [...c.highlights]
@@ -52,7 +54,7 @@ export default function ClipsPage() {
 
               <div className="grid gap-2 sm:grid-cols-2">
                 {items.map(({ h, meeting }) => {
-                  const author = PERSON_BY_ID.get(h.createdById);
+                  const author = c.personById.get(h.createdById);
                   const token = encodeShare({
                     m: h.meetingId,
                     s: h.startMs,

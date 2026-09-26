@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db/client";
 import { storeMedia } from "@/lib/pipeline/media";
+import { currentUserId } from "@/auth";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -10,6 +11,8 @@ export const dynamic = "force-dynamic";
  *  the client drives transcription and analysis as separate calls so neither
  *  hits the serverless time limit. */
 export async function POST(req: Request) {
+  const ownerId = await currentUserId();
+  if (!ownerId) return NextResponse.json({ error: "Sign in first" }, { status: 401 });
   const sql = db();
   if (!sql) return NextResponse.json({ error: "Database is not configured" }, { status: 503 });
 
@@ -23,10 +26,10 @@ export async function POST(req: Request) {
   const bytes = await file.arrayBuffer();
 
   await sql`
-    insert into meetings (id, title, kind, platform, status, media_mime, started_at)
+    insert into meetings (id, title, kind, platform, status, media_mime, started_at, owner_id, origin)
     values (${id}, ${file.name.replace(/\.[^.]+$/, "").slice(0, 120) || "New recording"},
             ${templateKey === "general" ? "planning" : templateKey}, 'upload', 'queued',
-            ${file.type || "audio/mpeg"}, now())`;
+            ${file.type || "audio/mpeg"}, now(), ${ownerId}, 'upload')`;
 
   try {
     const path = await storeMedia(id, bytes, file.name, file.type || "audio/mpeg");

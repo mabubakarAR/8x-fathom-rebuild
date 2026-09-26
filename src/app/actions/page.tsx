@@ -1,16 +1,13 @@
-import { corpus } from "@/lib/data/store";
-import { PEOPLE } from "@/lib/seed/cast";
+import { requireWorkspace } from "@/lib/data/session";
 import { ActionsBoard } from "@/components/actions-board";
 
-export default function ActionsPage() {
-  const c = corpus();
-  const rows = c.actionItems.map((a) => {
-    const m = c.byMeeting.get(a.meetingId)!.meeting;
-    return {
-      ...a,
-      meetingTitle: m.title,
-      meetingStartedAt: m.startedAt,
-    };
+export const dynamic = "force-dynamic";
+
+export default async function ActionsPage() {
+  const { ws } = await requireWorkspace();
+  const rows = ws.actionItems.map((a) => {
+    const m = ws.byMeeting.get(a.meetingId)!.meeting;
+    return { ...a, meetingTitle: m.title, meetingStartedAt: m.startedAt };
   });
-  return <ActionsBoard rows={rows} people={PEOPLE} />;
+  return <ActionsBoard rows={rows} people={ws.people} />;
 }

@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { askWorkspace } from "@/lib/pipeline/ask-workspace";
+import { currentUserId } from "@/auth";
+import { loadWorkspace } from "@/lib/data/workspace";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -12,8 +14,10 @@ export async function POST(req: Request) {
   if (!question?.trim()) {
     return NextResponse.json({ error: "no question" }, { status: 400 });
   }
+  const uid = await currentUserId();
+  if (!uid) return NextResponse.json({ error: "Sign in first" }, { status: 401 });
   try {
-    return NextResponse.json(await askWorkspace(question.trim()));
+    return NextResponse.json(await askWorkspace(await loadWorkspace(uid), question.trim()));
   } catch (e) {
     return NextResponse.json(
       { error: e instanceof Error ? e.message : "ask failed" },

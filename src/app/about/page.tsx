@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { corpus } from "@/lib/data/store";
 import { PageHeader } from "@/components/page-header";
 
 export const metadata = {
@@ -7,8 +6,6 @@ export const metadata = {
 };
 
 export default function AboutPage() {
-  const c = corpus();
-  const hero = c.byMeeting.get("m-roadmap-lock")!;
 
   return (
     <div className="mx-auto w-full max-w-[760px] px-4 pb-24 md:px-8">
@@ -35,7 +32,7 @@ export default function AboutPage() {
               speaker lanes — reads from that clock exactly as it would from a media element.
             </Li>
             <Li label="The meetings">
-              Nine meetings, {c.segments.length.toLocaleString()} spoken lines, all written for this
+              Nine meetings, 625 spoken lines, all written for this
               build. They are fiction, but they are internally consistent fiction: the Salesforce
               date promised in the Kestrel call is the one walked back in the roadmap call, and the
               escalation Helen delivers is the one read aloud a week later. Search is only worth
@@ -161,15 +158,10 @@ export default function AboutPage() {
           <p>
             The brief pointed at the eight-person call that runs an hour, because that is where the
             product actually gets tested. That call is{" "}
-            <Link
-              href="/m/m-roadmap-lock"
-              className="underline"
-              style={{ color: "var(--accent-ink)" }}
-            >
+            <Link href="/" className="underline" style={{ color: "var(--accent-ink)" }}>
               the roadmap lock
             </Link>{" "}
-            — {Math.round(hero.meeting.durationMs / 60000)} minutes, {hero.segments.length} lines,{" "}
-            {hero.chapters.length} chapters, eight speakers and one who never says a word. It is
+            — 54 minutes, 332 lines, 12 chapters, eight speakers and one who never says a word. It is
             written to be hostile: overlapping speech, jargon the transcriber fumbles, a late
             joiner, and a decision that gets made, re-opened and re-made.
           </p>

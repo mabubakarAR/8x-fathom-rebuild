@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { corpus } from "@/lib/data/store";
-import { PERSON_BY_ID } from "@/lib/seed/cast";
+import { currentUserId } from "@/auth";
+import { loadWorkspace } from "@/lib/data/workspace";
 import { buildIndex, search, tokenize } from "@/lib/search/engine";
 import { collectClaims, pairUp, type Claim } from "@/lib/commitments/collect";
 import { judgePairs } from "@/lib/commitments/judge";
@@ -25,8 +25,10 @@ export async function POST() {
     );
   }
 
-  const c = corpus();
-  const claims = collectClaims(c.meetings, c.summaries, c.actionItems, PERSON_BY_ID);
+  const uid = await currentUserId();
+  if (!uid) return NextResponse.json({ error: "Sign in first" }, { status: 401 });
+  const c = await loadWorkspace(uid);
+  const claims = collectClaims(c.meetings, c.summaries, c.actionItems, c.personById);
 
   // Score two claims by term overlap through the same index the search page
   // uses, so "renewal date" finds "contract timeline" rather than needing the

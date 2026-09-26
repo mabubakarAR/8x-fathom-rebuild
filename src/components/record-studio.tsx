@@ -343,6 +343,7 @@ export function RecordStudio({
 
       // Then the server, so it outlives this browser and the link works for
       // anyone you send it to.
+      let savedToWorkspace = false;
       setLog((l) => [...l, "Saving to your workspace…"]);
       try {
         const fd = new FormData();
@@ -369,8 +370,9 @@ export function RecordStudio({
         if (!save.ok) throw new Error(out.error || "Save failed");
         setLog((l) => [
           ...l,
-          out.warning ? `Saved. ${out.warning}` : "Saved — this call is now on the server.",
+          out.warning ? `Saved. ${out.warning}` : "Saved — this call is now in your workspace.",
         ]);
+        savedToWorkspace = true;
       } catch (e) {
         // Not fatal: the local copy is already written, and saying so is
         // better than a silent half-success.
@@ -382,7 +384,8 @@ export function RecordStudio({
         ]);
       }
 
-      router.push(`/imported/${id}`);
+      // The workspace copy is the real one; the browser copy is the fallback.
+      router.push(savedToWorkspace ? `/m/${id}` : `/imported/${id}`);
     } catch (e) {
       setPhase("idle");
       setError(e instanceof Error ? e.message : "Analysis failed");
