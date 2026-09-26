@@ -46,10 +46,16 @@ type Phase = "idle" | "live" | "analysing";
 export function RecordStudio({
   configured,
   transcription,
+  join = null,
+  calendarTitle = null,
 }: {
   configured: boolean;
   /** DEEPGRAM_API_KEY is set, so the far side can be transcribed too. */
   transcription: boolean;
+  /** Arrived from the calendar: the call's join link, opened alongside. */
+  join?: string | null;
+  /** The invite's title, which beats whatever the model guesses. */
+  calendarTitle?: string | null;
 }) {
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>("idle");
@@ -59,7 +65,8 @@ export function RecordStudio({
   const [speaker, setSpeaker] = useState(0);
   const [names, setNames] = useState<string[]>(["You", "Guest"]);
   const [template, setTemplate] = useState("general");
-  const [source, setSource] = useState<CaptureSource>("mic");
+  // Arriving from a calendar invite means there IS a call — preselect it.
+  const [source, setSource] = useState<CaptureSource>(join ? "meeting" : "mic");
   const [farSide, setFarSide] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -351,7 +358,7 @@ export function RecordStudio({
           "meta",
           JSON.stringify({
             id,
-            title: json.analysis.title,
+            title: calendarTitle || json.analysis.title,
             gist: json.analysis.gist,
             startedAt: createdAt,
             durationMs: Math.round(durationMs),
@@ -416,6 +423,30 @@ export function RecordStudio({
         title="Capture a meeting"
         subtitle="Share the tab your call is in and it records the whole room — not just your half of it."
       />
+
+      {/* ---- from the calendar ---- */}
+      {join && phase === "idle" && (
+        <div
+          className="mb-4 flex flex-wrap items-center gap-3 rounded-[var(--radius-lg)] px-4 py-3"
+          style={{ background: "var(--accent-soft)", border: "1px solid var(--accent-line)" }}
+        >
+          <div className="min-w-0 flex-1">
+            <div className="text-[13.5px] font-semibold" style={{ color: "var(--ink)" }}>{calendarTitle ?? "Your meeting"}</div>
+            <div className="text-[12px]" style={{ color: "var(--ink-3)" }}>
+              Open the call in a new tab, then come back here and choose that tab. The recording is saved under this name.
+            </div>
+          </div>
+          <a
+            href={join}
+            target="_blank"
+            rel="noopener"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-[var(--radius-sm)] px-3.5 py-[8px] text-[13px] font-semibold"
+            style={{ background: "var(--accent)", color: "var(--on-accent)" }}
+          >
+            <Icon name="external" size={13} /> Open the call
+          </a>
+        </div>
+      )}
 
       {/* ---- what to capture ---- */}
       {phase === "idle" && (
