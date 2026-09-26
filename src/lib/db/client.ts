@@ -234,6 +234,29 @@ export async function migrate(): Promise<{ ok: boolean; message: string }> {
   const schema = await readFile(join(process.cwd(), "src/lib/db/schema.sql"), "utf8");
 
   try {
+    // Columns added after the first deploy go in FIRST, so nothing in the
+    // schema file can reference a column an older database lacks. Every
+    // statement is idempotent, so a fresh database runs them harmlessly
+    // before its tables exist... except they'd fail. So: guard on the table.
+    await sql.unsafe(`
+      do $$ begin
+        if to_regclass('public.meetings') is not null then
+          alter table meetings add column if not exists media_url text;
+          alter table meetings add column if not exists origin text not null default 'import';
+          alter table meetings add column if not exists transcript_source text;
+          alter table meetings add column if not exists shape jsonb not null default '[]'::jsonb;
+          alter table meetings add column if not exists media_bytes bytea;
+          alter table meetings add column if not exists owner_id text;
+          alter table meetings add column if not exists sample boolean not null default false;
+        end if;
+        if to_regclass('public.speakers') is not null then
+          alter table speakers add column if not exists person_key text;
+          alter table speakers add column if not exists title text;
+          alter table speakers add column if not exists company text;
+          alter table speakers add column if not exists email text;
+        end if;
+      end $$;
+    `);
     await sql.unsafe(schema);
     // Columns added after the first deploy. `add column if not exists` is
     // idempotent, so running the whole schema again is always safe — but a

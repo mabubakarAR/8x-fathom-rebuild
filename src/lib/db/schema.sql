@@ -60,7 +60,9 @@ create table if not exists meetings (
   sample          boolean not null default false,
   created_at      timestamptz not null default now()
 );
-create index if not exists meetings_owner on meetings(owner_id, started_at desc);
+-- The owner index is created in migrate() after the column is guaranteed to
+-- exist: on a database that predates owner_id, CREATE TABLE IF NOT EXISTS
+-- skips and an index here would fail before the ALTER below ever runs.
 
 -- Speakers are per meeting, not global: an uploaded file has whatever voices
 -- the diarizer found, and the user renames them afterwards. "Speaker 0" is a
