@@ -24,7 +24,7 @@ create table if not exists users (
   default_template      text not null default 'general',
   -- Fathom's "auto-share with attendees". Off by default here: sharing a
   -- recording is a decision, not a side effect of having one.
-  auto_share            boolean not null default false
+  auto_share            boolean not null default false,
   created_at            timestamptz not null default now(),
   last_seen_at          timestamptz not null default now()
 );

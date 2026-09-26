@@ -48,7 +48,11 @@ export async function GET() {
     );
   }
   const m = await migrate();
+  // Row counts, so "my meetings vanished" can be told apart from "my
+  // meetings are there but not mine" without a database client.
+  const counts = await tableCounts();
   return NextResponse.json({
+    counts,
     ok: m.ok,
     status,
     usingVar: databaseUrlVar(),
@@ -56,4 +60,21 @@ export async function GET() {
     migration: m.message,
     env,
   });
+}
+
+async function tableCounts() {
+  const { db } = await import("@/lib/db/client");
+  const sql = db();
+  if (!sql) return null;
+  try {
+    const [r] = await sql<{ users: number; meetings: number; owned: number; sample: number; ready: number }[]>`
+      select (select count(*)::int from users) as users,
+             (select count(*)::int from meetings) as meetings,
+             (select count(*)::int from meetings where owner_id is not null) as owned,
+             (select count(*)::int from meetings where sample) as sample,
+             (select count(*)::int from meetings where status = 'ready') as ready`;
+    return r;
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : String(e) };
+  }
 }
