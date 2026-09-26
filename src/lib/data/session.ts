@@ -10,7 +10,7 @@ import { loadWorkspace, type Workspace } from "./workspace";
  * shaped page at all — not an empty one, not a demo one — because the
  * product has an owner now and a stranger is not them.
  */
-export async function requireWorkspace(): Promise<{ uid: string; ws: Workspace; user: { name: string; email: string; image: string | null; calendar: boolean } }> {
+export async function requireWorkspace(): Promise<{ uid: string; ws: Workspace; user: { name: string; email: string; image: string | null; calendar: boolean; guest: boolean } }> {
   const session = await auth();
   const uid = session?.user?.id;
   if (!uid) redirect("/");
@@ -23,6 +23,7 @@ export async function requireWorkspace(): Promise<{ uid: string; ws: Workspace; 
       email: session.user.email ?? "",
       image: session.user.image ?? null,
       calendar: Boolean(session.user.calendar),
+      guest: Boolean(session.user.guest),
     },
   };
 }

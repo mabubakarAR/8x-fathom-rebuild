@@ -26,11 +26,15 @@ export default async function SettingsPage() {
         templates={TEMPLATES.map((t) => ({ key: t.key, label: t.label }))}
         user={user}
         connectCalendar={
-          <ConnectCalendarButton
-            label={settings?.calendarConnected ? "Reconnect" : "Connect Google Calendar"}
-            className="rounded-full px-3.5 py-[8px] text-[13px] font-semibold"
-            style={{ background: "var(--accent)", color: "var(--on-accent)" }}
-          />
+          user.guest ? (
+            <span className="text-[12.5px]" style={{ color: "var(--ink-3)" }}>Not available in a guest workspace — there is no Google account behind it.</span>
+          ) : (
+            <ConnectCalendarButton
+              label={settings?.calendarConnected ? "Reconnect" : "Connect Google Calendar"}
+              className="rounded-full px-3.5 py-[8px] text-[13px] font-semibold"
+              style={{ background: "var(--accent)", color: "var(--on-accent)" }}
+            />
+          )
         }
         signOut={<SignOutButton className="rounded-full px-3.5 py-[8px] text-[13px] font-medium" style={{ color: "var(--ink-2)", border: "1px solid var(--line-strong)" }} />}
       />

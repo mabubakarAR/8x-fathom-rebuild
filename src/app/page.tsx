@@ -5,7 +5,7 @@ import { listProcessing } from "@/lib/db/calls";
 import { MeetingList, type MeetingRow } from "@/components/meeting-list";
 import { WorkspaceHero } from "@/components/workspace-hero";
 import { Landing } from "@/components/landing";
-import { ConnectCalendarButton } from "@/components/sign-in-button";
+import { ConnectCalendarButton, SignInButton } from "@/components/sign-in-button";
 import type { ThumbSlice } from "@/lib/thumb";
 import { sliceMeeting } from "@/lib/thumb";
 
@@ -81,18 +81,24 @@ export default async function HomePage() {
   const upcoming: UpcomingMeeting[] = cal.ok ? cal.meetings : [];
   const me = ws.people.find((p) => p.email && p.email === session.user.email)?.id ?? "";
 
+  // A guest has no Google account behind the session, so "connect calendar"
+  // would really be "sign in with Google as someone else". Say that instead.
+  const connect = session.user.guest ? (
+    <GuestCalendarNote />
+  ) : (
+    <ConnectCalendarButton
+      className="rounded-full px-4 py-[9px] text-[13px] font-semibold"
+      style={{ background: "var(--accent)", color: "var(--on-accent)" }}
+    />
+  );
+
   return (
     <MeetingList
       rows={[...processingRows, ...rows]}
       upcoming={upcoming}
       calendarError={cal.ok ? null : cal.reason}
       calendarConnected={Boolean(session.user.calendar)}
-      connectCalendar={
-        <ConnectCalendarButton
-          className="shrink-0 rounded-[var(--radius-sm)] px-3.5 py-[8px] text-[13px] font-semibold"
-          style={{ background: "var(--accent)", color: "var(--on-accent)" }}
-        />
-      }
+      connectCalendar={connect}
       people={ws.people}
       me={me}
       hasSample={ws.hasSample}
@@ -105,14 +111,22 @@ export default async function HomePage() {
           openActions={ws.actionItems.filter((a) => !a.done).length}
           next={upcoming.find((u) => u.joinUrl) ?? upcoming[0] ?? null}
           calendarConnected={Boolean(session.user.calendar)}
-          connectCalendar={
-            <ConnectCalendarButton
-              className="rounded-full px-4 py-[9px] text-[13px] font-semibold"
-              style={{ background: "var(--accent)", color: "var(--on-accent)" }}
-            />
-          }
+          connectCalendar={connect}
         />
       }
     />
+  );
+}
+
+function GuestCalendarNote() {
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      <span className="text-[12.5px]" style={{ color: "var(--ink-3)" }}>Guest workspaces have no Google account to read a calendar from.</span>
+      <SignInButton
+        label="Sign in with Google instead"
+        className="rounded-full px-3.5 py-[7px] text-[12.5px] font-semibold"
+        style={{ background: "var(--surface-2)", color: "var(--ink)", border: "1px solid var(--line-strong)" }}
+      />
+    </div>
   );
 }
