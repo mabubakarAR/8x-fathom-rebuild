@@ -169,15 +169,31 @@ export function envReport() {
     "BLOB_READ_WRITE_TOKEN",
     "ANTHROPIC_API_KEY",
     "DEEPGRAM_API_KEY",
+    "GOOGLE_CLIENT_ID",
+    "GOOGLE_CLIENT_SECRET",
+    "AUTH_SECRET",
   ];
   const present: string[] = [];
   const missing: string[] = [];
   for (const n of watched) (process.env[n] ? present : missing).push(n);
 
   const keys = Object.keys(process.env);
+  // Shape checks for the Google client, because "invalid_client" from Google
+  // is indistinguishable from a typo until you look. Never the values.
+  const gid = process.env.GOOGLE_CLIENT_ID ?? "";
+  const google = {
+    clientIdPresent: Boolean(gid),
+    clientIdLength: gid.length,
+    clientIdLooksRight: /^\d+-[a-z0-9]+\.apps\.googleusercontent\.com$/.test(gid.trim()),
+    clientIdHasWhitespace: gid !== gid.trim(),
+    secretPresent: Boolean(process.env.GOOGLE_CLIENT_SECRET),
+    secretLooksRight: /^GOCSPX-/.test((process.env.GOOGLE_CLIENT_SECRET ?? "").trim()),
+    authSecretPresent: Boolean(process.env.AUTH_SECRET),
+  };
   return {
     present,
     missing,
+    google,
     // Every variable whose VALUE is a Postgres URL, whatever it is called.
     // If this is empty, the deployment genuinely has no database attached —
     // no amount of renaming will help and the next step is a redeploy.
